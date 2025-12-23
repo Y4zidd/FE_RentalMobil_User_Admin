@@ -10,7 +10,7 @@ Backend target: Laravel (REST API + Midtrans integration)
 Dari FE user (`user/`) dan FE admin (`admin/`) terlihat kebutuhan utama:
 
 - Manajemen mobil (listing, status tersedia/disewa/maintenance, harga per hari, plat nomor, spesifikasi).
-- Manajemen user (customer + role admin/owner/staff di dashboard admin).
+- Manajemen user (customer + role admin/staff di dashboard admin).
 - Manajemen booking (relasi user–mobil, tanggal sewa, lokasi pickup, status booking, total harga).
 - Opsi tambahan booking (theft protection, collision damage, full insurance, additional driver).
 - Pembayaran, termasuk opsi:
@@ -33,7 +33,7 @@ Field utama (Laravel migration contoh):
 - `name` (string)
 - `email` (string, unique)
 - `password` (string, nullable untuk user yang register via Google)
-- `role` (enum: `customer`, `owner`, `admin`, `staff`)
+- `role` (enum: `customer`, `admin`, `staff`)
 - `status` (enum: `active`, `inactive`)
 - `avatar_url` (string nullable)
   - Untuk user yang register/login pertama kali via Google, default diisi dari foto profil Google (URL yang diberikan oleh Google OAuth).
@@ -45,10 +45,13 @@ Field utama (Laravel migration contoh):
 - `remember_token` (string nullable)
 - `created_at`, `updated_at`
 
-Relasi:
+Relasi & catatan peran:
 - 1 user memiliki banyak booking (`hasMany(Bookings)`).
-- Dipakai oleh FE admin untuk tabel Manage Users (role: Owner/Admin/Staff, status: Active/Inactive).
-- User dengan `auth_provider = google` **hanya boleh memiliki role `customer`** (tidak boleh dibuat sebagai `admin/owner/staff` via Google login).
+- Dipakai oleh FE admin untuk tabel Manage Users (role: Admin/Staff, status: Active/Inactive).
+- Admin: bisa kelola mobil (`cars`), user (`users`), mengelola booking (`bookings`), dan melihat seluruh laporan/overview.
+- Staff: memiliki akses dashboard untuk melihat overview dan **mengelola booking saja** (lihat dan ubah status booking), tanpa hak kelola user/mobil.
+- User/customer: hanya memakai FE user (browse, booking, profile), tidak mengakses dashboard admin.
+- User dengan `auth_provider = google` **hanya boleh memiliki role `customer`** (tidak boleh dibuat sebagai `admin` atau `staff` via Google login).
 
 ### 2.2. `cars` (Master Mobil)
 
@@ -61,15 +64,15 @@ Field utama:
 - `model` (string)
 - `license_plate` (string, unique) – dari admin: plat nomor.
 - `year` (integer nullable)
-- `category` (string; contoh: `MPV`, `SUV`, dll. – bisa juga di-normalisasi ke tabel lain jika perlu).
+- `category` (string; contoh: `MPV`, `SUV`, `Sedan`, `Hatchback`, `Coupe`, `Van`).
 - `status` (enum: `available`, `rented`, `maintenance`)
-- `transmission` (enum: `manual`, `automatic`)
-- `fuel_type` (string nullable)
+- `transmission` (enum: `manual`, `automatic`, `semi_automatic`, `cvt`, `ivt`)
+- `fuel_type` (string; contoh: `Petrol`, `Diesel`, `Hybrid`, `Electric`)
 - `seating_capacity` (integer)
 - `price_per_day` (decimal(12,2))
 - `location_id` (foreignId ke `locations`)
 - `description` (text nullable)
-- `image_url` (string) – gambar utama (thumbnail/cover) yang ditampilkan di listing.
+- `photo_url` (string) – gambar utama (thumbnail/cover) yang ditampilkan di listing (FE Admin uses `photo_url`).
 - `created_at`, `updated_at`
 
 Relasi:
@@ -211,7 +214,7 @@ Berikut mapping kebutuhan API berdasarkan FE user & admin.
 - `GET /api/user/data`
   - Header: `Authorization: <token>`.
   - Response: data user login sekarang.
-- **Google Login (hanya untuk customer, bukan admin/owner/staff)**
+- **Google Login (hanya untuk customer, bukan admin/staff)**
   - `GET /api/user/auth/google/redirect`
     - FE user arahkan user ke endpoint ini ketika klik "Login dengan Google".
     - Backend akan redirect ke Google OAuth.
@@ -245,7 +248,9 @@ Berikut mapping kebutuhan API berdasarkan FE user & admin.
   - Header: `Authorization: <token>`.
   - Response: list booking milik user berupa struktur yang saat ini dipakai FE:
     - `_id`, `car` (nested: image, brand, model, year, category, location),
-    - `status`, `pickupDate`, `returnDate`, `price`, `createdAt`.
+    - `status`, `pickupDate`, `returnDate`, `price`, `createdAt`,
+    - `payment_method` (untuk FE bisa dimapping ke `paymentMethod`),
+    - daftar opsi tambahan yang dipilih (misalnya sebagai array `extras` yang diambil dari tabel `booking_options`).
 - `POST /api/bookings`
   - Header: `Authorization: <token>`.
   - Body (contoh):
@@ -320,7 +325,7 @@ Alur dari sisi user ketika memilih bayar online:
 Prefix contoh: `/api/admin` dengan guard khusus (token admin).
 
 **Auth Admin**
-- `POST /api/admin/login` – login admin/owner/staff.
+- `POST /api/admin/login` – login admin/staff.
 
 **Manage Cars**
 - `GET /api/admin/cars` – list mobil (filter status/category).
@@ -342,9 +347,11 @@ Prefix contoh: `/api/admin` dengan guard khusus (token admin).
 - `GET /api/admin/bookings` – list semua booking (filter by status/date).
 - `GET /api/admin/bookings/{id}` – detail booking + payment.
 - `PUT /api/admin/bookings/{id}` – ubah status (mis. manual confirm/cancel jika bayar di lokasi).
+  - Diizinkan untuk **admin dan staff** (staff fokus mengelola booking harian yang bersifat real-time di frontdesk/lapangan).
 
 **Dashboard Overview**
 - `GET /api/admin/overview` – mengembalikan data untuk grafik dan summary (total revenue, total bookings, dsb.), diambil dari `bookings` + `payments`.
+  - Bisa diakses oleh **admin dan staff** (staff hanya baca data, admin bisa menggunakannya untuk keputusan manajerial dan pengelolaan data lain).
   - Contoh struktur response (disederhanakan):
     ```json
     {
@@ -383,7 +390,7 @@ Prefix contoh: `/api/admin` dengan guard khusus (token admin).
 
 - Gunakan Sanctum atau Passport untuk auth token (`Authorization` header seperti di FE sekarang).
 - Buat seeder untuk:
-  - Users (Owner/Admin/Staff default).
+- Users (Admin/Staff demo default plus example customer).
   - Cars default (sesuai dummy data di FE).
   - Locations default.
 - Mapping model utama:

@@ -40,4 +40,17 @@ class Car extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function getPhotoUrlAttribute($value)
+    {
+        if (
+            is_string($value) &&
+            str_starts_with($value, 'http://localhost/storage/')
+        ) {
+            $appUrl = config('app.url', 'http://localhost:8000');
+            return str_replace('http://localhost', $appUrl, $value);
+        }
+
+        return $value;
+    }
 }

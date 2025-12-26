@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Car;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CarController extends Controller
 {
     public function index()
     {
-        $cars = Car::with(['location'])->get();
+        $cars = Car::with(['location', 'images'])->get();
         return response()->json($cars);
     }
 
@@ -30,11 +31,40 @@ class CarController extends Controller
             'price_per_day' => 'required|numeric',
             'location_id' => 'required|exists:locations,id',
             'description' => 'nullable|string',
-            'photo_url' => 'required|string',
+            'images' => 'required|array',
+            'images.*' => 'image|max:5120',
         ]);
 
-        $car = Car::create($validated);
-        return response()->json($car, 201);
+        $carData = collect($validated)->except(['images'])->toArray();
+        if (!array_key_exists('photo_url', $carData)) {
+            $carData['photo_url'] = '';
+        }
+        $car = Car::create($carData);
+
+        $files = $request->file('images', []);
+        $primaryUrl = null;
+
+        foreach ($files as $index => $file) {
+            $path = $file->store('cars', 'public');
+            $url = asset('storage/' . $path);
+
+            $car->images()->create([
+                'image_url' => $url,
+                'is_primary' => $index === 0,
+                'sort_order' => $index + 1,
+            ]);
+
+            if ($index === 0) {
+                $primaryUrl = $url;
+            }
+        }
+
+        if ($primaryUrl) {
+            $car->photo_url = $primaryUrl;
+            $car->save();
+        }
+
+        return response()->json($car->load(['location', 'images']), 201);
     }
 
     public function show($id)
@@ -61,11 +91,51 @@ class CarController extends Controller
             'price_per_day' => 'numeric',
             'location_id' => 'exists:locations,id',
             'description' => 'nullable|string',
-            'photo_url' => 'string',
+            'images' => 'sometimes|array',
+            'images.*' => 'image|max:5120',
         ]);
 
-        $car->update($validated);
-        return response()->json($car);
+        $carData = collect($validated)->except(['images'])->toArray();
+        $car->update($carData);
+
+        if ($request->hasFile('images')) {
+            foreach ($car->images as $existingImage) {
+                $path = parse_url($existingImage->image_url, PHP_URL_PATH);
+                if (is_string($path)) {
+                    $path = ltrim(str_replace('/storage/', '', $path), '/');
+                    if ($path !== '') {
+                        Storage::disk('public')->delete($path);
+                    }
+                }
+            }
+
+            $car->images()->delete();
+
+            $files = $request->file('images', []);
+            $primaryUrl = null;
+
+            foreach ($files as $index => $file) {
+                $path = $file->store('cars', 'public');
+                $url = asset('storage/' . $path);
+
+                $car->images()->create([
+                    'image_url' => $url,
+                    'is_primary' => $index === 0,
+                    'sort_order' => $index + 1,
+                ]);
+
+                if ($index === 0) {
+                    $primaryUrl = $url;
+                }
+            }
+
+            if ($primaryUrl) {
+                $car->photo_url = $primaryUrl;
+                $car->save();
+            }
+        }
+
+        return response()->json($car->load(['location', 'images']));
     }
 
     public function destroy($id)

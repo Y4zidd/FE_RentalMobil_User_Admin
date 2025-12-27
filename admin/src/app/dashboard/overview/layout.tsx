@@ -73,23 +73,40 @@ export default function OverViewLayout({
         // Fetch Cars
         const carsRes = await apiClient.get('/api/admin/cars');
         const carsData = Array.isArray(carsRes.data) ? carsRes.data : carsRes.data.data || [];
-        setPreviewCars(carsData.slice(0, 5).map((c: any) => ({
+        setPreviewCars(
+          carsData.slice(0, 5).map((c: any) => ({
+            id: c.id,
             photo: c.photo_url || 'https://via.placeholder.com/150',
             name: c.name,
             plate: c.license_plate,
             price: Number(c.price_per_day).toLocaleString('id-ID'),
             status: c.status
-        })));
+          }))
+        );
 
         // Fetch Users
         const usersRes = await apiClient.get('/api/admin/users');
-        const usersData = Array.isArray(usersRes.data) ? usersRes.data : usersRes.data.data || [];
-        setPreviewUsers(usersData.slice(0, 5).map((u: any) => ({
-            avatar: u.avatar_url,
-            name: u.name,
-            email: u.email,
-            role: u.role === 'admin' ? 'Admin' : 'Staff'
-        })));
+        const usersData = Array.isArray(usersRes.data)
+          ? usersRes.data
+          : usersRes.data.data || [];
+        setPreviewUsers(
+          usersData.slice(0, 5).map((u: any) => {
+            let role = 'Customer';
+            if (u.role === 'admin') {
+              role = 'Admin';
+            } else if (u.role === 'staff') {
+              role = 'Staff';
+            }
+
+            return {
+              id: u.id,
+              avatar: u.avatar_url,
+              name: u.name,
+              email: u.email,
+              role
+            };
+          })
+        );
 
         // Update Stats (Simplified for now, ideally fetch /api/admin/overview)
         const newStats = [...statisticsCardData];
@@ -154,9 +171,9 @@ export default function OverViewLayout({
                 <TableHeader>
                   <TableRow>
                     <TableHead className='w-[72px]'>Image</TableHead>
-                    <TableHead>Nama Mobil</TableHead>
-                    <TableHead className='hidden sm:table-cell'>Plat</TableHead>
-                    <TableHead className='hidden sm:table-cell'>Harga / Hari</TableHead>
+                    <TableHead>Car Name</TableHead>
+                    <TableHead className='hidden sm:table-cell'>License Plate</TableHead>
+                    <TableHead className='hidden sm:table-cell'>Price / Day</TableHead>
                     <TableHead className='text-right'>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -185,7 +202,7 @@ export default function OverViewLayout({
                     }
 
                     return (
-                      <TableRow key={car.plate}>
+                      <TableRow key={car.id}>
                         <TableCell>
                           <div className='relative h-10 w-16 overflow-hidden rounded-md bg-muted'>
                             <Image
@@ -245,7 +262,7 @@ export default function OverViewLayout({
                 <TableHeader>
                   <TableRow>
                     <TableHead className='w-[72px]'>Image</TableHead>
-                    <TableHead>Nama</TableHead>
+                    <TableHead>Name</TableHead>
                     <TableHead className='hidden sm:table-cell'>Email</TableHead>
                     <TableHead className='text-right'>Role</TableHead>
                   </TableRow>
@@ -263,13 +280,17 @@ export default function OverViewLayout({
                         roleColor =
                           'bg-amber-500 hover:bg-amber-600 text-white border-transparent';
                         break;
+                      case 'Customer':
+                        roleColor =
+                          'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent';
+                        break;
                       default:
                         roleColor =
                           'bg-gray-500 hover:bg-gray-600 text-white border-transparent';
                     }
 
                     return (
-                      <TableRow key={user.email}>
+                      <TableRow key={user.id}>
                         <TableCell>
                           <Avatar className='h-9 w-9 rounded-full border'>
                             <AvatarImage src={user.avatar} alt={user.name} />

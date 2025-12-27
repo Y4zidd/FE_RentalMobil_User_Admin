@@ -14,14 +14,15 @@ export type User = {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Staff';
+  role: 'Admin' | 'Staff' | 'Customer';
   status: 'Active' | 'Inactive';
   avatarUrl?: string;
 };
 
 export const ROLE_OPTIONS = [
   { label: 'Admin', value: 'Admin' },
-  { label: 'Staff', value: 'Staff' }
+  { label: 'Staff', value: 'Staff' },
+  { label: 'Customer', value: 'Customer' }
 ];
 
 export const STATUS_OPTIONS = [
@@ -62,7 +63,7 @@ export const columns: ColumnDef<User>[] = [
     id: 'search',
     accessorKey: 'name',
     header: ({ column }: { column: Column<User, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Nama' />
+      <DataTableColumnHeader column={column} title='Name' />
     ),
     cell: ({ cell }) => <div>{cell.getValue<User['name']>()}</div>,
     meta: {
@@ -93,6 +94,10 @@ export const columns: ColumnDef<User>[] = [
         case 'Staff':
           roleColor =
             'bg-amber-500 hover:bg-amber-600 text-white border-transparent';
+          break;
+        case 'Customer':
+          roleColor =
+            'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent';
           break;
         default:
           roleColor =

@@ -69,6 +69,7 @@ Route::prefix('admin')->group(function () {
 
         // Manage Users
         Route::apiResource('users', AdminUserController::class);
+        Route::post('users/{id}/avatar', [AdminUserController::class, 'updateAvatar']);
 
         // Manage Bookings
         Route::apiResource('bookings', AdminBookingController::class)->except(['store', 'destroy']); // Admin usually edits status

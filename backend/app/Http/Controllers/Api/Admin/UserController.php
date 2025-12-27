@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -62,6 +63,7 @@ class UserController extends Controller
             'role' => 'in:admin,staff,customer',
             'status' => 'in:active,inactive',
             'phone' => 'nullable|string',
+            'password' => 'nullable|string|min:8',
         ];
 
         // Prevent email update if locked (Google users)
@@ -70,7 +72,39 @@ class UserController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        if (isset($validated['password'])) {
+            $validated['password'] = bcrypt($validated['password']);
+        }
+
         $user->update($validated);
+        return response()->json($user);
+    }
+
+    public function updateAvatar(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'avatar' => 'required|image|max:2048',
+        ]);
+
+        if ($user->avatar_url) {
+            $path = parse_url($user->avatar_url, PHP_URL_PATH);
+            if (is_string($path)) {
+                $path = ltrim(str_replace('/storage/', '', $path), '/');
+                if ($path !== '') {
+                    Storage::disk('public')->delete($path);
+                }
+            }
+        }
+
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $url = asset('storage/' . $path);
+
+        $user->avatar_url = $url;
+        $user->save();
+
         return response()->json($user);
     }
 

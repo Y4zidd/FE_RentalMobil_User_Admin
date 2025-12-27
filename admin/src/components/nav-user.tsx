@@ -30,8 +30,7 @@ import { toast } from 'sonner';
 import apiClient from '@/lib/api-client';
 import { getInitials } from '@/lib/utils';
 
-const USER_APP_URL =
-  process.env.NEXT_PUBLIC_USER_APP_URL || 'http://localhost:5173';
+const USER_APP_URL = process.env.NEXT_PUBLIC_USER_APP_URL;
 
 export function NavUser({
   user

@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.admin
+    ports:
+      - "3000:3000"
+    working_dir: /app
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+    command: npm run dev -- --port 3000 --hostname 0.0.0.0
+    depends_on:
+      - backend
+
+  user:
+    build:
+      context: ./user
+      dockerfile: Dockerfile.user
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    volumes:
+      - ./user:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - backend
+

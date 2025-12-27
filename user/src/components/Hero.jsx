@@ -685,32 +685,6 @@ const Hero = () => {
                   url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
                 />
                 <ZoomControl position='bottomright' />
-                {(provinces.length > 0 ? provinces : availableLocations).map(
-                  (location) => {
-                    if (
-                      typeof location.lat !== 'number' ||
-                      typeof location.lng !== 'number'
-                    ) {
-                      return null
-                    }
-                    const isActive = pickupLocation === location.label
-                    return (
-                      <CircleMarker
-                        key={location.label}
-                        center={[location.lat, location.lng]}
-                        radius={isActive ? 10 : 6}
-                        eventHandlers={{
-                          click: () => handleLocationChange(location.label),
-                        }}
-                        pathOptions={{
-                          color: isActive ? '#0558FE' : '#64748B',
-                          fillColor: isActive ? '#0558FE' : '#64748B',
-                          fillOpacity: 0.85,
-                        }}
-                      />
-                    )
-                  }
-                )}
                 {selectedCoords && (
                   <CircleMarker
                     center={[selectedCoords.lat, selectedCoords.lng]}

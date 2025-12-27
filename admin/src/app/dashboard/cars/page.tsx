@@ -30,7 +30,7 @@ export default async function Page(props: PageProps) {
     <PageContainer
       scrollable={false}
       pageTitle='Manage Cars'
-      pageDescription='Manage cars (server-side table functionalities, to be connected to Laravel API).'
+      pageDescription='Manage cars '
       pageHeaderAction={
         <Link
           href='/dashboard/cars/new'

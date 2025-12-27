@@ -22,6 +22,19 @@ import {
   CardTitle,
 } from "../components/ui/card"
 
+const ASEAN_COUNTRIES = [
+  "Indonesia",
+  "Singapore",
+  "Malaysia",
+  "Thailand",
+  "Philippines",
+  "Vietnam",
+  "Brunei",
+  "Cambodia",
+  "Laos",
+  "Myanmar",
+]
+
 const Profile = () => {
   const { user, setUser, axios, navigate } = useAppContext()
 
@@ -93,40 +106,7 @@ const Profile = () => {
   }, [baseUser])
 
   useEffect(() => {
-    let isMounted = true
-
-    const fetchCountries = async () => {
-      try {
-        setIsLoadingLocations(true)
-        const response = await fetch(
-          "https://restcountries.com/v3.1/all?fields=name"
-        )
-        if (!response.ok) {
-          return
-        }
-        const data = await response.json()
-        if (!isMounted) {
-          return
-        }
-        const names = data
-          .map((item) => item?.name?.common)
-          .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b))
-        setCountryOptions(names)
-      } catch (error) {
-        void error
-      } finally {
-        if (isMounted) {
-          setIsLoadingLocations(false)
-        }
-      }
-    }
-
-    fetchCountries()
-
-    return () => {
-      isMounted = false
-    }
+    setCountryOptions(ASEAN_COUNTRIES)
   }, [])
 
   useEffect(() => {

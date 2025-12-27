@@ -54,9 +54,10 @@ const ASEAN_DEFAULT_CENTER: [number, number] = [-2, 115];
 const formSchema = z.object({
   image: z
     .array(z.any())
-    .nonempty('Image is required.')
+    .optional()
     .refine(
       (files) =>
+        !files ||
         files.every(
           (file) => file && typeof file.size === 'number' && file.size <= MAX_FILE_SIZE
         ),
@@ -64,6 +65,7 @@ const formSchema = z.object({
     )
     .refine(
       (files) =>
+        !files ||
         files.every(
           (file) => file && ACCEPTED_IMAGE_TYPES.includes(file.type as string)
         ),
@@ -130,6 +132,8 @@ export default function CarForm({
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
   const geocodeControllerRef = useRef<AbortController | null>(null);
+  const [existingImages, setExistingImages] = useState(initialData?.images ?? []);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
 
   const parsedLocation = (() => {
     const location = initialData?.location || '';
@@ -171,6 +175,11 @@ export default function CarForm({
 
   const selectedCountry = form.watch('country');
   const selectedProvince = form.watch('province');
+
+  const handleRemoveExistingImage = (id: number) => {
+    setExistingImages((prev) => prev.filter((image) => image.id !== id));
+    setDeletedImageIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -381,6 +390,15 @@ export default function CarForm({
     try {
       const formData = new FormData();
 
+      const hasExistingImages = existingImages.length > 0;
+      const hasNewImages = Array.isArray(values.image) && values.image.length > 0;
+
+      if (!hasExistingImages && !hasNewImages) {
+        toast.error('Upload at least one car image');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         name: values.name,
         brand: values.brand,
@@ -393,7 +411,11 @@ export default function CarForm({
         fuel_type: values.fuelType,
         seating_capacity: values.seatingCapacity,
         price_per_day: values.pricePerDay,
-        location_id: 1,
+        location_name: `${values.province}, ${values.country}`,
+        location_city: values.province,
+        location_address: '',
+        location_latitude: markerPosition ? markerPosition[0] : null,
+        location_longitude: markerPosition ? markerPosition[1] : null,
         description: values.description
       };
 
@@ -403,9 +425,21 @@ export default function CarForm({
         }
       });
 
-      if (values.image && values.image.length > 0) {
+      if (hasNewImages && values.image) {
         values.image.forEach((file) => {
           formData.append('images[]', file);
+        });
+      }
+
+      if (values.features && values.features.length > 0) {
+        values.features.forEach((feature) => {
+          formData.append('features[]', feature);
+        });
+      }
+
+      if (deletedImageIds.length > 0) {
+        deletedImageIds.forEach((id) => {
+          formData.append('deleted_image_ids[]', String(id));
         });
       }
 
@@ -430,7 +464,31 @@ export default function CarForm({
       router.refresh();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.message || 'Something went wrong');
+      const fieldErrors = error?.response?.data?.errors;
+
+      if (error?.response?.status === 422 && fieldErrors) {
+        if (fieldErrors.license_plate?.[0]) {
+          const plateMessage =
+            'This license plate is already used by another car.';
+
+          form.setError('licensePlate', {
+            type: 'server',
+            message: plateMessage
+          });
+
+          toast.error(plateMessage);
+          return;
+        }
+
+        const firstError =
+          Object.values(fieldErrors)?.[0]?.[0] || 'Validation error';
+        toast.error(firstError);
+      } else {
+        const message =
+          error?.response?.data?.message ||
+          'Something went wrong';
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -459,6 +517,35 @@ export default function CarForm({
               maxFiles: 8
             }}
           />
+
+          {initialData && existingImages.length > 0 && (
+            <div className='space-y-2'>
+              <p className='text-sm font-medium'>Existing Images</p>
+              <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                {existingImages.map((image) => (
+                  <div
+                    key={image.id}
+                    className='relative overflow-hidden rounded-xl bg-muted'
+                  >
+                    <img
+                      src={image.image_url}
+                      alt={initialData.name}
+                      className='h-40 w-full object-cover'
+                    />
+                    <Button
+                      type='button'
+                      size='icon'
+                      variant='destructive'
+                      className='absolute right-3 top-3 h-8 w-8 rounded-full bg-red-500/90 text-white shadow-md'
+                      onClick={() => handleRemoveExistingImage(image.id)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Separator />
 

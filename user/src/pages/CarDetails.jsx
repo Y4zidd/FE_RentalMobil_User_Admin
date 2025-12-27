@@ -10,7 +10,7 @@ const CarDetails = () => {
 
   const {id} = useParams()
 
-  const {cars, pickupDate, setPickupDate, returnDate, setReturnDate, axios, token, setShowLogin, formatCurrency, currency} = useAppContext()
+  const {cars, pickupDate, setPickupDate, returnDate, setReturnDate, axios, token, setShowLogin, formatCurrency} = useAppContext()
 
   const navigate = useNavigate()
   const [car, setCar] = useState(null)
@@ -299,20 +299,19 @@ const CarDetails = () => {
                   <p className='text-gray-500'>{car.description}</p>
                 </div>
 
-                {/* Features */}
-                <div>
-                  <h1 className='text-xl font-medium mb-3'>Features</h1>
-                  <ul className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
-                    {
-                      ["360 Camera", "Bluetooth", "GPS", "Heated Seats", "Rear View Mirror"].map((item)=>(
+                {car.features && car.features.length > 0 && (
+                  <div>
+                    <h1 className='text-xl font-medium mb-3'>Features</h1>
+                    <ul className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                      {car.features.map((item) => (
                         <li key={item} className='flex items-center text-gray-500'>
                           <img src={assets.check_icon} className='h-4 mr-2' alt="" />
                           {item}
                         </li>
-                      ))
-                    }
-                  </ul>
-                </div>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               </Motion.div>
           </Motion.div>
@@ -411,11 +410,11 @@ const CarDetails = () => {
                       Location: <span className='font-medium'>{car.location}</span>
                     </p>
                     <p>
-                      Car: <span className='font-medium'>{car.brand} {car.model} ({currency}{car.pricePerDay}/day)</span>
+                      Car: <span className='font-medium'>{car.brand} {car.model} ({formatCurrency(car.pricePerDay)}/day)</span>
                     </p>
                     <p className='flex items-center justify-between pt-2 mt-2 border-t border-borderColor'>
                       <span className='text-gray-700'>Estimated total</span>
-                      <span className='font-semibold text-gray-900'>{currency}{totalCost}</span>
+                      <span className='font-semibold text-gray-900'>{formatCurrency(totalCost)}</span>
                     </p>
                   </div>
                 ) : (

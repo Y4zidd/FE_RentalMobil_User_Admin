@@ -24,6 +24,11 @@ class Car extends Model
         'location_id',
         'description',
         'photo_url',
+        'features',
+    ];
+
+    protected $casts = [
+        'features' => 'array',
     ];
 
     public function location()
@@ -47,7 +52,7 @@ class Car extends Model
             is_string($value) &&
             str_starts_with($value, 'http://localhost/storage/')
         ) {
-            $appUrl = config('app.url', 'http://localhost:8000');
+            $appUrl = config('app.url');
             return str_replace('http://localhost', $appUrl, $value);
         }
 

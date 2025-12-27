@@ -5,6 +5,34 @@ import apiClient from '@/lib/api-client';
 export const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
+
+function normalizeImageUrl(url?: string | null) {
+  if (!url) {
+    return '';
+  }
+
+  try {
+    if (!url.startsWith('http')) {
+      return `${apiBaseUrl}${url}`;
+    }
+
+    const base = new URL(apiBaseUrl);
+    const current = new URL(url);
+
+    if (current.hostname === 'localhost') {
+      current.hostname = base.hostname;
+      current.port = base.port || current.port;
+      current.protocol = base.protocol;
+      return current.toString();
+    }
+
+    return url;
+  } catch {
+    return url;
+  }
+}
+
 // Define the shape of Product data
 export type Product = {
   photo_url: string;
@@ -68,13 +96,20 @@ export const fakeProducts = {
           allProducts = response.data.data; // Handle pagination if present
       }
       
-      // Map backend response to Frontend Product type
       allProducts = allProducts.map((p: any) => ({
-          ...p,
-          location: p.location?.name || 'Unknown', // Flatten location object to string
-          price_per_day: Number(p.price_per_day), // Ensure number
-          seating_capacity: Number(p.seating_capacity), // Ensure number
-          year: Number(p.year) // Ensure number
+        ...p,
+        photo_url: normalizeImageUrl(p.photo_url),
+        location: p.location?.name || 'Unknown',
+        price_per_day: Number(p.price_per_day),
+        seating_capacity: Number(p.seating_capacity),
+        year: Number(p.year),
+        images: p.images
+          ? p.images.map((img: any) => ({
+              ...img,
+              image_url: normalizeImageUrl(img.image_url)
+            }))
+          : [],
+        features: Array.isArray(p.features) ? p.features : []
       }));
 
       if (categories) {
@@ -128,15 +163,20 @@ export const fakeProducts = {
     try {
         const response = await apiClient.get(`/api/admin/cars/${id}`);
         let product = response.data;
-        
-        // Map backend response
+
         product = {
-            ...product,
-            location: product.location?.name || 'Unknown',
-            price_per_day: Number(product.price_per_day),
-            seating_capacity: Number(product.seating_capacity),
-            year: Number(product.year),
-            images: product.images || []
+          ...product,
+          location: product.location?.name || 'Unknown',
+          price_per_day: Number(product.price_per_day),
+          seating_capacity: Number(product.seating_capacity),
+          year: Number(product.year),
+          images: product.images
+            ? product.images.map((img: any) => ({
+                ...img,
+                image_url: normalizeImageUrl(img.image_url)
+              }))
+            : [],
+          features: Array.isArray(product.features) ? product.features : []
         };
 
         const currentTime = new Date().toISOString();

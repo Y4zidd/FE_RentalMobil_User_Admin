@@ -38,15 +38,15 @@ class BookingController extends Controller
         $booking->save();
 
         $car = $booking->car;
-        if ($car) {
-            if (in_array($booking->status, ['pending', 'confirmed'])) {
-                $car->status = 'rented';
-            } elseif (in_array($booking->status, ['cancelled', 'completed'])) {
-                $car->status = 'available';
-            }
+        if ($car && $car->status !== 'maintenance') {
+            $hasActiveBookings = $car->bookings()
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->exists();
+
+            $car->status = $hasActiveBookings ? 'rented' : 'available';
             $car->save();
         }
 
-        return response()->json($booking);
+        return response()->json($booking->load(['user', 'car', 'options']));
     }
 }

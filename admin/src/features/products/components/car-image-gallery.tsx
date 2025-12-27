@@ -48,6 +48,7 @@ export function CarImageGallery({
             src={activeImage}
             alt={alt}
             fill
+            unoptimized
             className='object-cover transition-transform duration-300 group-hover:scale-[1.02]'
           />
         </div>
@@ -59,6 +60,7 @@ export function CarImageGallery({
             <Image
               src={allImages[1] ?? activeImage}
               alt={alt}
+              unoptimized
               fill
               className='object-cover'
             />
@@ -70,6 +72,7 @@ export function CarImageGallery({
             <Image
               src={allImages[2] ?? allImages[1] ?? activeImage}
               alt={alt}
+              unoptimized
               fill
               className='object-cover'
             />
@@ -90,36 +93,45 @@ export function CarImageGallery({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='max-w-3xl border-0 bg-background/95 p-0 sm:p-0'>
+        <DialogContent className='max-w-6xl border-0 bg-background/95 p-0 sm:p-0'>
           <DialogHeader className='px-6 pt-6'>
             <DialogTitle className='text-lg font-semibold'>
               Photo gallery
             </DialogTitle>
           </DialogHeader>
           <div className='flex flex-col gap-4 px-6 pb-6 pt-2'>
-            <div className='relative h-[260px] w-full overflow-hidden rounded-md bg-muted sm:h-[340px]'>
+            <div className='relative w-full aspect-[16/9] max-h-[60vh] overflow-hidden rounded-md bg-muted'>
               <Image
                 src={activeImage}
                 alt={alt}
+                unoptimized
                 fill
                 className='object-cover'
               />
             </div>
-            <div className='grid grid-cols-4 gap-2'>
-              {allImages.map((src, index) => (
-                <button
-                  key={index}
-                  type='button'
-                  onClick={() => setActiveIndex(index)}
-                  className={cn(
-                    'relative h-16 overflow-hidden rounded-md bg-muted',
-                    index === activeIndex && 'ring-2 ring-primary'
-                  )}
-                >
-                  <Image src={src} alt={alt} fill className='object-cover' />
-                </button>
-              ))}
-            </div>
+            {allImages.length > 1 && (
+              <div className='grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-5'>
+                {allImages.map((src, index) => (
+                  <button
+                    key={index}
+                    type='button'
+                    onClick={() => setActiveIndex(index)}
+                    className={cn(
+                      'relative w-full h-24 overflow-hidden rounded-md bg-muted border',
+                      index === activeIndex && 'border-primary ring-2 ring-primary'
+                    )}
+                  >
+                    <Image
+                      src={src}
+                      alt={alt}
+                      unoptimized
+                      fill
+                      className='object-cover'
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

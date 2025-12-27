@@ -26,6 +26,10 @@ export default function SignInViewPage({ stars }: { stars: number }) {
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem('admin_token', tokenFromUserApp);
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete('token');
+        window.history.replaceState(null, '', url.toString());
       }
       router.replace('/dashboard/overview');
     } catch (error) {

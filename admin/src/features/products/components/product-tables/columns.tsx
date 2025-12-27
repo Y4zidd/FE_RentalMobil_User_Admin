@@ -23,19 +23,20 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const { state } = useSidebar();
       const sizeClass =
-        state === 'collapsed' ? 'h-20 w-20' : 'h-14 w-14';
+        state === 'collapsed' ? 'h-20 w-28' : 'h-16 w-24';
       return (
         <div
           className={cn(
-            'relative aspect-square transition-all duration-200',
+            'relative overflow-hidden rounded-lg bg-muted transition-all duration-200',
             sizeClass
           )}
         >
           <Image
             src={row.getValue('photo_url')}
             alt={row.original.name}
+            unoptimized
             fill
-            className='rounded-lg'
+            className='h-full w-full object-cover'
           />
         </div>
       );

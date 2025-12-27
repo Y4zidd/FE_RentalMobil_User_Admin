@@ -33,19 +33,25 @@ export function UsersTable() {
         const users = Array.isArray(response.data)
           ? response.data
           : response.data.data || [];
-        const mappedUsers = users.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role:
-            u.role === 'admin'
-              ? 'Admin'
-              : u.role === 'staff'
-              ? 'Staff'
-              : 'Staff',
-          status: u.status === 'active' ? 'Active' : 'Inactive',
-          avatarUrl: u.avatar_url || ''
-        }));
+        const mappedUsers = users.map((u: any) => {
+          let role: User['role'];
+          if (u.role === 'admin') {
+            role = 'Admin';
+          } else if (u.role === 'staff') {
+            role = 'Staff';
+          } else {
+            role = 'Customer';
+          }
+
+          return {
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role,
+            status: u.status === 'active' ? 'Active' : 'Inactive',
+            avatarUrl: u.avatar_url || ''
+          };
+        });
         setData(mappedUsers);
       } catch (error) {
         console.error('Failed to fetch users', error);

@@ -1,8 +1,15 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
+const rawBaseURL = process.env.NEXT_PUBLIC_API_URL;
+
+const baseURL =
+  typeof window !== 'undefined' && rawBaseURL?.includes('backend')
+    ? rawBaseURL.replace('backend', 'localhost')
+    : rawBaseURL || 'http://localhost:8000';
+
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json'

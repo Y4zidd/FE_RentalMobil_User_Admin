@@ -5,10 +5,59 @@ import { useNavigate } from "react-router-dom";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
-const formatRupiah = (value) => {
-    const number = Number(value) || 0
-    const formatter = new Intl.NumberFormat('id-ID')
-    return `Rp ${formatter.format(Math.round(number))}`
+const DEFAULT_CURRENCY = {
+    code: 'IDR',
+    symbol: 'Rp',
+    locale: 'id-ID',
+}
+
+const ASEAN_CURRENCY_BY_COUNTRY = {
+    Indonesia: DEFAULT_CURRENCY,
+    Singapore: {
+        code: 'SGD',
+        symbol: 'S$',
+        locale: 'en-SG',
+    },
+    Malaysia: {
+        code: 'MYR',
+        symbol: 'RM',
+        locale: 'ms-MY',
+    },
+    Thailand: {
+        code: 'THB',
+        symbol: '฿',
+        locale: 'th-TH',
+    },
+    Philippines: {
+        code: 'PHP',
+        symbol: '₱',
+        locale: 'en-PH',
+    },
+    Vietnam: {
+        code: 'VND',
+        symbol: '₫',
+        locale: 'vi-VN',
+    },
+    Brunei: {
+        code: 'BND',
+        symbol: 'B$',
+        locale: 'ms-BN',
+    },
+    Cambodia: {
+        code: 'KHR',
+        symbol: '៛',
+        locale: 'km-KH',
+    },
+    Laos: {
+        code: 'LAK',
+        symbol: '₭',
+        locale: 'lo-LA',
+    },
+    Myanmar: {
+        code: 'MMK',
+        symbol: 'K',
+        locale: 'my-MM',
+    },
 }
 
 export const AppContext = createContext();
@@ -16,8 +65,6 @@ export const AppContext = createContext();
 export const AppProvider = ({ children })=>{
 
     const navigate = useNavigate()
-    const currency = 'Rp'
-
     const [token, setToken] = useState(null)
     const [user, setUser] = useState(null)
     const [showLogin, setShowLogin] = useState(false)
@@ -25,6 +72,7 @@ export const AppProvider = ({ children })=>{
     const [returnDate, setReturnDate] = useState('')
 
     const [cars, setCars] = useState([])
+    const [exchangeRates, setExchangeRates] = useState(null)
 
     const mapCarFromApi = (car) => {
         const locationObj = car.location || {}
@@ -58,6 +106,7 @@ export const AppProvider = ({ children })=>{
             locationId: car.location_id,
             isAvaliable: car.status === 'available',
             description: car.description,
+            features: Array.isArray(car.features) ? car.features : [],
         }
     }
 
@@ -82,6 +131,74 @@ export const AppProvider = ({ children })=>{
             toast.error('Failed to load cars')
         }
     }
+
+    useEffect(() => {
+        const fetchRates = async () => {
+            try {
+                const res = await fetch('https://open.er-api.com/v6/latest/IDR')
+                if (!res.ok) {
+                    return
+                }
+                const data = await res.json()
+                if (data.result !== 'success' || !data.rates) {
+                    return
+                }
+                setExchangeRates(data.rates)
+            } catch (error) {
+                console.error('Failed to fetch exchange rates', error)
+            }
+        }
+
+        fetchRates()
+    }, [])
+
+    const getUserCountry = () => {
+        const defaultCity = user?.default_city || ''
+        if (!defaultCity) {
+            return 'Indonesia'
+        }
+        const parts = defaultCity.split(',').map((part) => part.trim()).filter(Boolean)
+        if (parts.length >= 2) {
+            return parts[1]
+        }
+        return parts[0] || 'Indonesia'
+    }
+
+    const getCurrencyConfig = () => {
+        const country = getUserCountry()
+        const config = ASEAN_CURRENCY_BY_COUNTRY[country]
+        return config || DEFAULT_CURRENCY
+    }
+
+    const formatCurrency = (value) => {
+        const number = Number(value) || 0
+        const { locale, code } = getCurrencyConfig()
+
+        if (!number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+            }).format(0)
+        }
+
+        if (code === 'IDR' || !exchangeRates || !exchangeRates[code]) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+            }).format(Math.round(number))
+        }
+
+        const rate = exchangeRates[code]
+        const amountInTarget = number * rate
+
+        const formatter = new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: code,
+        })
+        return formatter.format(Math.round(amountInTarget))
+    }
+
+    const currency = getCurrencyConfig().symbol
 
     const logout = ()=>{
         localStorage.removeItem('token')
@@ -124,7 +241,7 @@ export const AppProvider = ({ children })=>{
         navigate, currency, axios, user, setUser,
         token, setToken, fetchUser, showLogin, setShowLogin, logout, fetchCars, cars, setCars, 
         pickupDate, setPickupDate, returnDate, setReturnDate,
-        formatCurrency: formatRupiah,
+        formatCurrency,
     }
 
     return (

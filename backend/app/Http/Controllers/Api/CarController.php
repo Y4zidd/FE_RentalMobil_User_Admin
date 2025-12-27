@@ -10,7 +10,25 @@ class CarController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Car::with(['location', 'images'])->where('status', 'available');
+        $query = Car::with(['location', 'images']);
+
+        $pickupDate = $request->input('pickup_date');
+        $returnDate = $request->input('return_date');
+
+        if ($pickupDate && $returnDate) {
+            $pickup = \Carbon\Carbon::parse($pickupDate);
+            $return = \Carbon\Carbon::parse($returnDate);
+
+            $query->whereDoesntHave('bookings', function ($q) use ($pickup, $return) {
+                $q->whereIn('status', ['pending', 'confirmed'])
+                  ->where(function ($overlap) use ($pickup, $return) {
+                      $overlap->where('pickup_date', '<', $return)
+                              ->where('return_date', '>', $pickup);
+                  });
+            });
+        } else {
+            $query->where('status', 'available');
+        }
 
         if ($request->has('location_id')) {
             $query->where('location_id', $request->location_id);

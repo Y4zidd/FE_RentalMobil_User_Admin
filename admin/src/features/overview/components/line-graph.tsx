@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -15,18 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-
-// TODO: Ganti data dummy ini dengan data asli dari endpoint
-// GET /api/admin/overview (field: revenue_by_day dari tabel payments/Midtrans)
-const chartData = [
-  { date: "2025-01-01", revenue: 1200000 },
-  { date: "2025-01-02", revenue: 900000 },
-  { date: "2025-01-03", revenue: 1500000 },
-  { date: "2025-01-04", revenue: 800000 },
-  { date: "2025-01-05", revenue: 1750000 },
-  { date: "2025-01-06", revenue: 1300000 },
-  { date: "2025-01-07", revenue: 2100000 },
-];
+import apiClient from "@/lib/api-client";
 
 const chartConfig = {
   revenue: {
@@ -35,7 +25,41 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+type RevenueDay = {
+  date: string;
+  revenue: number;
+};
+
 export function RevenueLineGraph() {
+  const [chartData, setChartData] = useState<RevenueDay[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await apiClient.get("/api/admin/overview");
+        const items = res.data?.revenue_by_day;
+        if (Array.isArray(items) && items.length > 0) {
+          const mapped: RevenueDay[] = items.map((item: any) => ({
+            date: String(item.date),
+            revenue: Number(item.revenue ?? 0),
+          }));
+
+          const hasPositive = mapped.some((item) => item.revenue > 0);
+
+          if (hasPositive) {
+            setChartData(mapped);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch daily revenue data", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const hasData = chartData.length > 0;
+
   return (
     <Card className="@container/card">
       <CardHeader>
@@ -45,43 +69,49 @@ export function RevenueLineGraph() {
         </CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <LineChart
-            data={chartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
+        {hasData ? (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
           >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => value.slice(5)}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => `${value / 1000000}jt`}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Line
-              type="monotone"
-              dataKey="revenue"
-              stroke="var(--color-revenue)"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ChartContainer>
+            <LineChart
+              data={chartData}
+              margin={{
+                left: 12,
+                right: 12,
+              }}
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => value.slice(5)}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `${value / 1000000}jt`}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="line" />}
+              />
+              <Line
+                type="monotone"
+                dataKey="revenue"
+                stroke="var(--color-revenue)"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ChartContainer>
+        ) : (
+          <div className="flex h-[250px] w-full items-center justify-center text-sm text-muted-foreground">
+            Belum ada data pendapatan harian.
+          </div>
+        )}
       </CardContent>
     </Card>
   );

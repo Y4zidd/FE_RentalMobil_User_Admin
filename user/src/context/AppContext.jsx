@@ -81,6 +81,8 @@ export const AppProvider = ({ children })=>{
             locationObj.name ||
             locationObj.address ||
             ''
+        const provinceName = locationObj.city || ''
+        const countryName = locationObj.country || ''
 
         const imageRecords = Array.isArray(car.images) ? car.images : []
         const imageUrls = imageRecords.map((img) => img.image_url)
@@ -103,6 +105,8 @@ export const AppProvider = ({ children })=>{
             image: primaryImage,
             images: imageUrls,
             location: locationName,
+            province: provinceName,
+            country: countryName,
             locationId: car.location_id,
             isAvaliable: car.status === 'available',
             description: car.description,

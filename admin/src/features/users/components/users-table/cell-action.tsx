@@ -18,6 +18,8 @@ import {
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import apiClient from '@/lib/api-client';
+import { toast } from 'sonner';
 
 import type { User } from './columns';
 import { UserFormDialog } from '../user-form-dialog';
@@ -27,12 +29,35 @@ interface CellActionProps {
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [action, setAction] = useState<'deactivate' | 'delete' | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const router = useRouter();
 
-  const onConfirm = async () => {};
+  const onConfirm = async () => {
+    try {
+      setLoading(true);
+      if (action === 'deactivate') {
+        await apiClient.patch(`/api/admin/users/${data.id}`, {
+          status: 'inactive'
+        });
+        toast.success('User deactivated successfully');
+      } else if (action === 'delete') {
+        await apiClient.delete(`/api/admin/users/${data.id}`);
+        toast.success('User deleted successfully');
+      }
+      router.refresh();
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
+  };
 
   return (
     <>
@@ -59,10 +84,20 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuItem onClick={() => setEditOpen(true)}>
             <IconEdit className='mr-2 h-4 w-4' /> Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(true)}>
+          <DropdownMenuItem
+            onClick={() => {
+              setAction('deactivate');
+              setOpen(true);
+            }}
+          >
             <IconBan className='mr-2 h-4 w-4' /> Nonaktifkan
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(true)}>
+          <DropdownMenuItem
+            onClick={() => {
+              setAction('delete');
+              setOpen(true);
+            }}
+          >
             <IconTrash className='mr-2 h-4 w-4' /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

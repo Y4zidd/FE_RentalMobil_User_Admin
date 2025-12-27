@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Mail, Phone, Save, User as UserIcon, KeyRound, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 type AccountFormState = {
   name: string;
@@ -209,10 +209,10 @@ export default function ProfileViewPage() {
       pageTitle='Profile'
       pageDescription='Manage your admin account information and security.'
     >
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-[320px,1fr]'>
+      <div className='grid grid-cols-1 gap-8 lg:grid-cols-[320px,1fr]'>
         <div className='flex flex-col gap-4'>
           <Card>
-            <CardHeader className='flex flex-row items-center gap-4'>
+            <CardHeader className='flex flex-row items-center gap-4 p-6'>
               <div className='relative'>
                 <input
                   id='avatarUpload'
@@ -252,23 +252,19 @@ export default function ProfileViewPage() {
         <div className='space-y-6'>
           <Card>
             <form onSubmit={handleSaveAccount}>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <UserIcon className='h-4 w-4 text-primary' />
-                  Account information
-                </CardTitle>
+              <CardHeader className='p-6'>
+                <CardTitle>Account information</CardTitle>
                 <CardDescription>
                   Update your personal details used across the dashboard.
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-1.5'>
+              <CardContent className='space-y-8 p-6'>
+                <div className='grid gap-x-8 gap-y-6 md:grid-cols-2'>
+                  <div className='space-y-2'>
                     <Label
                       htmlFor='name'
-                      className='text-xs text-muted-foreground flex items-center gap-1.5'
+                      className='text-xs text-muted-foreground'
                     >
-                      <UserIcon className='h-3.5 w-3.5' />
                       Full name
                     </Label>
                     <Input
@@ -280,12 +276,11 @@ export default function ProfileViewPage() {
                       placeholder='Admin name'
                     />
                   </div>
-                  <div className='space-y-1.5'>
+                  <div className='space-y-2'>
                     <Label
                       htmlFor='email'
-                      className='text-xs text-muted-foreground flex items-center gap-1.5'
+                      className='text-xs text-muted-foreground'
                     >
-                      <Mail className='h-3.5 w-3.5' />
                       Email address
                     </Label>
                     <Input
@@ -298,12 +293,11 @@ export default function ProfileViewPage() {
                       placeholder='admin@example.com'
                     />
                   </div>
-                  <div className='space-y-1.5'>
+                  <div className='space-y-2'>
                     <Label
                       htmlFor='phone'
-                      className='text-xs text-muted-foreground flex items-center gap-1.5'
+                      className='text-xs text-muted-foreground'
                     >
-                      <Phone className='h-3.5 w-3.5' />
                       Phone number
                     </Label>
                     <Input
@@ -317,9 +311,8 @@ export default function ProfileViewPage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className='flex justify-end'>
-                <Button type='submit' disabled={savingAccount}>
-                  <Save className='mr-2 h-4 w-4' />
+              <CardFooter className='flex justify-end p-4'>
+                <Button type='submit' disabled={savingAccount} className='px-4 py-2'>
                   Save changes
                 </Button>
               </CardFooter>
@@ -328,17 +321,14 @@ export default function ProfileViewPage() {
 
           <Card>
             <form onSubmit={handleSavePassword}>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <KeyRound className='h-4 w-4 text-primary' />
-                  Change password
-                </CardTitle>
+              <CardHeader className='p-6'>
+                <CardTitle>Change password</CardTitle>
                 <CardDescription>
                   Update your password to keep your account secure.
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='space-y-1.5'>
+              <CardContent className='space-y-8 p-6'>
+                <div className='space-y-2'>
                   <Label
                     htmlFor='currentPassword'
                     className='text-xs text-muted-foreground'
@@ -358,8 +348,8 @@ export default function ProfileViewPage() {
                     placeholder='Enter current password'
                   />
                 </div>
-                <div className='grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-1.5'>
+                <div className='grid gap-x-8 gap-y-6 md:grid-cols-2'>
+                  <div className='space-y-2'>
                     <Label
                       htmlFor='newPassword'
                       className='text-xs text-muted-foreground'
@@ -376,7 +366,7 @@ export default function ProfileViewPage() {
                       placeholder='Enter new password'
                     />
                   </div>
-                  <div className='space-y-1.5'>
+                  <div className='space-y-2'>
                     <Label
                       htmlFor='confirmPassword'
                       className='text-xs text-muted-foreground'
@@ -398,9 +388,8 @@ export default function ProfileViewPage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className='flex justify-end'>
-                <Button type='submit' disabled={savingPassword}>
-                  <Save className='mr-2 h-4 w-4' />
+              <CardFooter className='flex justify-end p-4'>
+                <Button type='submit' disabled={savingPassword} className='px-4 py-2'>
                   Update password
                 </Button>
               </CardFooter>

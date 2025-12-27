@@ -45,6 +45,10 @@ class BookingController extends Controller
             $payment->paid_at = now();
             $payment->save();
         }
+        if ($booking->car && $booking->car->status !== 'maintenance') {
+            $booking->car->status = 'rented';
+            $booking->car->save();
+        }
 
         return response()->json($booking->load(['car.location', 'options', 'payments']));
     }
@@ -118,8 +122,7 @@ class BookingController extends Controller
             $booking->total_price = $basePrice + $extrasTotal;
             $booking->save();
 
-            $car->status = 'rented';
-            $car->save();
+            // Keep car available while booking is pending.
 
             DB::commit();
 

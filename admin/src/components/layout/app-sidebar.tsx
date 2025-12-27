@@ -33,10 +33,8 @@ import { navItems } from '@/config/nav-config';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useFilteredNavItems } from '@/hooks/use-nav';
 import {
-  IconBell,
   IconChevronRight,
   IconChevronsDown,
-  IconCreditCard,
   IconLogout,
   IconUserCircle
 } from '@tabler/icons-react';
@@ -78,18 +76,37 @@ export default function AppSidebar() {
   };
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem('admin_user');
-    if (!stored) return;
-    try {
-      const parsed = JSON.parse(stored);
-      setCurrentUser({
-        name: parsed.name ?? '',
-        email: parsed.email ?? '',
-        avatarUrl: parsed.avatar_url ?? ''
-      });
-    } catch {
-    }
+    const loadCurrentUser = async () => {
+      if (typeof window === 'undefined') return;
+      const stored = window.localStorage.getItem('admin_user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setCurrentUser({
+            name: parsed.name ?? '',
+            email: parsed.email ?? '',
+            avatarUrl: parsed.avatar_url ?? ''
+          });
+          return;
+        } catch {
+        }
+      }
+
+      try {
+        const response = await apiClient.get('/api/user/data');
+        const user = response.data;
+        const mapped = {
+          name: user.name ?? '',
+          email: user.email ?? '',
+          avatarUrl: user.avatar_url ?? ''
+        };
+        setCurrentUser(mapped);
+        window.localStorage.setItem('admin_user', JSON.stringify(user));
+      } catch {
+      }
+    };
+
+    loadCurrentUser();
   }, [isOpen]);
 
   return (
@@ -210,16 +227,6 @@ export default function AppSidebar() {
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/dashboard/billing')}
-                  >
-                    <IconCreditCard className='mr-2 h-4 w-4' />
-                    Billing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconBell className='mr-2 h-4 w-4' />
-                    Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

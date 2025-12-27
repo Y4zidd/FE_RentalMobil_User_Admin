@@ -17,17 +17,54 @@ class DashboardController extends Controller
         $confirmedBookings = Booking::where('status', 'confirmed')->count();
         $cancelledBookings = Booking::where('status', 'cancelled')->count();
         $completedBookings = Booking::where('status', 'completed')->count();
-        
-        // Total revenue from confirmed payments
+
         $totalRevenue = Payment::where('transaction_status', 'settlement')->sum('gross_amount');
 
-        // Revenue by day (last 7 days)
-        $revenueByDay = Payment::where('transaction_status', 'settlement')
+        $basePaymentsQuery = Payment::where('provider', 'midtrans')
+            ->where('transaction_status', 'settlement');
+
+        $paymentsForDay = (clone $basePaymentsQuery)
             ->where('created_at', '>=', now()->subDays(30))
-            ->selectRaw('DATE(created_at) as date, SUM(gross_amount) as revenue')
-            ->groupBy('date')
-            ->orderBy('date')
             ->get();
+
+        $revenueByDay = $paymentsForDay
+            ->groupBy(fn ($payment) => $payment->created_at->toDateString())
+            ->map(function ($group) {
+                return [
+                    'date' => $group->first()->created_at->toDateString(),
+                    'revenue' => $group->sum('gross_amount'),
+                ];
+            })
+            ->values();
+
+        $paymentsForMonth = (clone $basePaymentsQuery)
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->with('booking')
+            ->get();
+
+        $revenueByMonth = $paymentsForMonth
+            ->groupBy(fn ($payment) => $payment->created_at->format('Y-m'))
+            ->map(function ($group) {
+                $month = $group->first()->created_at->format('Y-m');
+                $online = 0;
+                $payAtLocation = 0;
+
+                foreach ($group as $payment) {
+                    $method = optional($payment->booking)->payment_method;
+                    if ($method === 'online_full') {
+                        $online += $payment->gross_amount;
+                    } elseif ($method === 'pay_at_location') {
+                        $payAtLocation += $payment->gross_amount;
+                    }
+                }
+
+                return [
+                    'month' => $month,
+                    'online' => $online,
+                    'pay_at_location' => $payAtLocation,
+                ];
+            })
+            ->values();
 
         return response()->json([
             'metrics' => [
@@ -39,6 +76,7 @@ class DashboardController extends Controller
                 'total_revenue' => $totalRevenue,
             ],
             'revenue_by_day' => $revenueByDay,
+            'revenue_by_month' => $revenueByMonth,
         ]);
     }
 }

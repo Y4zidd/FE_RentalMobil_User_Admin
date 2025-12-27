@@ -32,26 +32,22 @@ const CarDetails = () => {
     {
       id: 'theftProtection',
       label: 'Theft protection',
-      description: '+ $24 ($8/day)',
-      pricePerDay: 8,
+      pricePerDay: 60000,
     },
     {
       id: 'collisionDamage',
       label: 'Collision damage waiver',
-      description: '+ $24 ($8/day)',
-      pricePerDay: 8,
+      pricePerDay: 60000,
     },
     {
       id: 'fullInsurance',
       label: 'Full insurance',
-      description: '+ $54 ($18/day)',
-      pricePerDay: 18,
+      pricePerDay: 90000,
     },
     {
       id: 'additionalDriver',
-      label: 'Additional driver',
-      description: '+ $60 ($20/day)',
-      pricePerDay: 20,
+      label: 'Driver service',
+      pricePerDay: 200000,
     },
   ]
 
@@ -259,7 +255,6 @@ const CarDetails = () => {
                         <span className='h-1.5 w-1.5 bg-white/80 rounded-[1px]' />
                       </span>
                     </span>
-                    Gallery
                   </button>
                 )}
               </div>
@@ -349,10 +344,14 @@ const CarDetails = () => {
                     type='button'
                     onClick={() => toggleOption(opt.id)}
                     className='w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-light transition-colors'
-                  >
+                >
                     <div className='text-left'>
                       <p className='text-sm text-gray-800'>{opt.label}</p>
-                      <p className='text-xs text-gray-400'>{opt.description}</p>
+                      <p className='text-xs text-gray-400'>
+                        {rentalDays > 0
+                          ? `+ ${formatCurrency(opt.pricePerDay * rentalDays)} (${formatCurrency(opt.pricePerDay)}/day)`
+                          : `+ ${formatCurrency(opt.pricePerDay)}/day`}
+                      </p>
                     </div>
                     <span
                       className={`relative inline-flex h-5 w-9 items-center rounded-full border border-borderColor transition-colors ${
@@ -430,8 +429,6 @@ const CarDetails = () => {
             >
               {loading ? 'Processing...' : 'Book Now'}
             </button>
-
-            <p className='text-center text-sm'>No credit card required to reserve</p>
 
           </Motion.form>
        </div>

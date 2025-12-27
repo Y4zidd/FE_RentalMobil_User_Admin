@@ -131,7 +131,7 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid notification'], 400);
         }
 
-        $payment = Payment::where('order_id', $orderId)->with('booking')->first();
+        $payment = Payment::where('order_id', $orderId)->with(['booking.car'])->first();
         if (! $payment) {
             return response()->json(['message' => 'Payment not found'], 404);
         }
@@ -142,11 +142,37 @@ class PaymentController extends Controller
         $payment->payment_type = $paymentType ?? $payment->payment_type;
         $payment->payload_notification = $request->all();
 
-        if ($transactionStatus === 'settlement') {
-            $payment->paid_at = now();
-            if ($payment->booking && $payment->booking->status === 'pending') {
-                $payment->booking->status = 'confirmed';
-                $payment->booking->save();
+        $transactionStatus = $transactionStatus ?: $payment->transaction_status;
+
+        if ($payment->booking) {
+            $booking = $payment->booking;
+            switch ($transactionStatus) {
+                case 'settlement':
+                case 'capture':
+                    $payment->paid_at = now();
+                    $booking->status = 'confirmed';
+                    $booking->save();
+                    if ($booking->car && $booking->car->status !== 'maintenance') {
+                        $booking->car->status = 'rented';
+                        $booking->car->save();
+                    }
+                    break;
+                case 'expire':
+                case 'cancel':
+                case 'deny':
+                    $booking->status = 'cancelled';
+                    $booking->save();
+                    if ($booking->car && $booking->car->status !== 'maintenance') {
+                        $hasActive = $booking->car->bookings()
+                            ->whereIn('status', ['pending', 'confirmed'])
+                            ->exists();
+                        $booking->car->status = $hasActive ? 'rented' : 'available';
+                        $booking->car->save();
+                    }
+                    break;
+                default:
+                    // leave as-is for pending/other statuses
+                    break;
             }
         }
 

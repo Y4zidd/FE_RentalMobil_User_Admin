@@ -49,6 +49,7 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
+        $validated['email_verified_at'] = now();
 
         $user = User::create($validated);
         return response()->json($user, 201);
@@ -111,8 +112,7 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
-        $user->update(['status' => 'inactive']); // Soft delete preferred or just status change
-        // $user->delete(); 
-        return response()->json(['message' => 'User deactivated']);
+        $user->delete();
+        return response()->json(['message' => 'User deleted successfully']);
     }
 }

@@ -26,7 +26,11 @@ use App\Http\Controllers\Api\PaymentController;
 // Public User Routes
 Route::prefix('user')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
+    Route::post('register-with-verification', [AuthController::class, 'registerWithVerification']);
+    Route::post('verify-email-code', [AuthController::class, 'verifyEmailCode']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('forgot-password', [AuthController::class, 'requestPasswordResetCode']);
+    Route::post('reset-password-with-code', [AuthController::class, 'resetPasswordWithCode']);
 
     Route::get('cars', [CarController::class, 'index']);
     Route::get('cars/{id}', [CarController::class, 'show']);
@@ -35,6 +39,8 @@ Route::prefix('user')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('data', [AuthController::class, 'me']); // /api/user/data
         Route::put('profile', [AuthController::class, 'updateAccount']);
+        Route::post('profile/request-email-change-code', [AuthController::class, 'requestEmailChangeCode']);
+        Route::post('profile/confirm-email-change', [AuthController::class, 'confirmEmailChange']);
         Route::put('rental-details', [AuthController::class, 'updateRentalDetails']);
         Route::put('password', [AuthController::class, 'changePassword']);
         Route::post('avatar', [AuthController::class, 'updateAvatar']);

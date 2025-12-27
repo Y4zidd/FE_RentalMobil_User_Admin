@@ -67,55 +67,108 @@ export default function OverViewLayout({
   const [previewUsers, setPreviewUsers] = useState<any[]>([]);
   const [stats, setStats] = useState(statisticsCardData);
 
+  const applyOverviewMetricsToStats = (metrics: any, carsCount: number) => {
+    setStats((prev) =>
+      prev.map((card) => {
+        if (card.title === 'Total Cars') {
+          return {
+            ...card,
+            value: String(carsCount ?? 0)
+          };
+        }
+        if (card.title === 'Active Bookings') {
+          const pending = Number(metrics.pending_bookings ?? 0);
+          const confirmed = Number(metrics.confirmed_bookings ?? 0);
+          return {
+            ...card,
+            value: String(pending + confirmed)
+          };
+        }
+        if (card.title === 'Pending Bookings') {
+          return {
+            ...card,
+            value: String(metrics.pending_bookings ?? 0)
+          };
+        }
+        if (card.title === 'Confirmed Bookings') {
+          return {
+            ...card,
+            value: String(metrics.confirmed_bookings ?? 0)
+          };
+        }
+        return card;
+      })
+    );
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch Cars
-        const carsRes = await apiClient.get('/api/admin/cars');
-        const carsData = Array.isArray(carsRes.data) ? carsRes.data : carsRes.data.data || [];
-        setPreviewCars(
-          carsData.slice(0, 5).map((c: any) => ({
-            id: c.id,
-            photo: c.photo_url || 'https://via.placeholder.com/150',
-            name: c.name,
-            plate: c.license_plate,
-            price: Number(c.price_per_day).toLocaleString('id-ID'),
-            status: c.status
-          }))
-        );
+        const [carsResult, usersResult, overviewResult] = await Promise.allSettled([
+          apiClient.get('/api/admin/cars'),
+          apiClient.get('/api/admin/users'),
+          apiClient.get('/api/admin/overview')
+        ]);
 
-        // Fetch Users
-        const usersRes = await apiClient.get('/api/admin/users');
-        const usersData = Array.isArray(usersRes.data)
-          ? usersRes.data
-          : usersRes.data.data || [];
-        setPreviewUsers(
-          usersData.slice(0, 5).map((u: any) => {
-            let role = 'Customer';
-            if (u.role === 'admin') {
-              role = 'Admin';
-            } else if (u.role === 'staff') {
-              role = 'Staff';
-            }
+        let carsCount = 0;
 
-            return {
-              id: u.id,
-              avatar: u.avatar_url,
-              name: u.name,
-              email: u.email,
-              role
-            };
-          })
-        );
+        if (carsResult.status === 'fulfilled') {
+          const carsRes = carsResult.value;
+          const carsData = Array.isArray(carsRes.data)
+            ? carsRes.data
+            : carsRes.data.data || [];
+          carsCount = carsData.length;
+          setPreviewCars(
+            carsData.slice(0, 5).map((c: any) => ({
+              id: c.id,
+              photo: c.photo_url || 'https://via.placeholder.com/150',
+              name: c.name,
+              plate: c.license_plate,
+              price: Number(c.price_per_day).toLocaleString('id-ID'),
+              status: c.status
+            }))
+          );
+        } else {
+          console.error('Failed to fetch cars', carsResult.reason);
+        }
 
-        // Update Stats (Simplified for now, ideally fetch /api/admin/overview)
-        const newStats = [...statisticsCardData];
-        newStats[0].value = carsData.length.toString();
-        // newStats[1].value = ... bookings count
-        setStats(newStats);
+        if (usersResult.status === 'fulfilled') {
+          const usersRes = usersResult.value;
+          const usersData = Array.isArray(usersRes.data)
+            ? usersRes.data
+            : usersRes.data.data || [];
+          setPreviewUsers(
+            usersData.slice(0, 5).map((u: any) => {
+              let role = 'Customer';
+              if (u.role === 'admin') {
+                role = 'Admin';
+              } else if (u.role === 'staff') {
+                role = 'Staff';
+              }
 
+              return {
+                id: u.id,
+                avatar: u.avatar_url,
+                name: u.name,
+                email: u.email,
+                role
+              };
+            })
+          );
+        } else {
+          console.error('Failed to fetch users', usersResult.reason);
+        }
+
+        if (overviewResult.status === 'fulfilled') {
+          const overviewRes = overviewResult.value;
+          const metrics = overviewRes.data?.metrics || {};
+          applyOverviewMetricsToStats(metrics, carsCount);
+        } else {
+          console.error('Failed to fetch overview metrics', overviewResult.reason);
+          applyOverviewMetricsToStats({}, carsCount);
+        }
       } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
+        console.error('Failed to fetch dashboard data', error);
       }
     };
     fetchData();

@@ -28,18 +28,37 @@ export function UserNav() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem('admin_user');
-    if (!stored) return;
-    try {
-      const parsed = JSON.parse(stored);
-      setCurrentUser({
-        name: parsed.name ?? '',
-        email: parsed.email ?? '',
-        avatarUrl: parsed.avatar_url ?? ''
-      });
-    } catch {
-    }
+    const loadUser = async () => {
+      if (typeof window === 'undefined') return;
+      const stored = window.localStorage.getItem('admin_user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setCurrentUser({
+            name: parsed.name ?? '',
+            email: parsed.email ?? '',
+            avatarUrl: parsed.avatar_url ?? ''
+          });
+          return;
+        } catch {
+        }
+      }
+
+      try {
+        const response = await apiClient.get('/api/user/data');
+        const user = response.data;
+        const mapped: CurrentUser = {
+          name: user.name ?? '',
+          email: user.email ?? '',
+          avatarUrl: user.avatar_url ?? ''
+        };
+        setCurrentUser(mapped);
+        window.localStorage.setItem('admin_user', JSON.stringify(user));
+      } catch {
+      }
+    };
+
+    loadUser();
   }, []);
 
   const handleLogout = async () => {
@@ -87,9 +106,6 @@ export function UserNav() {
           <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>Billing</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>

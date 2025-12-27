@@ -40,7 +40,7 @@ class BookingController extends Controller
         $car = $booking->car;
         if ($car && $car->status !== 'maintenance') {
             $hasActiveBookings = $car->bookings()
-                ->whereIn('status', ['pending', 'confirmed'])
+                ->whereIn('status', ['confirmed'])
                 ->exists();
 
             $car->status = $hasActiveBookings ? 'rented' : 'available';

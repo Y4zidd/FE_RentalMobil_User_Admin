@@ -47,6 +47,29 @@ export default async function RootLayout({
             `
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  if (typeof performance !== 'undefined' && typeof performance.measure === 'function') {
+                    var originalMeasure = performance.measure.bind(performance);
+                    performance.measure = function () {
+                      try {
+                        return originalMeasure.apply(performance, arguments);
+                      } catch (e) {
+                        if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+                          console.warn('Ignored performance.measure error', e && e.message ? e.message : e);
+                        }
+                        return;
+                      }
+                    };
+                  }
+                } catch (_) {}
+              })();
+            `
+          }}
+        />
       </head>
       <body
         className={cn(

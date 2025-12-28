@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, getInitials } from '@/lib/utils';
+import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { useParams } from 'next/navigation';
@@ -38,12 +39,17 @@ export default function Page() {
         const response = await apiClient.get(`/api/admin/users/${userId}`);
         const u = response.data;
         setUser({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            role: u.role === 'admin' ? 'Admin' : (u.role === 'customer' ? 'Customer' : 'Staff'),
-            status: u.status === 'active' ? 'Active' : 'Inactive',
-            avatarUrl: u.avatar_url
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role:
+            u.role === 'admin'
+              ? 'Admin'
+              : u.role === 'customer'
+                ? 'Customer'
+                : 'Staff',
+          status: u.status === 'active' ? 'Active' : 'Inactive',
+          avatarUrl: u.avatar_url || DEFAULT_USER_AVATAR
         });
       } catch (error) {
         console.error('Failed to fetch user', error);
@@ -107,9 +113,7 @@ export default function Page() {
         <Card>
           <CardHeader className='flex flex-row items-center gap-4'>
             <Avatar className='h-14 w-14'>
-              {user.avatarUrl ? (
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
-              ) : null}
+              <AvatarImage src={user.avatarUrl} alt={user.name} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className='space-y-1'>

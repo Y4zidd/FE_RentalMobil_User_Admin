@@ -76,9 +76,13 @@ class AuthController extends Controller
         );
 
         Mail::raw(
-            'Your verification code is: ' . $code,
+            "Hi {$request->name},\n\n" .
+            "Here is your email verification code for your Rent-A-Car account:\n\n" .
+            "{$code}\n\n" .
+            "This code will expire in 30 minutes.\n\n" .
+            "If you did not try to sign up, you can safely ignore this email.",
             function ($message) use ($request) {
-                $message->to($request->email)->subject('Email Verification Code');
+                $message->to($request->email)->subject('Rent-A-Car Email Verification Code');
             }
         );
 
@@ -212,9 +216,13 @@ class AuthController extends Controller
         );
 
         Mail::raw(
-            'Your email change verification code is: ' . $code,
+            "Hi,\n\n" .
+            "Here is your verification code to confirm the email change for your Rent-A-Car account:\n\n" .
+            "{$code}\n\n" .
+            "This code will expire in 30 minutes.\n\n" .
+            "If you did not request to change your email, you can safely ignore this email.",
             function ($message) use ($newEmail) {
-                $message->to($newEmail)->subject('Email Change Verification Code');
+                $message->to($newEmail)->subject('Rent-A-Car Email Change Verification Code');
             }
         );
 
@@ -327,9 +335,13 @@ class AuthController extends Controller
         );
 
         Mail::raw(
-            'Your password reset code is: ' . $code,
+            "Hi {$user->name},\n\n" .
+            "Here is your password reset code for your Rent-A-Car account:\n\n" .
+            "{$code}\n\n" .
+            "This code will expire in 30 minutes.\n\n" .
+            "If you did not request a password reset, you can safely ignore this email.",
             function ($message) use ($user) {
-                $message->to($user->email)->subject('Password Reset Code');
+                $message->to($user->email)->subject('Rent-A-Car Password Reset Code');
             }
         );
 

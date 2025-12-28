@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn, getInitials } from '@/lib/utils';
+import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 
 import type { User } from './users-table/columns';
 
@@ -147,12 +148,10 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
           {/* Avatar Section */}
           <div className='flex flex-col items-center gap-3 pb-4 border-b'>
             <Avatar className='h-24 w-24'>
-              {(avatarPreview || user?.avatarUrl) && (
-                <AvatarImage
-                  src={avatarPreview || user?.avatarUrl}
-                  alt={form.name}
-                />
-              )}
+              <AvatarImage
+                src={avatarPreview || user?.avatarUrl || DEFAULT_USER_AVATAR}
+                alt={form.name}
+              />
               <AvatarFallback className='text-xl font-semibold bg-primary/10'>
                 {avatarInitials || 'US'}
               </AvatarFallback>

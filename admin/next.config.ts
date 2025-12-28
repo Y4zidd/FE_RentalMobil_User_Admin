@@ -43,6 +43,9 @@ const baseConfig: NextConfig = {
     ],
     dangerouslyAllowLocalIP: true
   },
+  experimental: {
+    externalDir: true
+  },
   transpilePackages: ['geist'],
   async rewrites() {
     return [

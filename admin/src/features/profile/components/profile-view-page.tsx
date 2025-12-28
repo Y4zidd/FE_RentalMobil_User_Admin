@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
+import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
@@ -222,9 +223,10 @@ export default function ProfileViewPage() {
                   className='hidden'
                 />
                 <Avatar className='h-20 w-20 rounded-full border bg-background'>
-                  {avatarPreview ? (
-                    <AvatarImage src={avatarPreview} alt={accountForm.name} />
-                  ) : null}
+                  <AvatarImage
+                    src={avatarPreview || DEFAULT_USER_AVATAR}
+                    alt={accountForm.name}
+                  />
                   <AvatarFallback className='text-lg font-semibold'>
                     {initials}
                   </AvatarFallback>

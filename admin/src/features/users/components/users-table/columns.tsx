@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn, getInitials } from '@/lib/utils';
+import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import { Column, ColumnDef } from '@tanstack/react-table';
 import { Text } from 'lucide-react';
 
@@ -37,7 +38,7 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const { state } = useSidebar();
       const sizeClass = state === 'collapsed' ? 'h-10 w-10' : 'h-10 w-10';
-      const avatarUrl = row.original.avatarUrl;
+      const avatarUrl = row.original.avatarUrl || DEFAULT_USER_AVATAR;
       const initials = getInitials(row.original.name, 'AD');
 
       return (
@@ -48,9 +49,7 @@ export const columns: ColumnDef<User>[] = [
           )}
         >
           <Avatar className='h-10 w-10 rounded-full border border-border/60'>
-            {avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt={row.original.name} />
-            ) : null}
+            <AvatarImage src={avatarUrl} alt={row.original.name} />
             <AvatarFallback className='text-xs font-medium'>
               {initials}
             </AvatarFallback>

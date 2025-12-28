@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AreaGraph } from '@/features/overview/components/area-graph';
@@ -148,7 +149,7 @@ export default function OverViewLayout({
 
               return {
                 id: u.id,
-                avatar: u.avatar_url,
+                avatar: u.avatar_url || DEFAULT_USER_AVATAR,
                 name: u.name,
                 email: u.email,
                 role

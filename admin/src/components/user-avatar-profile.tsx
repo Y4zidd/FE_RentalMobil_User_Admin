@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
+import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 
 interface AdminUserProfile {
   name?: string | null;
@@ -20,13 +21,13 @@ export function UserAvatarProfile({
 }: UserAvatarProfileProps) {
   const name = user?.name ?? '';
   const email = user?.email ?? '';
-  const avatarUrl = user?.avatarUrl ?? '';
+  const avatarUrl = user?.avatarUrl || DEFAULT_USER_AVATAR;
   const initials = getInitials(name || email, 'AD');
 
   return (
     <div className='flex items-center gap-2'>
       <Avatar className={className}>
-        {avatarUrl ? <AvatarImage src={avatarUrl} alt={name} /> : null}
+        <AvatarImage src={avatarUrl} alt={name || email || 'User'} />
         <AvatarFallback className='rounded-lg'>{initials}</AvatarFallback>
       </Avatar>
 

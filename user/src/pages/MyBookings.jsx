@@ -40,6 +40,19 @@ const MyBookings = () => {
     }
   }
 
+  const formatDateTime = (value) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    })
+  }
+
   const fetchBookings = async () => {
     try {
       const { data } = await axios.get('/api/bookings/user')
@@ -118,7 +131,7 @@ const MyBookings = () => {
                   <img src={assets.calendar_icon_colored} alt="" className='w-4 h-4 mt-1'/>
                   <div>
                     <p className='text-gray-500'>Rental Period</p>
-                    <p>{booking.pickupDate.split('T')[0]} To {booking.returnDate.split('T')[0]}</p>
+                    <p>{formatDateTime(booking.pickupDate)} To {formatDateTime(booking.returnDate)}</p>
                   </div>
                 </div>
 

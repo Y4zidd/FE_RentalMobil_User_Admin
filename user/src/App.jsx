@@ -7,6 +7,7 @@ import Cars from './pages/Cars'
 import MyBookings from './pages/MyBookings'
 import BookingDetails from './pages/BookingDetails'
 import Profile from './pages/Profile'
+import Checkout from './pages/Checkout'
 import Footer from './components/Footer'
 import Login from './components/Login'
 import { Toaster } from 'react-hot-toast'
@@ -28,6 +29,7 @@ const App = () => {
         <Route path='/car-details/:id' element={<CarDetails />} />
         <Route path='/my-bookings' element={<MyBookings />} />
         <Route path='/my-bookings/:id' element={<BookingDetails />} />
+        <Route path='/checkout' element={<Checkout />} />
         <Route path='/profile' element={<Profile />} />
       </Routes>
 

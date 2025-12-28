@@ -93,10 +93,23 @@ const BookingDetails = () => {
     )
   }
 
+  const formatDateTime = (value) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    })
+  }
+
   const rentalPeriod =
-    booking.pickupDate.split("T")[0] +
+    formatDateTime(booking.pickupDate) +
     " - " +
-    booking.returnDate.split("T")[0]
+    formatDateTime(booking.returnDate)
 
   const canRetryPayment =
     booking.paymentMethod === "online_full" &&
@@ -230,13 +243,12 @@ const BookingDetails = () => {
                 <p className="text-sm font-medium">{booking._id}</p>
               </div>
               <span
-                className={`px-3 py-1 text-xs rounded-full ${
-                  booking.status === "confirmed"
+                className={`px-3 py-1 text-xs rounded-full ${booking.status === "confirmed"
                     ? "bg-green-400/15 text-green-600"
                     : booking.status === "pending"
-                    ? "bg-amber-400/15 text-amber-700"
-                    : "bg-red-400/15 text-red-600"
-                }`}
+                      ? "bg-amber-400/15 text-amber-700"
+                      : "bg-red-400/15 text-red-600"
+                  }`}
               >
                 {booking.status}
               </span>

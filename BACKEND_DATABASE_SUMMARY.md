@@ -1,6 +1,6 @@
 # Backend Database & API Summary
 
-Project: Car Rental (feUser & feAdmin)
+Project: Rent-A-Car (feUser & feAdmin)
 Backend target: Laravel (REST API + Midtrans integration)
 
 ---

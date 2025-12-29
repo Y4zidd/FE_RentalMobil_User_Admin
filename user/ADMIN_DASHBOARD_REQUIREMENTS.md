@@ -134,4 +134,4 @@
 
 ---
 
-File ini bisa dipakai sebagai acuan saat memilih dan mengintegrasikan template dashboard admin baru ke dalam project CarRental-fullstack.
+File ini bisa dipakai sebagai acuan saat memilih dan mengintegrasikan template dashboard admin baru ke dalam project Rent-A-Car-fullstack.

@@ -31,7 +31,7 @@ const BookingDetails = () => {
       createdAt: b.created_at,
       paymentMethod:
         b.payment_method || (b.status === "pending" ? "online_full" : "offline"),
-      operatorId: "CarRental",
+      operatorId: "Rent-A-Car",
       extras: options.map((opt) => opt.label),
       car: {
         image: car.photo_url,
@@ -136,7 +136,7 @@ const BookingDetails = () => {
       return
     }
 
-    const title = "Car Rental Receipt"
+    const title = "Rent-A-Car Receipt"
     const createdAt = booking.createdAt || new Date().toISOString()
 
     const html = `
@@ -313,8 +313,8 @@ const BookingDetails = () => {
           <div class="receipt">
             <div class="header">
               <div>
-                <div class="brand">CarRental</div>
-                <div class="tagline">Premium car rental receipt</div>
+                <div class="brand">Rent-A-Car</div>
+                <div class="tagline">Premium Rent-A-Car receipt</div>
               </div>
               <div style="text-align: right;">
                 <div class="pill">Booking Receipt</div>
@@ -332,9 +332,6 @@ const BookingDetails = () => {
               <div class="hero-main">
                 <div class="hero-title">
                   ${booking.car?.brand || ""} ${booking.car?.model || ""} ${booking.car?.year || ""}
-                </div>
-                <div class="hero-sub">
-                  Rental operator · CarRental
                 </div>
               </div>
               <div class="hero-image-wrap">
@@ -428,7 +425,7 @@ const BookingDetails = () => {
             </div>
 
             <div class="footer">
-              Thank you for choosing CarRental. Please present this receipt at pick-up if requested.
+              Thank you for choosing Rent-A-Car. Please present this receipt at pick-up if requested.
             </div>
           </div>
           <script>
@@ -525,7 +522,7 @@ const BookingDetails = () => {
         </button>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Details</h1>
-        <p className="text-gray-500 text-base mb-8">Review the details of your car rental booking</p>
+        <p className="text-gray-500 text-base mb-8">Review the details of your Rent-A-Car booking</p>
 
         {/* Card 1: Car Summary */}
         <Motion.div
@@ -546,7 +543,6 @@ const BookingDetails = () => {
             <p className="text-gray-500">
               {booking.car.year} • {booking.car.category} • {booking.car.location}
             </p>
-            <p className="text-gray-500 text-xs mt-2">Rental operator: <span className="font-medium text-gray-900">{booking.operatorId}</span></p>
           </div>
         </Motion.div>
 
@@ -607,14 +603,31 @@ const BookingDetails = () => {
               </div>
             </div>
 
-            {/* Row 3: Location */}
             <div className="pb-6 border-b border-gray-100">
               <p className="text-xs text-gray-500 font-medium mb-1">Pick-up Location</p>
               <p className="text-base font-medium text-gray-900">{booking.car.location}</p>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 mt-0 mb-6 pb-6 border-b border-gray-100">
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Payment Method</p>
+                <p className="text-base font-medium text-gray-900">
+                  {booking.paymentMethod === "online_full" ? "Online payment" : "Pay at location"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Payment Status</p>
+                <p className="text-base font-medium text-gray-900 capitalize">
+                  {booking.status === "completed" || booking.status === "confirmed"
+                    ? "Paid"
+                    : booking.status === "pending"
+                      ? "Pending"
+                      : "Unpaid / Cancelled"}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Cost Breakdown Box */}
           <div className="bg-gray-50 rounded-xl p-6 mb-8 mt-6">
             <div className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between items-center text-gray-600">
@@ -645,6 +658,15 @@ const BookingDetails = () => {
               <span className="font-bold text-gray-900 text-base">Total Amount</span>
               <span className="font-bold text-primary text-xl md:text-2xl">{formatCurrency(booking.price)}</span>
             </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-4 mb-8 text-xs md:text-sm text-gray-600">
+            <p className="font-semibold text-gray-800 mb-2">Important rental notes</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Please bring your ID card and valid driving license at pick-up.</li>
+              <li>Late return may incur additional charges based on rental policy.</li>
+              <li>Return the car with a similar fuel level as at pick-up.</li>
+            </ul>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 justify-end">

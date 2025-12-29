@@ -1,6 +1,6 @@
-# Car Rental Booking System (MERN Stack)
+# Rent-A-Car Booking System (MERN Stack)
 
-A fully functional, production‑ready **Car Rental Booking Website** built using the **MERN Stack (MongoDB, Express.js, React.js, Node.js)** with **ImageKit** integration for media storage.
+A fully functional, production‑ready **Rent-A-Car Booking Website** built using the **MERN Stack (MongoDB, Express.js, React.js, Node.js)** with **ImageKit** integration for media storage.
 
 ---
 

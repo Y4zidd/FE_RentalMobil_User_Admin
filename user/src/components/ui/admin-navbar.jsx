@@ -10,7 +10,7 @@ export function AdminNavbar() {
           </span>
           <div className="flex flex-col">
             <span className="text-sm font-semibold tracking-tight text-gray-900">
-              CarRental Admin
+              Rent-A-Car Admin
             </span>
             <span className="text-xs text-gray-500">Admin dashboard</span>
           </div>

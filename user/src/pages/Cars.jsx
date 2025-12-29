@@ -23,6 +23,7 @@ const Cars = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     category: '',
+    model: '',
     transmission: '',
     fuel_type: '',
     province: '',
@@ -82,17 +83,17 @@ const Cars = () => {
     }
   }, [axios, pickupDate, returnDate])
 
-  const applyFilter = useCallback(()=>{
+  const applyFilter = useCallback(() => {
     const source = baseCars.length ? baseCars : cars
     let filtered = source.slice()
 
     const query = input.trim().toLowerCase()
     if (query) {
-      filtered = filtered.filter((car)=>{
+      filtered = filtered.filter((car) => {
         return car.brand.toLowerCase().includes(query)
-        || car.model.toLowerCase().includes(query)  
-        || car.category.toLowerCase().includes(query)  
-        || car.transmission.toLowerCase().includes(query)
+          || car.model.toLowerCase().includes(query)
+          || car.category.toLowerCase().includes(query)
+          || car.transmission.toLowerCase().includes(query)
       })
     }
 
@@ -111,6 +112,13 @@ const Cars = () => {
       const categoryLower = filters.category.toLowerCase()
       filtered = filtered.filter(
         (car) => (car.category || '').toLowerCase() === categoryLower
+      )
+    }
+
+    if (filters.model) {
+      const modelLower = filters.model.toLowerCase()
+      filtered = filtered.filter(
+        (car) => (car.model || '').toLowerCase() === modelLower
       )
     }
 
@@ -146,23 +154,26 @@ const Cars = () => {
   }, [cars, baseCars, input, pickupLocation, filters])
 
   // lewati pengecekan availability ke backend saat develop FE
-  useEffect(()=>{
+  useEffect(() => {
     if (hasSearchParams && (pickupDate && returnDate)) {
       searchCarAvailablity()
     } else {
       setBaseCars([])
     }
-  },[hasSearchParams, pickupDate, returnDate, searchCarAvailablity])
+  }, [hasSearchParams, pickupDate, returnDate, searchCarAvailablity])
 
-  useEffect(()=>{
+  useEffect(() => {
     if (cars.length > 0 || baseCars.length > 0) {
       applyFilter()
     }
-  },[cars.length, baseCars.length, applyFilter])
+  }, [cars.length, baseCars.length, applyFilter])
 
-  const currentList = baseCars.length ? baseCars : cars
+  const currentList = cars
   const categories = Array.from(
     new Set(currentList.map((c) => c.category).filter(Boolean))
+  )
+  const models = Array.from(
+    new Set(currentList.map((c) => c.model).filter(Boolean))
   )
   const transmissions = Array.from(
     new Set(currentList.map((c) => c.transmission).filter(Boolean))
@@ -177,12 +188,12 @@ const Cars = () => {
   return (
     <div>
 
-      <Motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+      <Motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
 
-      className='flex flex-col items-center py-20 bg-light max-md:px-4'>
+        className='flex flex-col items-center py-20 bg-light max-md:px-4'>
         <Title
           title='Available Cars'
           subTitle={
@@ -198,125 +209,179 @@ const Cars = () => {
           transition={{ delay: 0.3, duration: 0.5 }}
           className='flex items-center bg-white px-4 mt-6 max-w-140 w-full h-12 rounded-full shadow'
         >
-          <img src={assets.search_icon} alt="" className='w-4.5 h-4.5 mr-2'/>
+          <img src={assets.search_icon} alt="" className='w-4.5 h-4.5 mr-2' />
 
-          <input onChange={(e)=> setInput(e.target.value)} value={input} type="text" placeholder='Search by make, model, or features' className='w-full h-full outline-none text-gray-500'/>
+          <input onChange={(e) => setInput(e.target.value)} value={input} type="text" placeholder='Search by make, model, or features' className='w-full h-full outline-none text-gray-500' />
 
           <button
             type='button'
             onClick={() => setShowFilters((prev) => !prev)}
             className='ml-2 p-1.5 rounded-full hover:bg-gray-100 transition'
           >
-            <img src={assets.filter_icon} alt="" className='w-4.5 h-4.5'/>
+            <img src={assets.filter_icon} alt="" className='w-4.5 h-4.5' />
           </button>
         </Motion.div>
 
-        <Motion.div
-          initial={false}
-          animate={
-            showFilters
-              ? { opacity: 1, height: 'auto', marginTop: 16 }
-              : { opacity: 0, height: 0, marginTop: 0 }
-          }
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className='w-full max-w-140 overflow-hidden'
-        >
-          <div className='w-full bg-white rounded-2xl shadow px-4 py-3 grid grid-cols-1 md:grid-cols-5 gap-3'>
-            <div className='flex flex-col text-sm'>
-              <span className='mb-1 text-gray-500'>Category</span>
-              <select
-                value={filters.category}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, category: e.target.value }))
-                }
-                className='h-9 rounded-lg border border-borderColor px-2 text-gray-700 outline-none'
-              >
-                <option value=''>All</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='flex flex-col text-sm'>
-              <span className='mb-1 text-gray-500'>Transmission</span>
-              <select
-                value={filters.transmission}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    transmission: e.target.value,
-                  }))
-                }
-                className='h-9 rounded-lg border border-borderColor px-2 text-gray-700 outline-none'
-              >
-                <option value=''>All</option>
-                {transmissions.map((tr) => (
-                  <option key={tr} value={tr}>
-                    {tr}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='flex flex-col text-sm'>
-              <span className='mb-1 text-gray-500'>Fuel type</span>
-              <select
-                value={filters.fuel_type}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    fuel_type: e.target.value,
-                  }))
-                }
-                className='h-9 rounded-lg border border-borderColor px-2 text-gray-700 outline-none'
-              >
-                <option value=''>All</option>
-                {fuels.map((fuel) => (
-                  <option key={fuel} value={fuel}>
-                    {fuel}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='flex flex-col text-sm'>
-              <span className='mb-1 text-gray-500'>Province / City</span>
-              <select
-                value={filters.province}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    province: e.target.value,
-                  }))
-                }
-                className='h-9 rounded-lg border border-borderColor px-2 text-gray-700 outline-none'
-              >
-                <option value=''>All</option>
-                {provinces.map((prov) => (
-                  <option key={prov} value={prov}>
-                    {prov}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='flex flex-col text-sm'>
-              <span className='mb-1 text-gray-500'>Max price / day</span>
-              <input
-                type='number'
-                min='0'
-                value={filters.maxPrice}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    maxPrice: e.target.value,
-                  }))
-                }
-                className='h-9 rounded-lg border border-borderColor px-2 text-gray-700 outline-none'
-                placeholder='e.g. 500000'
-              />
-            </div>
+        {showFilters && (
+          <div className='fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4'>
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className='bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[80vh] flex flex-col overflow-hidden'
+            >
+              <div className='flex items-center justify-between px-5 py-4 border-b border-gray-100'>
+                <p className='text-xl font-bold text-gray-900'>All filters</p>
+                <button
+                  type='button'
+                  onClick={() => setShowFilters(false)}
+                  className='text-xs px-2 py-1 rounded-full bg-slate-100 text-gray-600 hover:bg-slate-200'
+                >
+                  x
+                </button>
+              </div>
+              <div className='flex-1 overflow-y-auto px-5 py-4 space-y-5 text-sm'>
+                <div>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Category</p>
+                  <div className='flex flex-wrap gap-3'>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        type='button'
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            category: prev.category === cat ? '' : cat,
+                          }))
+                        }
+                        className={`px-4 py-2 rounded-full border text-sm transition-all ${filters.category === cat
+                          ? 'bg-primary text-white border-primary shadow-md'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Transmission</p>
+                  <div className='flex flex-wrap gap-3'>
+                    {transmissions.map((tr) => (
+                      <button
+                        key={tr}
+                        type='button'
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            transmission: prev.transmission === tr ? '' : tr,
+                          }))
+                        }
+                        className={`px-4 py-2 rounded-full border text-sm transition-all ${filters.transmission === tr
+                          ? 'bg-primary text-white border-primary shadow-md'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                      >
+                        {tr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Fuel type</p>
+                  <div className='flex flex-wrap gap-3'>
+                    {fuels.map((fuel) => (
+                      <button
+                        key={fuel}
+                        type='button'
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            fuel_type: prev.fuel_type === fuel ? '' : fuel,
+                          }))
+                        }
+                        className={`px-4 py-2 rounded-full border text-sm transition-all ${filters.fuel_type === fuel
+                          ? 'bg-primary text-white border-primary shadow-md'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                      >
+                        {fuel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Province / City</p>
+                  <div className='flex flex-wrap gap-3'>
+                    {provinces.map((prov) => (
+                      <button
+                        key={prov}
+                        type='button'
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            province: prev.province === prov ? '' : prov,
+                          }))
+                        }
+                        className={`px-4 py-2 rounded-full border text-sm transition-all ${filters.province === prov
+                          ? 'bg-primary text-white border-primary shadow-md'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                      >
+                        {prov}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Max price / day</p>
+                  <input
+                    type='number'
+                    min='0'
+                    value={filters.maxPrice}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        maxPrice: e.target.value,
+                      }))
+                    }
+                    className='w-full h-10 rounded-lg border border-borderColor px-3 text-gray-700 outline-none'
+                    placeholder='e.g. 500000'
+                  />
+                </div>
+              </div>
+
+              <div className='flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-white'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setFilters({
+                      category: '',
+                      model: '',
+                      transmission: '',
+                      fuel_type: '',
+                      province: '',
+                      maxPrice: '',
+                    })
+                    setInput('')
+                  }}
+                  className='text-xs font-medium text-gray-500 hover:text-gray-700'
+                >
+                  Reset
+                </button>
+                <button
+                  type='button'
+                  onClick={() => setShowFilters(false)}
+                  className='px-4 py-2 rounded-full bg-primary text-white text-xs font-semibold hover:bg-primary-dull'
+                >
+                  Show {filteredCars.length} cars
+                </button>
+              </div>
+            </Motion.div>
           </div>
-        </Motion.div>
+        )}
       </Motion.div>
 
       <Motion.div
@@ -324,17 +389,17 @@ const Cars = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.5 }}
 
-      className='px-6 md:px-16 lg:px-24 xl:px-32 mt-10'>
+        className='px-6 md:px-16 lg:px-24 xl:px-32 mt-10'>
         <p className='text-gray-500 xl:px-20 max-w-7xl mx-auto'>Showing {filteredCars.length} Cars</p>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-8 mt-4 xl:px-20 max-w-7xl mx-auto'>
-          {filteredCars.map((car, index)=> (
+          {filteredCars.map((car, index) => (
             <Motion.div key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * index, duration: 0.4 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index, duration: 0.4 }}
             >
-              <CarCard car={car}/>
+              <CarCard car={car} />
             </Motion.div>
           ))}
         </div>

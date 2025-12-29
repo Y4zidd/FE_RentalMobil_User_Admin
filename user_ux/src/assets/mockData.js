@@ -34,12 +34,6 @@ const LOCATION_BALI = {
     name: 'Bali'
 }
 
-const LOCATION_YOGYAKARTA = {
-    city: 'Yogyakarta',
-    country: 'Indonesia',
-    name: 'Yogyakarta'
-}
-
 const LOCATION_EASTJAVA = {
     city: 'East Java',
     country: 'Indonesia',
@@ -88,7 +82,7 @@ export const mockCars = [
         license_plate: "B 1122 XYZ",
         year: 2023,
         category: "City Car",
-        status: "rented",
+        status: "available",
         transmission: "automatic",
         fuel_type: "Petrol",
         seating_capacity: 5,
@@ -193,7 +187,7 @@ export const mockCars = [
         seating_capacity: 6,
         price_per_day: 650000,
         location_id: 4,
-        description: "MPV futuristik dengan kenyamanan maksimal untuk travel keluarga di Yogyakarta.",
+        description: "MPV futuristik dengan kenyamanan maksimal untuk travel keluarga di West Java.",
         photo_url: "https://apollo.olx.co.id/v1/files/6946aa54ae0dc-ID/image;f=avif;s=1700x0",
         images: [
             {
@@ -210,7 +204,7 @@ export const mockCars = [
             }
         ],
         features: ["Captain Seat", "Wireless Charger", "Bluelink", "Drive Mode"],
-        location: LOCATION_YOGYAKARTA
+        location: LOCATION_WESTJAVA
     },
     {
         id: 6,

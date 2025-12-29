@@ -25,7 +25,7 @@ const MyBookings = () => {
       price: b.total_price,
       createdAt: b.created_at,
       paymentMethod: b.payment_method,
-      operatorId: 'CarRental',
+      operatorId: 'Rent-A-Car',
       extras: options.map((opt) => opt.label),
       car: {
         image: car.photo_url,

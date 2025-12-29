@@ -466,7 +466,7 @@ export default function BookingsPage() {
     <PageContainer
       scrollable
       pageTitle='Manage Bookings'
-      pageDescription='Manage car rental bookings connected to the Laravel backend.'
+      pageDescription='Manage Rent-A-Car bookings connected to the Laravel backend.'
     >
       <div className='mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5'>
         {stats.map((card) => (

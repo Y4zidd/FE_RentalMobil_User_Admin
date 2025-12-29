@@ -21,7 +21,7 @@ const Testimonial = () => {
       name: "Arcitta",
       location: "Bandung, indonesia",
       testimonial:
-        "Reliable, affordable, and premium quality service. I recommend them to everyone looking for car rentals.",
+        "Reliable, affordable, and premium quality service. I recommend them to everyone looking for Rent-A-Cars.",
     },
   ];
 

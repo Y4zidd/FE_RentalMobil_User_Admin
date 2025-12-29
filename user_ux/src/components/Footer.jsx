@@ -24,7 +24,7 @@ const Footer = () => {
           />
 
           <Motion.p {...fadeUp(0.3)} className="leading-relaxed">
-            Premium car rental service with a wide selection of luxury and
+            Premium Rent-A-Car service with a wide selection of luxury and
             everyday vehicles for all your driving needs.
           </Motion.p>
 
@@ -86,8 +86,8 @@ const Footer = () => {
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
               <li>1234 Luxury Drive</li>
-              <li>San Francisco, CA 94107</li>
-              <li>+1 234 567890</li>
+              <li>Jakarta Selatan, Indonesia</li>
+              <li>+62 8123 5557 6078</li>
               <li>info@example.com</li>
             </ul>
           </div>

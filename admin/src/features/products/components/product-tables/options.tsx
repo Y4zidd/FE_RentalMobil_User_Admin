@@ -34,7 +34,7 @@ export const LOCATION_OPTIONS = [
   { label: 'Surabaya', value: 'Surabaya' },
   { label: 'Bali', value: 'Bali' },
   { label: 'Medan', value: 'Medan' },
-  { label: 'Yogyakarta', value: 'Yogyakarta' },
+  { label: 'West Java', value: 'West Java' },
   { label: 'New York', value: 'New York' },
   { label: 'Los Angeles', value: 'Los Angeles' },
   { label: 'Houston', value: 'Houston' },

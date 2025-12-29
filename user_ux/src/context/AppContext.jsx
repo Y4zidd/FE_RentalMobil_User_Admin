@@ -1,9 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from 'axios'
-import { toast } from 'react-hot-toast'
+import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+import { mockUser, mockCars, mockBookings } from "../assets/mockData";
 
 const DEFAULT_CURRENCY = {
     code: 'IDR',
@@ -65,24 +63,41 @@ export const AppContext = createContext();
 export const AppProvider = ({ children }) => {
 
     const navigate = useNavigate()
-    const [token, setToken] = useState(null)
-    const [user, setUser] = useState(null)
+    const [token, setToken] = useState("demo-token")
+    const [user, setUser] = useState(mockUser)
     const [showLogin, setShowLogin] = useState(false)
     const [pickupDate, setPickupDate] = useState('')
     const [returnDate, setReturnDate] = useState('')
 
-    const [cars, setCars] = useState([])
-    const [exchangeRates, setExchangeRates] = useState(null)
-
     const mapCarFromApi = (car) => {
         const locationObj = car.location || {}
-        const locationName =
+        let locationName =
             locationObj.city ||
             locationObj.name ||
             locationObj.address ||
-            ''
-        const provinceName = locationObj.city || ''
-        const countryName = locationObj.country || ''
+            ""
+        let provinceName = locationObj.city || ""
+        let countryName = locationObj.country || ""
+
+        if (car.location && typeof car.location === 'object') {
+            const city = car.location.city || ''
+            const country = car.location.country || ''
+            locationName = city && country ? `${country}, ${city}` : (city || country || car.location.name || '')
+            provinceName = city
+            countryName = country
+        } else if (!locationName) {
+            if (car.location_name) {
+                locationName = car.location_name
+            } else if (car.location_id === 1) {
+                locationName = "Indonesia, Jakarta"
+                provinceName = "Jakarta"
+                countryName = "Indonesia"
+            } else if (car.location_id === 2) {
+                locationName = "Indonesia, Surabaya"
+                provinceName = "Surabaya"
+                countryName = "Indonesia"
+            }
+        }
 
         const imageRecords = Array.isArray(car.images) ? car.images : []
         const imageUrls = imageRecords.map((img) => img.image_url)
@@ -90,7 +105,7 @@ export const AppProvider = ({ children }) => {
             imageRecords.find((img) => img.is_primary)?.image_url ||
             imageUrls[0] ||
             car.photo_url ||
-            ''
+            ""
 
         return {
             id: car.id,
@@ -103,37 +118,33 @@ export const AppProvider = ({ children }) => {
             seating_capacity: car.seating_capacity,
             pricePerDay: Number(car.price_per_day),
             image: primaryImage,
-            images: imageUrls,
+            images: imageUrls.length ? imageUrls : [primaryImage].filter(Boolean),
             location: locationName,
             province: provinceName,
             country: countryName,
             locationId: car.location_id,
-            isAvaliable: car.status === 'available',
+            isAvaliable: car.status === "available",
             description: car.description,
             features: Array.isArray(car.features) ? car.features : [],
         }
     }
 
+    const initialCars = Array.isArray(mockCars)
+        ? mockCars.map(mapCarFromApi)
+        : []
+
+    const [cars, setCars] = useState(initialCars)
+    const [exchangeRates, setExchangeRates] = useState(null)
+    const [bookings, setBookings] = useState(
+        Array.isArray(mockBookings) ? mockBookings : []
+    )
+
     const fetchUser = async () => {
-        try {
-            const { data } = await axios.get('/api/user/data')
-            setUser(data)
-        } catch (error) {
-            console.error('Failed to fetch user', error)
-            toast.error('Session expired, please login again')
-            logout()
-        }
+        setUser(mockUser)
     }
 
     const fetchCars = async () => {
-        try {
-            const { data } = await axios.get('/api/user/cars')
-            const list = Array.isArray(data) ? data.map(mapCarFromApi) : []
-            setCars(list)
-        } catch (error) {
-            console.error('Failed to fetch cars', error)
-            toast.error('Failed to load cars')
-        }
+        setCars(initialCars)
     }
 
     useEffect(() => {
@@ -208,7 +219,6 @@ export const AppProvider = ({ children }) => {
         localStorage.removeItem('token')
         setToken(null)
         setUser(null)
-        axios.defaults.headers.common['Authorization'] = ''
         toast.success('You have been logged out')
         navigate('/')
     }
@@ -226,25 +236,34 @@ export const AppProvider = ({ children }) => {
                 fetchCars()
                 return
             }
-            const storedToken = localStorage.getItem('token')
-            if (storedToken) {
-                setToken(storedToken)
+            if (!localStorage.getItem('token')) {
+                localStorage.setItem('token', 'demo-token')
             }
         }
         fetchCars()
+        fetchUser()
     }, [])
 
-    useEffect(() => {
-        if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-            fetchUser()
-        }
-    }, [token])
-
     const value = {
-        navigate, currency, axios, user, setUser,
-        token, setToken, fetchUser, showLogin, setShowLogin, logout, fetchCars, cars, setCars,
-        pickupDate, setPickupDate, returnDate, setReturnDate,
+        navigate,
+        currency,
+        user,
+        setUser,
+        token,
+        setToken,
+        fetchUser,
+        showLogin,
+        setShowLogin,
+        logout,
+        fetchCars,
+        cars,
+        setCars,
+        bookings,
+        setBookings,
+        pickupDate,
+        setPickupDate,
+        returnDate,
+        setReturnDate,
         formatCurrency,
     }
 

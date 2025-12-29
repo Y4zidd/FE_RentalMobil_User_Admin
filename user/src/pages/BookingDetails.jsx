@@ -112,8 +112,7 @@ const BookingDetails = () => {
     formatDateTime(booking.returnDate)
 
   const canRetryPayment =
-    booking.paymentMethod === "online_full" &&
-    booking.status !== "confirmed"
+    booking.paymentMethod === "online_full" && booking.status === "pending"
 
   const handleRetryPayment = async () => {
     if (!token) {
@@ -324,7 +323,7 @@ const BookingDetails = () => {
               Download Receipt
             </button>
 
-            {canRetryPayment ? (
+            {canRetryPayment && (
               <button
                 type="button"
                 onClick={handleRetryPayment}
@@ -332,13 +331,6 @@ const BookingDetails = () => {
                 className="px-8 py-3 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary-dull transition-colors shadow-md shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isPaying ? "Processing..." : "Pay Now"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="px-8 py-3 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary-dull transition-colors shadow-md shadow-blue-200"
-              >
-                Contact Support
               </button>
             )}
           </div>

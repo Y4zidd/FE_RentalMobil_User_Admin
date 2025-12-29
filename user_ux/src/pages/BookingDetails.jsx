@@ -10,7 +10,7 @@ import { toast } from "react-hot-toast"
 const BookingDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { axios, token, formatCurrency } = useAppContext()
+  const { axios, token, bookings, formatCurrency } = useAppContext()
 
   const [booking, setBooking] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -29,7 +29,8 @@ const BookingDetails = () => {
       returnDate: b.return_date,
       price: b.total_price,
       createdAt: b.created_at,
-      paymentMethod: b.payment_method,
+      paymentMethod:
+        b.payment_method || (b.status === "pending" ? "online_full" : "offline"),
       operatorId: "CarRental",
       extras: options.map((opt) => opt.label),
       car: {
@@ -46,25 +47,37 @@ const BookingDetails = () => {
   }
 
   useEffect(() => {
+    const contextList = Array.isArray(bookings)
+      ? bookings.map(mapBookingFromApi)
+      : []
+    const contextBooking = contextList.find(
+      (item) => String(item.id) === String(id),
+    )
+
     const fetchBooking = async () => {
-      if (!token) {
+      if (!axios || !token) {
+        setBooking(contextBooking || null)
         setLoading(false)
         return
       }
       try {
         const { data } = await axios.get("/api/bookings/user")
         const list = Array.isArray(data) ? data.map(mapBookingFromApi) : []
-        const found = list.find((item) => String(item.id) === String(id))
+        const found =
+          list.find((item) => String(item.id) === String(id)) || contextBooking
         setBooking(found || null)
       } catch (error) {
         console.error(error)
-        toast.error("Failed to fetch booking details")
+        if (!contextBooking) {
+          toast.error("Failed to fetch booking details")
+        }
+        setBooking(contextBooking || null)
       } finally {
         setLoading(false)
       }
     }
     fetchBooking()
-  }, [axios, token, id])
+  }, [axios, token, bookings, id])
 
   if (loading) {
     return (
@@ -112,8 +125,7 @@ const BookingDetails = () => {
     formatDateTime(booking.returnDate)
 
   const canRetryPayment =
-    booking.paymentMethod === "online_full" &&
-    booking.status !== "confirmed"
+    booking.paymentMethod === "online_full" && booking.status === "pending"
 
   const handleRetryPayment = async () => {
     if (!token) {
@@ -324,7 +336,7 @@ const BookingDetails = () => {
               Download Receipt
             </button>
 
-            {canRetryPayment ? (
+            {canRetryPayment && (
               <button
                 type="button"
                 onClick={handleRetryPayment}
@@ -332,13 +344,6 @@ const BookingDetails = () => {
                 className="px-8 py-3 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary-dull transition-colors shadow-md shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isPaying ? "Processing..." : "Pay Now"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="px-8 py-3 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary-dull transition-colors shadow-md shadow-blue-200"
-              >
-                Contact Support
               </button>
             )}
           </div>

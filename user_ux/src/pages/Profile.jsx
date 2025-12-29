@@ -29,7 +29,7 @@ const ASEAN_COUNTRIES = [
 ]
 
 const Profile = () => {
-  const { user, setUser, axios, navigate } = useAppContext()
+  const { user, setUser, navigate } = useAppContext()
 
   const baseUser = useMemo(() => user || {}, [user])
 
@@ -65,6 +65,9 @@ const Profile = () => {
     passwordForm.newPassword !== passwordForm.confirmPassword
 
   const [avatarPreview, setAvatarPreview] = useState("")
+
+  const [pendingEmail, setPendingEmail] = useState("")
+  const [emailVerificationCode, setEmailVerificationCode] = useState("")
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token")
@@ -186,36 +189,68 @@ const Profile = () => {
 
   const handleSaveAccount = async (e) => {
     e.preventDefault()
-    try {
-      const payload = {
-        name: accountForm.name,
-        email: accountForm.email,
-        phone: accountForm.phone,
-      }
-      const { data } = await axios.put("/api/user/profile", payload)
-      setUser(data)
+    const trimmedEmail = (accountForm.email || "").trim()
+    const currentEmail = (baseUser.email || "").trim()
+    const emailChanged =
+      trimmedEmail &&
+      trimmedEmail.toLowerCase() !== currentEmail.toLowerCase()
+
+    setUser((prev) => ({
+      ...prev,
+      name: accountForm.name,
+      phone: accountForm.phone,
+    }))
+
+    if (!emailChanged) {
       toast.success("Profile updated")
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to update profile")
+      return
     }
+
+    setPendingEmail(trimmedEmail)
+    setEmailVerificationCode("")
+    toast.success(
+      "A 6-digit verification code has been sent to your new email (demo)."
+    )
+  }
+
+  const handleConfirmEmailChange = (e) => {
+    e.preventDefault()
+    if (!pendingEmail) {
+      toast.error("No email change in progress.")
+      return
+    }
+    if (!emailVerificationCode.trim()) {
+      toast.error("Please enter the verification code.")
+      return
+    }
+
+    if (emailVerificationCode.trim() !== "123456") {
+      toast.error("Invalid verification code for this demo. Use 123456.")
+      return
+    }
+
+    setUser((prev) => ({
+      ...prev,
+      email: pendingEmail,
+    }))
+    setAccountForm((prev) => ({
+      ...prev,
+      email: pendingEmail,
+    }))
+    setPendingEmail("")
+    setEmailVerificationCode("")
+    toast.success("Email updated successfully (demo).")
   }
 
   const handleSaveRental = async (e) => {
     e.preventDefault()
-    try {
-      const payload = {
-        license_number: rentalForm.licenseNumber,
-        default_city: rentalForm.defaultCity,
-        rental_preferences: rentalForm.preferences,
-      }
-      const { data } = await axios.put("/api/user/rental-details", payload)
-      setUser(data)
-      toast.success("Rental details updated")
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to update rental details")
-    }
+    setUser((prev) => ({
+      ...prev,
+      license_number: rentalForm.licenseNumber || prev.license_number,
+      default_city: rentalForm.defaultCity || prev.default_city,
+      rental_preferences: rentalForm.preferences || prev.rental_preferences,
+    }))
+    toast.success("Rental details updated")
   }
 
   const handleSavePassword = async (e) => {
@@ -232,22 +267,12 @@ const Profile = () => {
       toast.error("New password and confirmation do not match")
       return
     }
-    try {
-      await axios.put("/api/user/password", {
-        current_password: passwordForm.currentPassword,
-        new_password: passwordForm.newPassword,
-        new_password_confirmation: passwordForm.confirmPassword,
-      })
-      toast.success("Password updated")
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      })
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to update password")
-    }
+    toast.success("Password updated")
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    })
   }
 
   const handleAvatarUpload = async (e) => {
@@ -259,22 +284,22 @@ const Profile = () => {
       return
     }
 
-    const formData = new FormData()
-    formData.append("avatar", file)
-
-    try {
-      const { data } = await axios.post("/api/user/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      setUser(data)
-      setAvatarPreview(data.avatar_url || "")
+    const reader = new FileReader()
+    reader.onload = () => {
+      const url = typeof reader.result === "string" ? reader.result : ""
+      setAvatarPreview(url)
+      setUser((prev) => ({
+        ...prev,
+        avatar_url: url || prev?.avatar_url,
+      }))
       toast.success("Photo updated")
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to update photo")
-    } finally {
       e.target.value = ""
     }
+    reader.onerror = () => {
+      toast.error("Failed to load image")
+      e.target.value = ""
+    }
+    reader.readAsDataURL(file)
   }
 
   const avatarSrc = avatarPreview || assets.user_profile
@@ -441,6 +466,46 @@ const Profile = () => {
                                 className={inputClassName}
                               />
                             </div>
+                            {pendingEmail && (
+                              <div className="max-w-sm space-y-1">
+                                <label className={labelClassName}>
+                                  Email verification code
+                                </label>
+                                <div className="flex items-stretch gap-2">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    value={emailVerificationCode}
+                                    onChange={(e) =>
+                                      setEmailVerificationCode(
+                                        e.target.value.replace(/[^0-9]/g, "")
+                                      )
+                                    }
+                                    className={inputClassName}
+                                    placeholder="Enter verification code"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleConfirmEmailChange}
+                                    disabled={!emailVerificationCode}
+                                    className="px-3 py-1.5 rounded-md bg-primary hover:bg-primary-dull text-white text-[11px] font-medium disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                                  >
+                                    Verify
+                                  </button>
+                                </div>
+                                <p className="text-[11px] text-gray-500">
+                                  For this demo, we pretend to send a 6-digit
+                                  code to{" "}
+                                  <span className="font-medium">
+                                    {pendingEmail}
+                                  </span>
+                                  . Use code{" "}
+                                  <span className="font-mono">123456</span> to
+                                  confirm your new email address.
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex justify-start pt-2">

@@ -24,6 +24,11 @@ const Checkout = () => {
 
     const [paymentOption, setPaymentOption] = useState("pay_now") // pay_now || pay_later
     const [loading, setLoading] = useState(false)
+    const [couponCode, setCouponCode] = useState("")
+    const [couponDiscount, setCouponDiscount] = useState(0)
+    const [couponApplied, setCouponApplied] = useState(false)
+    const [couponLoading, setCouponLoading] = useState(false)
+    const [showPromoForm, setShowPromoForm] = useState(false)
 
     // User details state (editable)
     const [driverDetails, setDriverDetails] = useState({
@@ -118,6 +123,46 @@ const Checkout = () => {
     )
     const extrasCost = rentalDays * extrasPerDay
     const totalCost = baseCost + extrasCost
+    const finalCost = Math.max(0, totalCost - couponDiscount)
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) {
+            toast.error("Please enter a promo code")
+            return
+        }
+        const selectedOptions = optionConfig
+            .filter((opt) => bookingOptions[opt.id])
+            .map((opt) => ({
+                code: opt.id,
+                label: opt.label,
+                price: opt.pricePerDay,
+            }))
+        setCouponLoading(true)
+        try {
+            const { data } = await axios.post('/api/user/coupons/validate', {
+                code: couponCode.trim(),
+                car_id: car.id,
+                pickup_date: pickupDateTimeString,
+                return_date: returnDateTimeString,
+                options: selectedOptions,
+            })
+            if (data.valid) {
+                setCouponDiscount(Number(data.discount_amount) || 0)
+                setCouponApplied(true)
+                toast.success("Coupon applied")
+            } else {
+                setCouponDiscount(0)
+                setCouponApplied(false)
+                toast.error(data.message || "Coupon is not available")
+            }
+        } catch (err) {
+            setCouponDiscount(0)
+            setCouponApplied(false)
+            toast.error("Coupon is not available")
+        } finally {
+            setCouponLoading(false)
+        }
+    }
 
     const handleBooking = async () => {
         if (!token) {
@@ -148,6 +193,7 @@ const Checkout = () => {
                 pickup_location_id: car.locationId || 1, // Fallback need valid ID logic if not present
                 dropoff_location_id: car.locationId || 1,
                 options: selectedOptions,
+                coupon_code: couponApplied ? couponCode.trim() : undefined,
             }
 
             const { data: booking } = await axios.post('/api/bookings', payload, {
@@ -430,15 +476,52 @@ const Checkout = () => {
                                         <span>{formatCurrency(extrasCost)}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-sm text-gray-600">
-                                    <span>Trip fee (service)</span>
-                                    <span>{formatCurrency(0)}</span>
-                                </div>
-
+                                {couponApplied && couponDiscount > 0 && (
+                                    <div className="flex justify-between text-sm text-gray-600">
+                                        <span>Coupon Discount</span>
+                                        <span>-{formatCurrency(couponDiscount)}</span>
+                                    </div>
+                                )}
                                 <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
                                     <span className="font-bold text-gray-900">Trip total</span>
-                                    <span className="font-bold text-xl text-gray-900">{formatCurrency(totalCost)}</span>
+                                    <span className="font-bold text-xl text-gray-900">{formatCurrency(finalCost)}</span>
                                 </div>
+                                {!showPromoForm && (
+                                    <div className="mt-3 border-t border-gray-100 pt-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPromoForm(true)}
+                                            className="text-sm font-medium text-gray-900 underline underline-offset-2"
+                                        >
+                                            Promo code
+                                        </button>
+                                    </div>
+                                )}
+                                {showPromoForm && (
+                                    <div className="mt-3 space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900">
+                                            Promo code
+                                        </label>
+                                        <input
+                                            value={couponCode}
+                                            onChange={(e) => setCouponCode(e.target.value)}
+                                            placeholder="Enter promo code"
+                                            className="w-full h-10 px-3 rounded-md border border-gray-200 text-sm outline-none"
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                            Only one promo code can be applied per trip. If multiple codes are added,
+                                            only the last one will apply.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={handleApplyCoupon}
+                                            disabled={couponLoading}
+                                            className="inline-flex items-center justify-center px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-dull disabled:opacity-60"
+                                        >
+                                            {couponLoading ? "Checking..." : "Apply"}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                         </div>

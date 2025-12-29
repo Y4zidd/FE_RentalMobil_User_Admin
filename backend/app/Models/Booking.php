@@ -18,8 +18,11 @@ class Booking extends Model
         'dropoff_location_id',
         'status',
         'payment_method',
+        'coupon_id',
+        'coupon_code',
         'base_price',
         'extras_total',
+        'discount_amount',
         'total_price',
         'notes',
     ];

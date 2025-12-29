@@ -66,6 +66,11 @@ const Profile = () => {
 
   const [avatarPreview, setAvatarPreview] = useState("")
 
+  const [pendingEmail, setPendingEmail] = useState("")
+  const [emailVerificationCode, setEmailVerificationCode] = useState("")
+  const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false)
+  const [isVerifyingEmailCode, setIsVerifyingEmailCode] = useState(false)
+
   useEffect(() => {
     const storedToken = localStorage.getItem("token")
     if (!storedToken) {
@@ -186,18 +191,90 @@ const Profile = () => {
 
   const handleSaveAccount = async (e) => {
     e.preventDefault()
+    const trimmedEmail = (accountForm.email || "").trim()
+    const currentEmail = (baseUser.email || "").trim()
+    const emailChanged =
+      trimmedEmail &&
+      trimmedEmail.toLowerCase() !== currentEmail.toLowerCase()
+
     try {
       const payload = {
         name: accountForm.name,
-        email: accountForm.email,
         phone: accountForm.phone,
       }
-      const { data } = await axios.put("/api/user/profile", payload)
-      setUser(data)
-      toast.success("Profile updated")
+
+      const { data: updatedUser } = await axios.put(
+        "/api/user/profile",
+        payload
+      )
+      setUser(updatedUser)
+
+      if (!emailChanged) {
+        toast.success("Profile updated")
+        return
+      }
+
+      setIsRequestingEmailCode(true)
+      const { data } = await axios.post(
+        "/api/user/profile/request-email-change-code",
+        {
+          new_email: trimmedEmail,
+        }
+      )
+      setPendingEmail(trimmedEmail)
+      setEmailVerificationCode("")
+      toast.success(
+        data?.message ||
+          "Verification code has been sent to your new email address."
+      )
     } catch (error) {
       console.error(error)
-      toast.error("Failed to update profile")
+      const message =
+        error?.response?.data?.message || "Failed to update profile"
+      toast.error(message)
+    } finally {
+      setIsRequestingEmailCode(false)
+    }
+  }
+
+  const handleConfirmEmailChange = async (e) => {
+    e.preventDefault()
+    if (!pendingEmail) {
+      toast.error("No email change in progress.")
+      return
+    }
+    if (!emailVerificationCode.trim()) {
+      toast.error("Please enter the verification code.")
+      return
+    }
+
+    try {
+      setIsVerifyingEmailCode(true)
+      const { data } = await axios.post(
+        "/api/user/profile/confirm-email-change",
+        {
+          new_email: pendingEmail,
+          code: emailVerificationCode.trim(),
+        }
+      )
+
+      const updatedUser = data?.user || data
+      setUser(updatedUser)
+      setAccountForm((prev) => ({
+        ...prev,
+        email: updatedUser.email || prev.email,
+      }))
+      setPendingEmail("")
+      setEmailVerificationCode("")
+      toast.success(data?.message || "Email updated successfully.")
+    } catch (error) {
+      console.error(error)
+      const message =
+        error?.response?.data?.message ||
+        "Failed to verify email change. Please check the code and try again."
+      toast.error(message)
+    } finally {
+      setIsVerifyingEmailCode(false)
     }
   }
 
@@ -441,6 +518,49 @@ const Profile = () => {
                                 className={inputClassName}
                               />
                             </div>
+                            {pendingEmail && (
+                              <div className="max-w-sm space-y-1">
+                                <label className={labelClassName}>
+                                  Email verification code
+                                </label>
+                                <div className="flex items-stretch gap-2">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    value={emailVerificationCode}
+                                    onChange={(e) =>
+                                      setEmailVerificationCode(
+                                        e.target.value.replace(/[^0-9]/g, "")
+                                      )
+                                    }
+                                    className={inputClassName}
+                                    placeholder="Enter verification code"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleConfirmEmailChange}
+                                    disabled={
+                                      isVerifyingEmailCode ||
+                                      !emailVerificationCode
+                                    }
+                                    className="px-3 py-1.5 rounded-md bg-primary hover:bg-primary-dull text-white text-[11px] font-medium disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                                  >
+                                    {isVerifyingEmailCode
+                                      ? "Verifying"
+                                      : "Verify"}
+                                  </button>
+                                </div>
+                                <p className="text-[11px] text-gray-500">
+                                  We have sent a 6-digit code to{" "}
+                                  <span className="font-medium">
+                                    {pendingEmail}
+                                  </span>
+                                  . Enter the code to confirm your new email
+                                  address.
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex justify-start pt-2">

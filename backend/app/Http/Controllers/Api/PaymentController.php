@@ -51,7 +51,7 @@ class PaymentController extends Controller
             'item_details' => [
                 [
                     'id' => (string) $booking->car_id,
-                    'price' => (int) round($booking->base_price + $booking->extras_total),
+                    'price' => (int) round($booking->total_price),
                     'quantity' => 1,
                     'name' => $booking->car ? ($booking->car->brand . ' ' . $booking->car->model) : 'Car rental',
                 ],

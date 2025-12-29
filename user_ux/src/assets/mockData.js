@@ -62,14 +62,18 @@ export const mockCars = [
         price_per_day: 850000,
         location_id: 1,
         description: "MPV Hybrid premium, sangat irit BBM dan kabin senyap. Cocok untuk perjalanan bisnis atau keluarga.",
-        photo_url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
+        photo_url: "https://apollo.olx.co.id/v1/files/694e6c5292922-ID/image;s=780x0;q=60",
         images: [
             {
-                image_url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/694e6c5292922-ID/image;s=780x0;q=60",
                 is_primary: true
             },
             {
-                image_url: "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/694e6c5222bfc-ID/image;s=780x0;q=60",
+                is_primary: false
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/694e6c52e74b0-ID/image;s=780x0;q=60",
                 is_primary: false
             }
         ],
@@ -91,11 +95,19 @@ export const mockCars = [
         price_per_day: 350000,
         location_id: 1,
         description: "City car lincah, irit, dan stylish. Pilihan tepat untuk membelah kemacetan Jakarta.",
-        photo_url: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80",
+        photo_url: "https://apollo.olx.co.id/v1/files/692eb1cb37301-ID/image;s=780x0;q=60",
         images: [
             {
-                image_url: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/692eb1ca49d41-ID/image;s=1080x1080",
                 is_primary: true
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/692eb1cbe33bf-ID/image;s=1080x1080",
+                is_primary: false
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/692eb1cb6f40c-ID/image;s=1080x1080",
+                is_primary: false
             }
         ],
         features: ["Touchscreen Display", "Parking Sensor", "ABS", "Eco Indicator"],
@@ -116,14 +128,18 @@ export const mockCars = [
         price_per_day: 1300000,
         location_id: 2,
         description: "SUV tangguh dengan tenaga besar. Siap untuk perjalanan jarak jauh dan medan berat.",
-        photo_url: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80",
+        photo_url: "https://apollo.olx.co.id/v1/files/693cf4a390294-ID/image;s=780x0;q=60",
         images: [
             {
-                image_url: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/693cf4a390294-ID/image;s=780x0;q=60",
                 is_primary: true
             },
             {
-                image_url: "https://images.unsplash.com/photo-1580273916550-e323be2ebeed?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/693cf4a347c3c-ID/image;s=780x0;q=60",
+                is_primary: false
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/693cf4a014b03-ID/image;s=780x0;q=60",
                 is_primary: false
             }
         ],
@@ -145,11 +161,19 @@ export const mockCars = [
         price_per_day: 950000,
         location_id: 3,
         description: "Explore Bali dengan gaya menggunakan Jimny 5 pintu. Cocok untuk medan menantang dan pantai.",
-        photo_url: "https://images.unsplash.com/photo-1605218457223-2895f32a2656?auto=format&fit=crop&w=800&q=80",
+        photo_url: "https://apollo.olx.co.id/v1/files/68fa35abd31c5-ID/image;f=avif;s=1700x0",
         images: [
             {
-                image_url: "https://images.unsplash.com/photo-1605218457223-2895f32a2656?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/68fa35abd31c5-ID/image;f=avif;s=1700x0",
                 is_primary: true
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/68fa35b2454df-ID/image;f=avif;s=1700x0",
+                is_primary: false
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/68fa35acc395e-ID/image;f=avif;s=1700x0",
+                is_primary: false
             }
         ],
         features: ["4x4", "Apple CarPlay", "Roof Rack", "LED Headlights"],
@@ -170,11 +194,19 @@ export const mockCars = [
         price_per_day: 650000,
         location_id: 4,
         description: "MPV futuristik dengan kenyamanan maksimal untuk travel keluarga di Yogyakarta.",
-        photo_url: "https://images.unsplash.com/photo-1623869675781-80aa31012a5a?auto=format&fit=crop&w=800&q=80",
+        photo_url: "https://apollo.olx.co.id/v1/files/6946aa54ae0dc-ID/image;f=avif;s=1700x0",
         images: [
             {
-                image_url: "https://images.unsplash.com/photo-1623869675781-80aa31012a5a?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/6946aa54ae0dc-ID/image;f=avif;s=1700x0",
                 is_primary: true
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/6946aa932c50e-ID/image;f=avif;s=1700x0",
+                is_primary: false
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/6946ab042bfd3-ID/image;f=avif;s=1700x0",
+                is_primary: false
             }
         ],
         features: ["Captain Seat", "Wireless Charger", "Bluelink", "Drive Mode"],
@@ -195,11 +227,19 @@ export const mockCars = [
         price_per_day: 1250000,
         location_id: 5,
         description: "SUV gagah untuk perjalanan bisnis atau wisata bromo dari Surabaya.",
-        photo_url: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80",
+        photo_url: "https://apollo.olx.co.id/v1/files/6945750cc8625-ID/image;s=780x0;q=60",
         images: [
             {
-                image_url: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80",
+                image_url: "https://apollo.olx.co.id/v1/files/6945750cc8625-ID/image;s=780x0;q=60",
                 is_primary: true
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/6945750d1d772-ID/image;s=780x0;q=60",
+                is_primary: false
+            },
+            {
+                image_url: "https://apollo.olx.co.id/v1/files/6945750d3401a-ID/image;s=780x0;q=60",
+                is_primary: false
             }
         ],
         features: ["Sunroof", "Power Tailgate", "Active Stability Control", "Leather Seat"],
@@ -226,10 +266,10 @@ export const mockBookings = [
             year: 2024,
             location: {
                 country: 'Indonesia',
-                city: 'Jakarta Selatan',
-                name: 'Jakarta Selatan'
+                city: 'Jakarta',
+                name: 'Jakarta'
             },
-            photo_url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80"
+            photo_url: "https://apollo.olx.co.id/v1/files/693a4e9e6c245-ID/image;s=780x0;q=60"
         }
     },
     {
@@ -250,10 +290,10 @@ export const mockBookings = [
             year: 2024,
             location: {
                 country: 'Indonesia',
-                city: 'Bandung',
-                name: 'Stasiun Bandung'
+                city: 'West Java',
+                name: 'West Java'
             },
-            photo_url: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80"
+            photo_url: "https://apollo.olx.co.id/v1/files/694108fcb284d-ID/image;s=780x0;q=60"
         }
     },
     {
@@ -274,10 +314,10 @@ export const mockBookings = [
             year: 2023,
             location: {
                 country: 'Indonesia',
-                city: 'Jakarta Barat',
-                name: 'Jakarta Barat'
+                city: 'Jakarta',
+                name: 'Jakarta'
             },
-            photo_url: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80"
+            photo_url: "https://apollo.olx.co.id/v1/files/69478cd1965d2-ID/image;s=780x0;q=60"
         }
     },
     {
@@ -298,10 +338,10 @@ export const mockBookings = [
             year: 2024,
             location: {
                 country: 'Indonesia',
-                city: 'Jakarta Selatan',
-                name: 'Jakarta Selatan'
+                city: 'Jakarta',
+                name: 'Jakarta'
             },
-            photo_url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80"
+            photo_url: "https://apollo.olx.co.id/v1/files/694e54a7dadab-ID/image;f=avif;s=1700x0"
         }
     }
 ];

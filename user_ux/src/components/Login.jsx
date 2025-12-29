@@ -1,12 +1,13 @@
 import React from 'react'
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import { mockUser } from '../assets/mockData';
 
 const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:3000';
 
 const Login = () => {
 
-    const {setShowLogin, setToken, setUser, axios} = useAppContext()
+    const {setShowLogin, setToken, setUser} = useAppContext()
 
     const [state, setState] = React.useState("login"); // login | register | verify | forgot | reset
     const [name, setName] = React.useState("");
@@ -32,69 +33,58 @@ const Login = () => {
         toast.success('Login successful')
     }
 
-    const onSubmitHandler = async (event)=>{
+    const onSubmitHandler = (event)=>{
         event.preventDefault();
 
-        try {
-            if (state === 'login') {
-                const { data } = await axios.post('/api/user/login', { email, password })
-                if (data.token && data.user) {
-                    handleAfterAuthSuccess(data.user, data.token)
-                }
-            } else if (state === 'register') {
-                await axios.post('/api/user/register-with-verification', { name, email, password })
-                toast.success('Verification code sent to your email')
-                setState('verify')
-            } else if (state === 'verify') {
-                if (!verificationCode.trim()) {
-                    toast.error('Please enter the verification code')
-                    return
-                }
-                const { data } = await axios.post('/api/user/verify-email-code', {
-                    email,
-                    code: verificationCode.trim()
-                })
-                if (data.token && data.user) {
-                    handleAfterAuthSuccess(data.user, data.token)
-                }
-            } else if (state === 'forgot') {
-                await axios.post('/api/user/forgot-password', { email })
-                toast.success('If the email is registered, a reset code has been sent')
-                setState('reset')
-            } else if (state === 'reset') {
-                if (!verificationCode.trim()) {
-                    toast.error('Please enter the reset code')
-                    return
-                }
-                if (!resetPassword || !resetPasswordConfirm) {
-                    toast.error('Please fill both password fields')
-                    return
-                }
-                if (resetPassword !== resetPasswordConfirm) {
-                    toast.error('Passwords do not match')
-                    return
-                }
-                await axios.post('/api/user/reset-password-with-code', {
-                    email,
-                    code: verificationCode.trim(),
-                    password: resetPassword,
-                    password_confirmation: resetPasswordConfirm
-                })
-                toast.success('Password reset successfully, please login')
-                setState('login')
-                setPassword('')
-                setResetPassword('')
-                setResetPasswordConfirm('')
-                setVerificationCode('')
+        if (state === 'login') {
+            const demoUser = {
+                ...mockUser,
+                email: email || mockUser.email,
             }
-        } catch (error) {
-            console.error(error)
-            const apiMessage =
-              error?.response?.data?.message ||
-              (error?.response?.data?.errors &&
-                Object.values(error.response.data.errors)[0][0])
-
-            toast.error(apiMessage || 'Authentication failed')
+            handleAfterAuthSuccess(demoUser, 'demo-token')
+        } else if (state === 'register') {
+            if (!name || !email || !password) {
+                toast.error('Please fill all fields')
+                return
+            }
+            toast.success('Demo only: verification code sent to your email')
+            setState('verify')
+        } else if (state === 'verify') {
+            if (!verificationCode.trim()) {
+                toast.error('Please enter the verification code')
+                return
+            }
+            const demoUser = {
+                ...mockUser,
+                email: email || mockUser.email,
+            }
+            handleAfterAuthSuccess(demoUser, 'demo-token')
+        } else if (state === 'forgot') {
+            if (!email) {
+                toast.error('Please enter your email')
+                return
+            }
+            toast.success('Demo only: reset code has been sent')
+            setState('reset')
+        } else if (state === 'reset') {
+            if (!verificationCode.trim()) {
+                toast.error('Please enter the reset code')
+                return
+            }
+            if (!resetPassword || !resetPasswordConfirm) {
+                toast.error('Please fill both password fields')
+                return
+            }
+            if (resetPassword !== resetPasswordConfirm) {
+                toast.error('Passwords do not match')
+                return
+            }
+            toast.success('Demo only: password has been reset, please login')
+            setState('login')
+            setPassword('')
+            setResetPassword('')
+            setResetPasswordConfirm('')
+            setVerificationCode('')
         }
     }
 

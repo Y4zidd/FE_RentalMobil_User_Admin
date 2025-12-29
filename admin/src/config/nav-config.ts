@@ -58,6 +58,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Manage Coupons',
+    url: '/dashboard/coupons',
+    icon: 'settings',
+    shortcut: ['p', 'c'],
+    isActive: false,
+    items: []
+  },
+  {
     title: 'Manage Bookings',
     url: '/dashboard/bookings',
     icon: 'bookings',

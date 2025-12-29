@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { assets } from '../assets/assets'
 import Title from '../components/Title'
 import { useAppContext } from '../context/AppContext'
 import { motion as Motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-hot-toast'
 
 const MyBookings = () => {
 
-  const { axios, token, formatCurrency } = useAppContext()
+  const { bookings, token, formatCurrency } = useAppContext()
   const navigate = useNavigate()
-  const [bookings, setBookings] = useState([])
 
   const mapBookingFromApi = (b) => {
     const car = b.car || {}
@@ -52,23 +50,8 @@ const MyBookings = () => {
       minute: '2-digit'
     })
   }
-
-  const fetchBookings = async () => {
-    try {
-      const { data } = await axios.get('/api/bookings/user')
-      const mapped = Array.isArray(data) ? data.map(mapBookingFromApi) : []
-      setBookings(mapped)
-    } catch (error) {
-      console.error(error)
-      toast.error('Failed to fetch bookings')
-    }
-  }
-
-  useEffect(() => {
-    if (token) {
-      fetchBookings()
-    }
-  }, [token])
+  
+  const mappedBookings = Array.isArray(bookings) ? bookings.map(mapBookingFromApi) : []
 
   return (
     <Motion.div 
@@ -88,7 +71,7 @@ const MyBookings = () => {
         </div>
        ) : (
         <div>
-          {bookings.map((booking, index)=>(
+          {mappedBookings.map((booking, index)=>(
             <Motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

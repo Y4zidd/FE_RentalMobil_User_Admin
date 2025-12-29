@@ -77,6 +77,7 @@ class BookingController extends Controller
 
         $basePrice = $car->price_per_day * $days;
         $extrasTotal = 0;
+        $discountAmount = 0;
 
         DB::beginTransaction();
         try {
@@ -93,8 +94,11 @@ class BookingController extends Controller
                 'dropoff_location_id' => $request->dropoff_location_id ?? $request->pickup_location_id,
                 'status' => 'pending',
                 'payment_method' => $request->payment_method,
+                'coupon_id' => null,
+                'coupon_code' => null,
                 'base_price' => $basePrice,
                 'extras_total' => 0, // updated below
+                'discount_amount' => 0, // updated below
                 'total_price' => 0, // updated below
                 'notes' => $request->notes ?? null,
             ]);
@@ -118,8 +122,32 @@ class BookingController extends Controller
                 }
             }
 
+            if ($request->filled('coupon_code')) {
+                $coupon = \App\Models\Coupon::where('code', $request->coupon_code)->first();
+                if ($coupon && $coupon->is_active) {
+                    $now = \Carbon\Carbon::now();
+                    $isWithinDates = (!$coupon->starts_at || $now->gte($coupon->starts_at))
+                        && (!$coupon->expires_at || $now->lte($coupon->expires_at));
+                    $notExceeded = (!$coupon->max_uses || $coupon->used_count < $coupon->max_uses);
+                    $orderTotal = $basePrice + $extrasTotal;
+                    if ($isWithinDates && $notExceeded && $orderTotal >= ($coupon->min_order_total ?? 0)) {
+                        if ($coupon->discount_type === 'percent') {
+                            $discountAmount = (int) floor($orderTotal * ($coupon->discount_value / 100));
+                        } else {
+                            $discountAmount = (int) $coupon->discount_value;
+                        }
+                        $discountAmount = max(0, min($discountAmount, $orderTotal));
+                        $booking->coupon_id = $coupon->id;
+                        $booking->coupon_code = $coupon->code;
+                        $coupon->used_count = ($coupon->used_count ?? 0) + 1;
+                        $coupon->save();
+                    }
+                }
+            }
+
             $booking->extras_total = $extrasTotal;
-            $booking->total_price = $basePrice + $extrasTotal;
+            $booking->discount_amount = $discountAmount;
+            $booking->total_price = ($basePrice + $extrasTotal) - $discountAmount;
             $booking->save();
 
             // Keep car available while booking is pending.

@@ -2,7 +2,7 @@ import React from 'react'
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
-const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:3000';
+const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_URL;
 
 const Login = () => {
 
@@ -18,6 +18,10 @@ const Login = () => {
 
     const handleAfterAuthSuccess = (user, token) => {
         if (user?.role === 'admin' || user?.role === 'staff') {
+            if (!ADMIN_BASE_URL) {
+                toast.error('Admin dashboard URL is not configured')
+                return
+            }
             setShowLogin(false)
             toast.success('Login successful, redirecting to admin dashboard')
             window.location.href = `${ADMIN_BASE_URL}/auth/sign-in?token=${encodeURIComponent(

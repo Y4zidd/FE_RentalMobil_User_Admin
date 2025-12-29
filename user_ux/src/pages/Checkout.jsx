@@ -10,7 +10,7 @@ import { ShieldCheck, Calendar, MapPin, Car, CreditCard, ArrowLeft } from "lucid
 const Checkout = () => {
     const navigate = useNavigate()
     const location = useLocation()
-    const { cars, token, formatCurrency, user, axios, setShowLogin } = useAppContext()
+    const { cars, token, formatCurrency, user, setShowLogin } = useAppContext()
     const { carId, pickupDate, returnDate, pickupTime, returnTime, preselectedOptions } = location.state || {}
     const [car, setCar] = useState(null)
 
@@ -24,6 +24,11 @@ const Checkout = () => {
 
     const [paymentOption, setPaymentOption] = useState("pay_now") // pay_now || pay_later
     const [loading, setLoading] = useState(false)
+    const [couponCode, setCouponCode] = useState("")
+    const [couponDiscount, setCouponDiscount] = useState(0)
+    const [couponApplied, setCouponApplied] = useState(false)
+    const [couponLoading, setCouponLoading] = useState(false)
+    const [showPromoForm, setShowPromoForm] = useState(false)
 
     // User details state (editable)
     const [driverDetails, setDriverDetails] = useState({
@@ -118,95 +123,48 @@ const Checkout = () => {
     )
     const extrasCost = rentalDays * extrasPerDay
     const totalCost = baseCost + extrasCost
+    const finalCost = Math.max(0, totalCost - couponDiscount)
 
-    const handleBooking = async () => {
+    const handleApplyCoupon = () => {
+        const trimmed = couponCode.trim()
+        if (!trimmed) {
+            toast.error("Please enter a promo code")
+            return
+        }
+
+        if (!car || rentalDays <= 0 || !totalCost) {
+            toast.error("Please select valid dates first")
+            return
+        }
+
+        let discount = Math.round(totalCost * 0.1)
+        if (discount > totalCost) {
+            discount = totalCost
+        }
+
+        setCouponDiscount(discount)
+        setCouponApplied(true)
+        toast.success("Coupon applied")
+    }
+
+    const handleBooking = () => {
         if (!token) {
             toast.error('Please login or register before making a booking')
             setShowLogin(true)
             return
         }
 
-        setLoading(true)
-        try {
-            const selectedOptions = optionConfig
-                .filter((opt) => bookingOptions[opt.id])
-                .map((opt) => ({
-                    code: opt.id,
-                    label: opt.label,
-                    price: opt.pricePerDay,
-                }))
-
-            // Map our frontend option to backend expected enum
-            // 'pay_now' -> 'online_full', 'pay_later' -> 'pay_at_location'
-            const paymentMethodBackend = paymentOption === "pay_now" ? "online_full" : "pay_at_location"
-
-            const payload = {
-                car_id: car.id,
-                pickup_date: pickupDateTimeString,
-                return_date: returnDateTimeString,
-                payment_method: paymentMethodBackend,
-                pickup_location_id: car.locationId || 1, // Fallback need valid ID logic if not present
-                dropoff_location_id: car.locationId || 1,
-                options: selectedOptions,
-            }
-
-            const { data: booking } = await axios.post('/api/bookings', payload, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-
-            if (paymentMethodBackend === 'online_full') {
-                try {
-                    const { data: payment } = await axios.post(
-                        '/api/payments/checkout',
-                        { booking_id: booking.id },
-                        {
-                            headers: { Authorization: `Bearer ${token}` },
-                        },
-                    )
-
-                    if (payment.token && window.snap) {
-                        window.snap.pay(payment.token, {
-                            onSuccess: async () => {
-                                try {
-                                    await axios.post(
-                                        `/api/bookings/${booking.id}/mark-paid`,
-                                        {},
-                                        {
-                                            headers: { Authorization: `Bearer ${token}` },
-                                        }
-                                    )
-                                } catch (err) { console.error(err) }
-                                toast.success('Payment successful')
-                                navigate('/my-bookings')
-                            },
-                            onPending: () => {
-                                toast.success('Payment pending')
-                                navigate('/my-bookings')
-                            },
-                            onError: () => toast.error('Payment failed'),
-                            onClose: () => {
-                                toast('Payment popup closed. You can pay later from My Bookings.')
-                                navigate('/my-bookings')
-                            },
-                        })
-                    } else {
-                        toast.error('Payment initialization failed')
-                    }
-                } catch (payErr) {
-                    console.error(payErr)
-                    toast.error('Payment Error')
-                }
-            } else {
-                toast.success('Booking confirmed!')
-                navigate('/my-bookings')
-            }
-
-        } catch (error) {
-            console.error(error)
-            toast.error("Booking failed. Please try again.")
-        } finally {
-            setLoading(false)
+        if (!car || rentalDays <= 0) {
+            toast.error("Please select valid dates before booking")
+            return
         }
+
+        setLoading(true)
+        setTimeout(() => {
+            setLoading(false)
+            toast.success('Booking created for UX demo')
+            navigate('/my-bookings')
+        }, 800)
     }
 
     if (!car) return null
@@ -430,6 +388,12 @@ const Checkout = () => {
                                         <span>{formatCurrency(extrasCost)}</span>
                                     </div>
                                 )}
+                                {couponApplied && couponDiscount > 0 && (
+                                    <div className="flex justify-between text-sm text-gray-600">
+                                        <span>Coupon Discount</span>
+                                        <span>-{formatCurrency(couponDiscount)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Trip fee (service)</span>
                                     <span>{formatCurrency(0)}</span>
@@ -437,8 +401,44 @@ const Checkout = () => {
 
                                 <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
                                     <span className="font-bold text-gray-900">Trip total</span>
-                                    <span className="font-bold text-xl text-gray-900">{formatCurrency(totalCost)}</span>
+                                    <span className="font-bold text-xl text-gray-900">{formatCurrency(finalCost)}</span>
                                 </div>
+                                {!showPromoForm && (
+                                    <div className="mt-3 border-t border-gray-100 pt-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPromoForm(true)}
+                                            className="text-sm font-medium text-gray-900 underline underline-offset-2"
+                                        >
+                                            Promo code
+                                        </button>
+                                    </div>
+                                )}
+                                {showPromoForm && (
+                                    <div className="mt-3 space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900">
+                                            Promo code
+                                        </label>
+                                        <input
+                                            value={couponCode}
+                                            onChange={(e) => setCouponCode(e.target.value)}
+                                            placeholder="Enter promo code"
+                                            className="w-full h-10 px-3 rounded-md border border-gray-200 text-sm outline-none"
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                            Only one promo code can be applied per trip. If multiple codes are added,
+                                            only the last one will apply.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={handleApplyCoupon}
+                                            disabled={couponLoading}
+                                            className="inline-flex items-center justify-center px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-dull disabled:opacity-60"
+                                        >
+                                            {couponLoading ? "Checking..." : "Apply"}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                         </div>

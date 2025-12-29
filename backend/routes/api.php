@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\CouponController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +35,7 @@ Route::prefix('user')->group(function () {
 
     Route::get('cars', [CarController::class, 'index']);
     Route::get('cars/{id}', [CarController::class, 'show']);
+    Route::post('coupons/validate', [CouponController::class, 'validateCoupon']);
 
     // Protected User Routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -79,5 +81,6 @@ Route::prefix('admin')->group(function () {
 
         // Manage Bookings
         Route::apiResource('bookings', AdminBookingController::class)->except(['store', 'destroy']); // Admin usually edits status
+        Route::apiResource('coupons', \App\Http\Controllers\Api\Admin\CouponController::class);
     });
 });

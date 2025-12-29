@@ -112,15 +112,13 @@ const MyBookings = () => {
                   <p className='px-3 py-1.5 bg-light rounded'>Booking #{index+1}</p>
                   <p
                     className={`px-3 py-1 text-xs rounded-full capitalize ${
-                      booking.status === 'confirmed'
+                      booking.status === 'confirmed' || booking.status === 'completed'
                         ? 'bg-green-400/15 text-green-600'
                         : booking.status === 'pending'
                           ? 'bg-amber-400/15 text-amber-600'
                           : booking.status === 'cancelled'
                             ? 'bg-red-400/15 text-red-600'
-                            : booking.status === 'completed'
-                              ? 'bg-emerald-400/15 text-emerald-600'
-                              : 'bg-gray-400/15 text-gray-600'
+                            : 'bg-gray-400/15 text-gray-600'
                     }`}
                   >
                     {booking.status}

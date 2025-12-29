@@ -229,12 +229,13 @@ const BookingDetails = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <h3 className="text-lg font-bold text-gray-900">Booking Information</h3>
             <span
-              className={`px-4 py-1.5 text-xs font-semibold rounded-md uppercase tracking-wide w-fit ${booking.status === "confirmed"
-                ? "bg-green-100 text-green-700"
-                : booking.status === "pending"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-red-100 text-red-700"
-                }`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md uppercase tracking-wide w-fit ${
+                booking.status === "confirmed" || booking.status === "completed"
+                  ? "bg-green-100 text-green-700"
+                  : booking.status === "pending"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-red-100 text-red-700"
+              }`}
             >
               {booking.status}
             </span>

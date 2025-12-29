@@ -10,7 +10,7 @@ import { ShieldCheck, Calendar, MapPin, Car, CreditCard, ArrowLeft } from "lucid
 const Checkout = () => {
     const navigate = useNavigate()
     const location = useLocation()
-    const { cars, token, formatCurrency, user, setShowLogin } = useAppContext()
+    const { cars, token, formatCurrency, user, setShowLogin, bookings, setBookings } = useAppContext()
     const { carId, pickupDate, returnDate, pickupTime, returnTime, preselectedOptions } = location.state || {}
     const [car, setCar] = useState(null)
 
@@ -159,12 +159,57 @@ const Checkout = () => {
             return
         }
 
+        const now = new Date()
+        const newBookingId =
+            (Array.isArray(bookings) && bookings.length
+                ? Math.max(...bookings.map((b) => Number(b.id) || 0)) + 1
+                : 1)
+
+        const newBooking = {
+            id: newBookingId,
+            user_id: user?.id || 0,
+            car_id: car.id,
+            pickup_date: pickupDateTimeString,
+            return_date: returnDateTimeString,
+            total_price: finalCost || totalCost,
+            status: "completed",
+            payment_status: "paid",
+            created_at: now.toISOString(),
+            payment_method: "online_full",
+            options: optionConfig
+                .filter((opt) => bookingOptions[opt.id])
+                .map((opt) => ({
+                    id: opt.id,
+                    label: opt.label,
+                    price_per_day: opt.pricePerDay,
+                })),
+            car: {
+                id: car.id,
+                brand: car.brand,
+                model: car.model,
+                year: car.year,
+                category: car.category,
+                transmission: car.transmission,
+                seating_capacity: car.seating_capacity,
+                location: {
+                    country: car.country || "Indonesia",
+                    city: car.province || car.location || "",
+                    name: car.location || "",
+                },
+                photo_url: car.image,
+            },
+        }
+
         setLoading(true)
         setTimeout(() => {
+            setBookings((prev) => {
+                const list = Array.isArray(prev) ? prev : []
+                return [...list, newBooking]
+            })
             setLoading(false)
-            toast.success('Booking created for UX demo')
-            navigate('/my-bookings')
-        }, 800)
+            toast.success('Booking completed for UX demo')
+            navigate(`/my-bookings/${newBookingId}`)
+        }, 600)
     }
 
     if (!car) return null

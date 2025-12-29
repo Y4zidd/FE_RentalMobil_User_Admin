@@ -10,7 +10,7 @@ import { toast } from "react-hot-toast"
 const BookingDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { axios, token, bookings, formatCurrency } = useAppContext()
+  const { axios, token, bookings, formatCurrency, user } = useAppContext()
 
   const [booking, setBooking] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -127,6 +127,324 @@ const BookingDetails = () => {
   const canRetryPayment =
     booking.paymentMethod === "online_full" && booking.status === "pending"
 
+  const handleDownloadReceipt = () => {
+    if (!booking) return
+
+    const receiptWindow = window.open("", "BookingReceipt", "width=800,height=900")
+    if (!receiptWindow) {
+      toast.error("Please allow popups to download the receipt")
+      return
+    }
+
+    const title = "Car Rental Receipt"
+    const createdAt = booking.createdAt || new Date().toISOString()
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charSet="UTF-8" />
+          <title>${title}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              margin: 0;
+              padding: 32px 16px;
+              background: #0f172a;
+              color: #111827;
+              display: flex;
+              justify-content: center;
+              align-items: flex-start;
+            }
+            .receipt {
+              max-width: 700px;
+              width: 100%;
+              margin: 0 auto;
+              background: #ffffff;
+              border-radius: 24px;
+              padding: 28px 32px 26px;
+              border: 1px solid #e5e7eb;
+              box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 18px;
+              padding-bottom: 14px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .brand {
+              font-size: 22px;
+              font-weight: 700;
+              color: #1d4ed8;
+            }
+            .tagline {
+              color: #6b7280;
+              font-size: 12px;
+              margin-top: 2px;
+            }
+            .muted { color: #6b7280; font-size: 12px; }
+            .pill {
+              padding: 4px 10px;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 600;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              background: #e5edff;
+              color: #1d4ed8;
+              display: inline-block;
+              margin-bottom: 6px;
+            }
+            .section-title {
+              font-size: 13px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              color: #9ca3af;
+              margin-bottom: 6px;
+            }
+            .hero {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 18px;
+              margin-bottom: 18px;
+              padding: 12px 16px;
+              border-radius: 16px;
+              background: linear-gradient(135deg, #eff6ff, #f9fafb);
+            }
+            .hero-main {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .hero-title {
+              font-size: 18px;
+              font-weight: 700;
+              color: #111827;
+            }
+            .hero-sub {
+              font-size: 13px;
+              color: #6b7280;
+            }
+            .hero-image-wrap {
+              width: 120px;
+              height: 80px;
+              border-radius: 14px;
+              overflow: hidden;
+              background: #e5e7eb;
+              box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
+            }
+            .hero-image {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            .row {
+              display: flex;
+              justify-content: space-between;
+              gap: 16px;
+              margin-bottom: 12px;
+              font-size: 14px;
+            }
+            .label { color: #6b7280; }
+            .value { font-weight: 500; }
+            .divider {
+              border-top: 1px dashed #e5e7eb;
+              margin: 18px 0;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+              font-size: 15px;
+              margin-top: 4px;
+            }
+            .total-label { font-weight: 600; }
+            .total-value { font-size: 20px; font-weight: 700; color: #1d4ed8; }
+            .status-pill {
+              padding: 4px 10px;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              background: ${
+                booking.status === "completed" || booking.status === "confirmed"
+                  ? "#dcfce7"
+                  : booking.status === "pending"
+                  ? "#fef9c3"
+                  : "#fee2e2"
+              };
+              color: ${
+                booking.status === "completed" || booking.status === "confirmed"
+                  ? "#166534"
+                  : booking.status === "pending"
+                  ? "#92400e"
+                  : "#b91c1c"
+              };
+            }
+            .footer {
+              margin-top: 24px;
+              font-size: 11px;
+              color: #9ca3af;
+              text-align: center;
+            }
+            @media print {
+              body {
+                background: #ffffff;
+                padding: 0;
+                display: block;
+              }
+              .receipt {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+                width: 100%;
+                border-radius: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="header">
+              <div>
+                <div class="brand">CarRental</div>
+                <div class="tagline">Premium car rental receipt</div>
+              </div>
+              <div style="text-align: right;">
+                <div class="pill">Booking Receipt</div>
+                <div class="muted">Booking ID</div>
+                <div style="font-weight: 600;">#${
+                  String(booking.id || booking.bookingId || "").slice(-8).toUpperCase() || "DEMO"
+                }</div>
+                <div class="muted" style="margin-top:4px;">Issued at ${new Date(
+                  createdAt,
+                ).toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div class="hero">
+              <div class="hero-main">
+                <div class="hero-title">
+                  ${booking.car?.brand || ""} ${booking.car?.model || ""} ${booking.car?.year || ""}
+                </div>
+                <div class="hero-sub">
+                  Rental operator · CarRental
+                </div>
+              </div>
+              <div class="hero-image-wrap">
+                <img
+                  src="${booking.car?.image || ""}"
+                  alt="Car image"
+                  class="hero-image"
+                />
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <div class="section-title">Renter</div>
+              <div class="row">
+                <div>
+                  <div class="label">Name</div>
+                  <div class="value">${user?.name || "Demo Customer"}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="label">Email</div>
+                  <div class="value">${user?.email || "demo@example.com"}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="margin-bottom: 16px;">
+              <div class="section-title">Car & Rental Details</div>
+              <div class="row">
+                <div>
+                  <div class="label">Car</div>
+                  <div class="value">
+                    ${booking.car?.brand || ""} ${booking.car?.model || ""} ${
+                  booking.car?.year || ""
+                }
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="label">Location</div>
+                  <div class="value">${booking.car?.location || "-"}</div>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <div class="label">Pick-up</div>
+                  <div class="value">${formatDateTime(booking.pickupDate)}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="label">Drop-off</div>
+                  <div class="value">${formatDateTime(booking.returnDate)}</div>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <div class="label">Status</div>
+                  <div class="status-pill">${(booking.status || "")
+                    .toString()
+                    .toUpperCase()}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="label">Payment Method</div>
+                  <div class="value">${
+                    booking.paymentMethod === "online_full" ? "Online Payment" : "On Arrival"
+                  }</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div>
+              <div class="section-title">Price Summary</div>
+              <div class="row">
+                <div class="label">Rental period</div>
+                <div class="value">${rentalPeriod}</div>
+              </div>
+              <div class="row">
+                <div class="label">Extras & insurance</div>
+                <div class="value">${
+                  booking.extras && booking.extras.length
+                    ? booking.extras.join(", ")
+                    : "Included"
+                }</div>
+              </div>
+              <div class="divider"></div>
+              <div class="total-row">
+                <div class="total-label">Total paid</div>
+                <div class="total-value">${formatCurrency(booking.price || 0)}</div>
+              </div>
+            </div>
+
+            <div class="footer">
+              Thank you for choosing CarRental. Please present this receipt at pick-up if requested.
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `
+
+    receiptWindow.document.open()
+    receiptWindow.document.write(html)
+    receiptWindow.document.close()
+  }
+
   const handleRetryPayment = async () => {
     if (!token) {
       toast.error("Please login again to continue payment")
@@ -242,12 +560,13 @@ const BookingDetails = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <h3 className="text-lg font-bold text-gray-900">Booking Information</h3>
             <span
-              className={`px-4 py-1.5 text-xs font-semibold rounded-md uppercase tracking-wide w-fit ${booking.status === "confirmed"
-                ? "bg-green-100 text-green-700"
-                : booking.status === "pending"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-red-100 text-red-700"
-                }`}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md uppercase tracking-wide w-fit ${
+                booking.status === "confirmed" || booking.status === "completed"
+                  ? "bg-green-100 text-green-700"
+                  : booking.status === "pending"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-red-100 text-red-700"
+              }`}
             >
               {booking.status}
             </span>
@@ -331,6 +650,7 @@ const BookingDetails = () => {
           <div className="flex flex-col md:flex-row gap-4 justify-end">
             <button
               type="button"
+              onClick={handleDownloadReceipt}
               className="px-6 py-3 rounded-lg bg-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-300 transition-colors"
             >
               Download Receipt

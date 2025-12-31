@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:admin": "npm run dev --prefix ./admin",
+    "build:admin": "npm run build --prefix ./admin",
+    "start:admin": "npm run start --prefix ./admin",
+    "dev:both": "concurrently -n user,admin -c green,blue \"npm run dev\" \"npm run dev:admin\"",
+    "dev:backend": "composer --working-dir ../backend run dev",
+    "dev:all": "concurrently -n user,admin,backend -c green,blue,magenta \"npm run dev\" \"npm run dev:admin\" \"npm run dev:backend\""
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -15,14 +21,14 @@
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
     "framer-motion": "^12.23.26",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.561.0",
     "motion": "^12.19.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
-    "react-router-dom": "^7.6.2",
     "react-leaflet": "^4.2.1",
-    "leaflet": "^1.9.4",
+    "react-router-dom": "^7.6.2",
     "tailwindcss": "^4.1.10"
   },
   "devDependencies": {
@@ -30,6 +36,7 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^8.2.2",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",

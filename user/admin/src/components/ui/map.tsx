@@ -75,9 +75,9 @@ const MapClickHandlerImpl = dynamic(
 
 type LatLngTuple = [number, number];
 
-const ASEAN_BOUNDS: [LatLngTuple, LatLngTuple] = [
-  [-12, 90],
-  [30, 150]
+const INDONESIA_BOUNDS: [LatLngTuple, LatLngTuple] = [
+  [-11, 94],
+  [6, 141]
 ];
 
 interface MapProps extends Omit<MapContainerProps, 'center'> {
@@ -142,7 +142,7 @@ export function Map(props: MapProps) {
       zoomControl={false}
       preferCanvas
       minZoom={rest.minZoom ?? 3}
-      maxBounds={rest.maxBounds ?? ASEAN_BOUNDS}
+      maxBounds={rest.maxBounds ?? INDONESIA_BOUNDS}
       maxBoundsViscosity={rest.maxBoundsViscosity ?? 1}
       className={cn('h-full w-full isolate z-0', className)}
       {...rest}

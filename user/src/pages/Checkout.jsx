@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAppContext } from "../context/AppContext"
-import { assets } from "../assets/assets"
 import { motion as Motion } from "motion/react"
 import Title from "../components/Title"
 import toast from "react-hot-toast"
@@ -15,14 +14,14 @@ const Checkout = () => {
     const [car, setCar] = useState(null)
 
     // State for form, initialized with preselectedOptions if available
-    const [bookingOptions, setBookingOptions] = useState(preselectedOptions || {
+    const [bookingOptions] = useState(preselectedOptions || {
         theftProtection: false,
         collisionDamage: false,
         fullInsurance: false,
         additionalDriver: false,
     })
 
-    const [paymentOption, setPaymentOption] = useState("pay_now") // pay_now || pay_later
+    const [paymentOption, setPaymentOption] = useState("pay_now")
     const [loading, setLoading] = useState(false)
     const [couponCode, setCouponCode] = useState("")
     const [couponDiscount, setCouponDiscount] = useState(0)
@@ -95,13 +94,6 @@ const Checkout = () => {
         },
     ]
 
-    const toggleOption = (id) => {
-        setBookingOptions((prev) => ({
-            ...prev,
-            [id]: !prev[id],
-        }))
-    }
-
     const pickupDateTimeString = pickupDate && pickupTime ? `${pickupDate}T${pickupTime}` : pickupDate
     const returnDateTimeString = returnDate && returnTime ? `${returnDate}T${returnTime}` : returnDate
 
@@ -155,7 +147,7 @@ const Checkout = () => {
                 setCouponApplied(false)
                 toast.error(data.message || "Coupon is not available")
             }
-        } catch (err) {
+        } catch {
             setCouponDiscount(0)
             setCouponApplied(false)
             toast.error("Coupon is not available")

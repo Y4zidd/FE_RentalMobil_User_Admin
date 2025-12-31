@@ -60,33 +60,20 @@ const MapZoomButtons = () => {
 const fallbackLocations = cityList.map((city) => ({
   label: city,
   city,
-  country: 'Custom',
+  country: 'Indonesia',
   lat: cityCoordinates[city]?.lat,
   lng: cityCoordinates[city]?.lng,
 }))
 
-const ASEAN_COUNTRY_SET = new Set([
-  'Brunei',
-  'Cambodia',
-  'Indonesia',
-  'Laos',
-  'Malaysia',
-  'Myanmar',
-  'Philippines',
-  'Singapore',
-  'Thailand',
-  'Vietnam',
-])
-
-const ASEAN_BOUNDS = [
-  [-12, 90],
-  [30, 150],
+const INDONESIA_BOUNDS = [
+  [-11, 94],
+  [6, 141],
 ]
 
 const Hero = () => {
 
   const [pickupLocation, setPickupLocation] = useState('')
-  const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState('Indonesia')
   const [selectedCoords, setSelectedCoords] = useState(null)
   const statesControllerRef = useRef(null)
   const geocodeControllerRef = useRef(null)
@@ -133,7 +120,7 @@ const Hero = () => {
             if (!name) {
               return false
             }
-            return ASEAN_COUNTRY_SET.has(name)
+            return name === 'Indonesia'
           })
           .filter(
             (country) =>
@@ -262,7 +249,7 @@ const Hero = () => {
             try {
               const res = await fetch(
                 'https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox=' +
-                encodeURIComponent(`90,30,150,-12`) +
+                encodeURIComponent(`94,6,141,-11`) +
                 '&q=' +
                 encodeURIComponent(match.label),
                 { signal: controller2.signal }
@@ -290,7 +277,7 @@ const Hero = () => {
         try {
           const res = await fetch(
             'https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox=' +
-            encodeURIComponent(`90,30,150,-12`) +
+            encodeURIComponent(`94,6,141,-11`) +
             '&q=' +
             encodeURIComponent(selectedCountry)
           )
@@ -377,7 +364,7 @@ const Hero = () => {
         geocodeControllerRef.current = controller
         const res = await fetch(
           'https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox=' +
-          encodeURIComponent(`90,30,150,-12`) +
+          encodeURIComponent(`94,6,141,-11`) +
           '&q=' +
           encodeURIComponent(label),
           { signal: controller.signal }
@@ -624,47 +611,22 @@ const Hero = () => {
               </button>
             </div>
 
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='flex flex-col gap-2'>
-                <label className='text-xs text-gray-500'>Country</label>
-                <select
-                  className='w-full rounded-xl border border-borderColor px-3 py-2 text-sm'
-                  value={selectedCountry}
-                  onChange={(e) => {
-                    setSelectedCountry(e.target.value)
-                    setPickupLocation('')
-                  }}
-                >
-                  <option value=''>
-                    {isLoadingLocations ? 'Loading countries...' : 'Select country'}
-                  </option>
-                  {countryOptions.map((country) => (
-                    <option key={country} value={country}>
-                      {country}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className='grid gap-3 sm:grid-cols-1'>
               <div className='flex flex-col gap-2'>
                 <label className='text-xs text-gray-500'>Province / City</label>
                 <select
                   className='w-full rounded-xl border border-borderColor px-3 py-2 text-sm'
                   value={pickupLocation}
                   onChange={(e) => handleLocationChange(e.target.value)}
-                  disabled={!selectedCountry}
                 >
                   <option value=''>
-                    {selectedCountry
-                      ? isLoadingLocations
-                        ? 'Loading locations...'
-                        : 'Select province or city'
-                      : 'Select country first'}
+                    {isLoadingLocations
+                      ? 'Loading locations...'
+                      : 'Select province or city'}
                   </option>
                   {provinces.map((location) => (
                     <option key={location.label} value={location.label}>
-                      {location.city
-                        ? `${location.city}, ${location.country}`
-                        : location.label}
+                      {location.city || location.label}
                     </option>
                   ))}
                 </select>
@@ -679,7 +641,7 @@ const Hero = () => {
                 maxZoom={12}
                 scrollWheelZoom
                 zoomControl={false}
-                maxBounds={ASEAN_BOUNDS}
+                maxBounds={INDONESIA_BOUNDS}
                 maxBoundsViscosity={1.0}
                 preferCanvas
                 updateWhenZooming

@@ -16,14 +16,13 @@ const CarDetails = () => {
 
   const { id } = useParams()
 
-  const { cars, pickupDate, setPickupDate, returnDate, setReturnDate, axios, token, setShowLogin, formatCurrency } = useAppContext()
+  const { cars, pickupDate, setPickupDate, returnDate, setReturnDate, token, setShowLogin, formatCurrency } = useAppContext()
 
   const navigate = useNavigate()
   const [car, setCar] = useState(null)
   const [activeImage, setActiveImage] = useState('')
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [isHoveringMain, setIsHoveringMain] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [pickupTime, setPickupTime] = useState('09:00')
   const [returnTime, setReturnTime] = useState('10:00')
 

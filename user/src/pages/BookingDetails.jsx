@@ -93,24 +93,6 @@ const BookingDetails = () => {
     )
   }
 
-  const formatDateTime = (value) => {
-    if (!value) return ''
-    const date = new Date(value)
-    if (isNaN(date.getTime())) return value
-    return date.toLocaleString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    })
-  }
-
-  const rentalPeriod =
-    formatDateTime(booking.pickupDate) +
-    " - " +
-    formatDateTime(booking.returnDate)
-
   const canRetryPayment =
     booking.paymentMethod === "online_full" && booking.status === "pending"
 

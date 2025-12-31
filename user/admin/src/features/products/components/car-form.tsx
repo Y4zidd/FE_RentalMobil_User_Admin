@@ -36,20 +36,48 @@ const ACCEPTED_IMAGE_TYPES = [
   'image/webp'
 ];
 
-const ASEAN_COUNTRY_SET = new Set<string>([
-  'Brunei',
-  'Cambodia',
-  'Indonesia',
-  'Laos',
-  'Malaysia',
-  'Myanmar',
-  'Philippines',
-  'Singapore',
-  'Thailand',
-  'Vietnam'
-]);
+const INDONESIA_DEFAULT_CENTER: [number, number] = [-2, 115];
 
-const ASEAN_DEFAULT_CENTER: [number, number] = [-2, 115];
+const INDONESIAN_PROVINCES: FormOption[] = [
+  { value: 'Aceh', label: 'Aceh' },
+  { value: 'Sumatera Utara', label: 'Sumatera Utara' },
+  { value: 'Sumatera Barat', label: 'Sumatera Barat' },
+  { value: 'Riau', label: 'Riau' },
+  { value: 'Kepulauan Riau', label: 'Kepulauan Riau' },
+  { value: 'Jambi', label: 'Jambi' },
+  { value: 'Sumatera Selatan', label: 'Sumatera Selatan' },
+  { value: 'Kepulauan Bangka Belitung', label: 'Kepulauan Bangka Belitung' },
+  { value: 'Bengkulu', label: 'Bengkulu' },
+  { value: 'Lampung', label: 'Lampung' },
+  { value: 'DKI Jakarta', label: 'DKI Jakarta' },
+  { value: 'Jawa Barat', label: 'Jawa Barat' },
+  { value: 'Banten', label: 'Banten' },
+  { value: 'Jawa Tengah', label: 'Jawa Tengah' },
+  { value: 'DI Yogyakarta', label: 'DI Yogyakarta' },
+  { value: 'Jawa Timur', label: 'Jawa Timur' },
+  { value: 'Bali', label: 'Bali' },
+  { value: 'Nusa Tenggara Barat', label: 'Nusa Tenggara Barat' },
+  { value: 'Nusa Tenggara Timur', label: 'Nusa Tenggara Timur' },
+  { value: 'Kalimantan Barat', label: 'Kalimantan Barat' },
+  { value: 'Kalimantan Tengah', label: 'Kalimantan Tengah' },
+  { value: 'Kalimantan Selatan', label: 'Kalimantan Selatan' },
+  { value: 'Kalimantan Timur', label: 'Kalimantan Timur' },
+  { value: 'Kalimantan Utara', label: 'Kalimantan Utara' },
+  { value: 'Sulawesi Utara', label: 'Sulawesi Utara' },
+  { value: 'Sulawesi Tengah', label: 'Sulawesi Tengah' },
+  { value: 'Sulawesi Selatan', label: 'Sulawesi Selatan' },
+  { value: 'Sulawesi Tenggara', label: 'Sulawesi Tenggara' },
+  { value: 'Gorontalo', label: 'Gorontalo' },
+  { value: 'Sulawesi Barat', label: 'Sulawesi Barat' },
+  { value: 'Maluku', label: 'Maluku' },
+  { value: 'Maluku Utara', label: 'Maluku Utara' },
+  { value: 'Papua', label: 'Papua' },
+  { value: 'Papua Barat', label: 'Papua Barat' },
+  { value: 'Papua Barat Daya', label: 'Papua Barat Daya' },
+  { value: 'Papua Tengah', label: 'Papua Tengah' },
+  { value: 'Papua Pegunungan', label: 'Papua Pegunungan' },
+  { value: 'Papua Selatan', label: 'Papua Selatan' }
+];
 
 const formSchema = z.object({
   image: z
@@ -101,9 +129,6 @@ const formSchema = z.object({
   fuelType: z.string().min(1, {
     message: 'Fuel type is required.'
   }),
-  country: z.string().min(1, {
-    message: 'Country is required.'
-  }),
   province: z.string().min(1, {
     message: 'Province or region is required.'
   }),
@@ -123,11 +148,6 @@ export default function CarForm({
   initialData: Product | null;
   pageTitle: string;
 }) {
-  const [countryOptions, setCountryOptions] = useState<FormOption[]>([]);
-  const [provinceOptionsByCountry, setProvinceOptionsByCountry] = useState<
-    Record<string, FormOption[]>
-  >({});
-  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
@@ -139,14 +159,12 @@ export default function CarForm({
     const location = initialData?.location || '';
     if (!location.includes(',')) {
       return {
-        province: location,
-        country: ''
+        province: location
       };
     }
-    const [province, country] = location.split(',').map((part) => part.trim());
+    const [province] = location.split(',').map((part) => part.trim());
     return {
-      province,
-      country
+      province
     };
   })();
 
@@ -159,7 +177,6 @@ export default function CarForm({
     seatingCapacity: initialData?.seating_capacity || 1,
     transmission: initialData?.transmission || '',
     fuelType: initialData?.fuel_type || '',
-    country: parsedLocation.country,
     province: parsedLocation.province,
     year: initialData?.year || new Date().getFullYear(),
     category: initialData?.category || '',
@@ -173,7 +190,6 @@ export default function CarForm({
     defaultValues: defaultValues
   });
 
-  const selectedCountry = form.watch('country');
   const selectedProvince = form.watch('province');
 
   const handleRemoveExistingImage = (id: number) => {
@@ -182,135 +198,7 @@ export default function CarForm({
   };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchCountries = async () => {
-      try {
-        setIsLoadingLocations(true);
-
-        const response = await fetch(
-          'https://restcountries.com/v3.1/all?fields=name'
-        );
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-
-        if (!isMounted) {
-          return;
-        }
-
-        const countrySet = new Set<string>();
-
-        data.forEach((item: any) => {
-          const name = item.name?.common as string | undefined;
-          if (!name) {
-            return;
-          }
-          if (!ASEAN_COUNTRY_SET.has(name)) {
-            return;
-          }
-          countrySet.add(name);
-        });
-
-        const countries: FormOption[] = Array.from(countrySet)
-          .map((name) => ({
-            value: name,
-            label: name
-          }))
-          .sort((a, b) => a.label.localeCompare(b.label));
-
-        setCountryOptions(countries);
-      } catch {
-      } finally {
-        if (isMounted) {
-          setIsLoadingLocations(false);
-        }
-      }
-    };
-
-    fetchCountries();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCountry) {
-      return;
-    }
-
-    if (provinceOptionsByCountry[selectedCountry]) {
-      return;
-    }
-
-    let isMounted = true;
-
-    const fetchStates = async () => {
-      try {
-        setIsLoadingLocations(true);
-
-        const response = await fetch(
-          'https://countriesnow.space/api/v0.1/countries/states',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              country: selectedCountry
-            })
-          }
-        );
-
-        if (!response.ok) {
-          return;
-        }
-
-        const json = await response.json();
-
-        if (!isMounted) {
-          return;
-        }
-
-        const states = json?.data?.states ?? [];
-
-        const options: FormOption[] = states
-          .map((state: any) => ({
-            value: state.name,
-            label: state.name
-          }))
-          .sort((a: FormOption, b: FormOption) =>
-            a.label.localeCompare(b.label)
-          );
-
-        setProvinceOptionsByCountry((prev) => ({
-          ...prev,
-          [selectedCountry]: options
-        }));
-      } catch {
-      } finally {
-        if (isMounted) {
-          setIsLoadingLocations(false);
-        }
-      }
-    };
-
-    fetchStates();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCountry, provinceOptionsByCountry]);
-
-  useEffect(() => {
-    const query =
-      selectedProvince && selectedCountry
-        ? `${selectedProvince}, ${selectedCountry}`
-        : selectedCountry || selectedProvince;
+    const query = selectedProvince ? `${selectedProvince}, Indonesia` : '';
 
     if (!query) {
       return;
@@ -334,7 +222,7 @@ export default function CarForm({
 
         const response = await fetch(
           'https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox=' +
-            encodeURIComponent('90,30,150,-12') +
+            encodeURIComponent('94,6,141,-11') +
             '&q=' +
             encodeURIComponent(query),
           { signal: controller.signal }
@@ -380,7 +268,7 @@ export default function CarForm({
         }
       }
     };
-  }, [selectedCountry, selectedProvince]);
+  }, [selectedProvince]);
 
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -411,7 +299,7 @@ export default function CarForm({
         fuel_type: values.fuelType,
         seating_capacity: values.seatingCapacity,
         price_per_day: values.pricePerDay,
-        location_name: `${values.province}, ${values.country}`,
+        location_name: `${values.province}, Indonesia`,
         location_city: values.province,
         location_address: '',
         location_latitude: markerPosition ? markerPosition[0] : null,
@@ -637,7 +525,7 @@ export default function CarForm({
 
           <div className='space-y-4'>
             <h3 className='text-lg font-medium'>Rental Information</h3>
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
               <FormField
                 control={form.control}
                 name='pricePerDay'
@@ -669,27 +557,11 @@ export default function CarForm({
               />
               <FormSelect<CarFormValues>
                 control={form.control}
-                name='country'
-                label='Country'
-                placeholder={
-                  isLoadingLocations ? 'Loading countries...' : 'Select country'
-                }
-                required
-                disabled={isLoadingLocations}
-                options={countryOptions}
-              />
-              <FormSelect<CarFormValues>
-                control={form.control}
                 name='province'
                 label='Province / Region'
                 placeholder='Select province or region'
                 required
-                disabled={
-                  isLoadingLocations || !form.watch('country')
-                }
-                options={
-                  provinceOptionsByCountry[form.watch('country')] ?? []
-                }
+                options={INDONESIAN_PROVINCES}
               />
             </div>
             <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
@@ -705,11 +577,11 @@ export default function CarForm({
             <div className='space-y-2'>
               <p className='text-sm font-medium'>Pickup Location Map</p>
               <p className='text-xs text-muted-foreground'>
-                The map will follow the selected country and province/region.
+                The map will follow the selected province in Indonesia.
               </p>
               <div className='mt-2 h-64 overflow-hidden rounded-xl border'>
                 <Map
-                  center={mapCenter ?? ASEAN_DEFAULT_CENTER}
+                  center={mapCenter ?? INDONESIA_DEFAULT_CENTER}
                   zoom={mapCenter ? 6 : 4}
                   scrollWheelZoom
                   className='h-full w-full'
@@ -719,9 +591,9 @@ export default function CarForm({
                   {markerPosition && (
                     <MapMarker position={markerPosition}>
                       <MapPopup>
-                        {selectedProvince && selectedCountry
-                          ? `${selectedProvince}, ${selectedCountry}`
-                          : selectedCountry || 'Selected location'}
+                        {selectedProvince
+                          ? `${selectedProvince}, Indonesia`
+                          : 'Selected location'}
                       </MapPopup>
                     </MapMarker>
                   )}

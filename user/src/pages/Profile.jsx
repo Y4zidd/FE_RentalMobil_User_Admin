@@ -15,17 +15,45 @@ import {
   ChevronRight,
 } from "lucide-react"
 
-const ASEAN_COUNTRIES = [
-  "Indonesia",
-  "Singapore",
-  "Malaysia",
-  "Thailand",
-  "Philippines",
-  "Vietnam",
-  "Brunei",
-  "Cambodia",
-  "Laos",
-  "Myanmar",
+const INDONESIAN_PROVINCES = [
+  "Aceh",
+  "Sumatera Utara",
+  "Sumatera Barat",
+  "Riau",
+  "Kepulauan Riau",
+  "Jambi",
+  "Sumatera Selatan",
+  "Kepulauan Bangka Belitung",
+  "Bengkulu",
+  "Lampung",
+  "DKI Jakarta",
+  "Jawa Barat",
+  "Banten",
+  "Jawa Tengah",
+  "DI Yogyakarta",
+  "Jawa Timur",
+  "Bali",
+  "Nusa Tenggara Barat",
+  "Nusa Tenggara Timur",
+  "Kalimantan Barat",
+  "Kalimantan Tengah",
+  "Kalimantan Selatan",
+  "Kalimantan Timur",
+  "Kalimantan Utara",
+  "Sulawesi Utara",
+  "Sulawesi Tengah",
+  "Sulawesi Selatan",
+  "Sulawesi Tenggara",
+  "Gorontalo",
+  "Sulawesi Barat",
+  "Maluku",
+  "Maluku Utara",
+  "Papua",
+  "Papua Barat",
+  "Papua Barat Daya",
+  "Papua Tengah",
+  "Papua Pegunungan",
+  "Papua Selatan",
 ]
 
 const Profile = () => {
@@ -46,12 +74,8 @@ const Profile = () => {
     defaultCity: "",
     preferences: "",
   })
-
-  const [selectedCountry, setSelectedCountry] = useState("")
   const [selectedProvince, setSelectedProvince] = useState("")
-  const [countryOptions, setCountryOptions] = useState([])
-  const [provinceOptions, setProvinceOptions] = useState([])
-  const [isLoadingLocations, setIsLoadingLocations] = useState(false)
+  const [provinceOptions] = useState(INDONESIAN_PROVINCES)
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -93,71 +117,12 @@ const Profile = () => {
     const defaultCity = baseUser.default_city || ""
     if (defaultCity) {
       const parts = defaultCity.split(",").map((part) => part.trim())
-      if (parts.length >= 2) {
-        setSelectedProvince(parts[0])
-        setSelectedCountry(parts[1])
-      } else {
-        setSelectedProvince(defaultCity)
-        setSelectedCountry("")
-      }
+      setSelectedProvince(parts[0] || defaultCity)
     } else {
       setSelectedProvince("")
-      setSelectedCountry("")
     }
     setAvatarPreview(baseUser?.avatar_url || "")
   }, [baseUser])
-
-  useEffect(() => {
-    setCountryOptions(ASEAN_COUNTRIES)
-  }, [])
-
-  useEffect(() => {
-    if (!selectedCountry) {
-      setProvinceOptions([])
-      return
-    }
-
-    let isMounted = true
-
-    const fetchProvinces = async () => {
-      try {
-        setIsLoadingLocations(true)
-        const response = await fetch(
-          "https://countriesnow.space/api/v0.1/countries/states",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              country: selectedCountry,
-            }),
-          }
-        )
-
-        if (!response.ok) return
-        const json = await response.json()
-        if (!isMounted) return
-
-        const states = json?.data?.states ?? []
-        const options = states
-          .map((state) => state.name)
-          .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b))
-
-        setProvinceOptions(options)
-      } catch (error) {
-        void error
-      } finally {
-        if (isMounted) setIsLoadingLocations(false)
-      }
-    }
-
-    fetchProvinces()
-    return () => {
-      isMounted = false
-    }
-  }, [selectedCountry])
 
   const handleAccountChange = (e) => {
     const { name, value } = e.target
@@ -174,18 +139,11 @@ const Profile = () => {
     setPasswordForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleCountryChange = (value) => {
-    setSelectedCountry(value)
-    setSelectedProvince("")
-    setRentalForm((prev) => ({ ...prev, defaultCity: "" }))
-  }
-
   const handleProvinceChange = (value) => {
     setSelectedProvince(value)
     setRentalForm((prev) => ({
       ...prev,
-      defaultCity:
-        value && selectedCountry ? `${value}, ${selectedCountry}` : value,
+      defaultCity: value ? `${value}, Indonesia` : "",
     }))
   }
 
@@ -590,15 +548,19 @@ const Profile = () => {
                           </div>
                         </div>
                         <div>
-                          <label className={labelClassName}>Default Pickup Location</label>
+                          <label className={labelClassName}>Default Pickup Location (Province)</label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <select value={selectedCountry} onChange={(e) => handleCountryChange(e.target.value)} className={inputClassName}>
-                              <option value="">Select Country</option>
-                              {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                            <select value={selectedProvince} onChange={(e) => handleProvinceChange(e.target.value)} disabled={!selectedCountry} className={inputClassName}>
+                            <select
+                              value={selectedProvince}
+                              onChange={(e) => handleProvinceChange(e.target.value)}
+                              className={inputClassName}
+                            >
                               <option value="">Select Province</option>
-                              {provinceOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                              {provinceOptions.map((p) => (
+                                <option key={p} value={p}>
+                                  {p}
+                                </option>
+                              ))}
                             </select>
                           </div>
                         </div>

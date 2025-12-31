@@ -6,7 +6,7 @@ const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_URL;
 
 const Login = () => {
 
-    const {setShowLogin, setToken, setUser, axios} = useAppContext()
+    const {setShowLogin, setToken, setUser, axios, t} = useAppContext()
 
     const [state, setState] = React.useState("login"); // login | register | verify | forgot | reset
     const [name, setName] = React.useState("");
@@ -19,11 +19,11 @@ const Login = () => {
     const handleAfterAuthSuccess = (user, token) => {
         if (user?.role === 'admin' || user?.role === 'staff') {
             if (!ADMIN_BASE_URL) {
-                toast.error('Admin dashboard URL is not configured')
+                toast.error(t('login_admin_url_not_configured'))
                 return
             }
             setShowLogin(false)
-            toast.success('Login successful, redirecting to admin dashboard')
+            toast.success(t('login_admin_redirect_success'))
             window.location.href = `${ADMIN_BASE_URL}/auth/sign-in?token=${encodeURIComponent(
                 token
             )}`
@@ -33,7 +33,7 @@ const Login = () => {
         localStorage.setItem('token', token)
         setUser(user)
         setShowLogin(false)
-        toast.success('Login successful')
+        toast.success(t('login_success'))
     }
 
     const onSubmitHandler = async (event)=>{
@@ -47,11 +47,11 @@ const Login = () => {
                 }
             } else if (state === 'register') {
                 await axios.post('/api/user/register-with-verification', { name, email, password })
-                toast.success('Verification code sent to your email')
+                toast.success(t('login_verification_sent'))
                 setState('verify')
             } else if (state === 'verify') {
                 if (!verificationCode.trim()) {
-                    toast.error('Please enter the verification code')
+                    toast.error(t('login_enter_verification_code'))
                     return
                 }
                 const { data } = await axios.post('/api/user/verify-email-code', {
@@ -63,19 +63,19 @@ const Login = () => {
                 }
             } else if (state === 'forgot') {
                 await axios.post('/api/user/forgot-password', { email })
-                toast.success('If the email is registered, a reset code has been sent')
+                toast.success(t('login_reset_email_sent'))
                 setState('reset')
             } else if (state === 'reset') {
                 if (!verificationCode.trim()) {
-                    toast.error('Please enter the reset code')
+                    toast.error(t('login_enter_reset_code'))
                     return
                 }
                 if (!resetPassword || !resetPasswordConfirm) {
-                    toast.error('Please fill both password fields')
+                    toast.error(t('login_fill_both_password_fields'))
                     return
                 }
                 if (resetPassword !== resetPasswordConfirm) {
-                    toast.error('Passwords do not match')
+                    toast.error(t('login_passwords_do_not_match'))
                     return
                 }
                 await axios.post('/api/user/reset-password-with-code', {
@@ -84,7 +84,7 @@ const Login = () => {
                     password: resetPassword,
                     password_confirmation: resetPasswordConfirm
                 })
-                toast.success('Password reset successfully, please login')
+                toast.success(t('login_password_reset_success'))
                 setState('login')
                 setPassword('')
                 setResetPassword('')
@@ -98,7 +98,7 @@ const Login = () => {
               (error?.response?.data?.errors &&
                 Object.values(error.response.data.errors)[0][0])
 
-            toast.error(apiMessage || 'Authentication failed')
+            toast.error(apiMessage || t('login_auth_failed'))
         }
     }
 
@@ -112,20 +112,20 @@ const Login = () => {
       >
         <p className="text-2xl font-medium m-auto">
           <span className="text-primary">User</span>{" "}
-          {state === "login" && "Login"}
-          {state === "register" && "Sign Up"}
-          {state === "verify" && "Verify Email"}
-          {state === "forgot" && "Forgot Password"}
-          {state === "reset" && "Reset Password"}
+          {state === "login" && t('login_title_login')}
+          {state === "register" && t('login_title_register')}
+          {state === "verify" && t('login_title_verify')}
+          {state === "forgot" && t('login_title_forgot')}
+          {state === "reset" && t('login_title_reset')}
         </p>
 
         {(state === "register" || state === "verify" || state === "forgot" || state === "reset") && (
           <div className="w-full">
-            <p>Email</p>
+            <p>{t('login_label_email')}</p>
             <input
               onChange={(e) => setEmail(e.target.value)}
               value={email}
-              placeholder="type here"
+              placeholder={t('login_placeholder_type_here')}
               className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
               type="email"
               required
@@ -136,22 +136,22 @@ const Login = () => {
         {state === "register" && (
           <>
             <div className="w-full">
-              <p>Name</p>
+              <p>{t('login_label_name')}</p>
               <input
                 onChange={(e) => setName(e.target.value)}
                 value={name}
-                placeholder="type here"
+                placeholder={t('login_placeholder_type_here')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="text"
                 required
               />
             </div>
             <div className="w-full">
-              <p>Password</p>
+              <p>{t('login_label_password')}</p>
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
-                placeholder="type here"
+                placeholder={t('login_placeholder_type_here')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="password"
                 required
@@ -163,34 +163,34 @@ const Login = () => {
         {state === "login" && (
           <>
             <div className="w-full ">
-              <p>Email</p>
+              <p>{t('login_label_email')}</p>
               <input
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
-                placeholder="type here"
+                placeholder={t('login_placeholder_type_here')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="email"
                 required
               />
             </div>
             <div className="w-full ">
-              <p>Password</p>
+              <p>{t('login_label_password')}</p>
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
-                placeholder="type here"
+                placeholder={t('login_placeholder_type_here')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="password"
                 required
               />
             </div>
             <p className="text-xs text-gray-500">
-              Forgot password?{" "}
+              {t('login_hint_forgot_password')}{" "}
               <span
                 onClick={() => setState("forgot")}
                 className="text-primary cursor-pointer"
               >
-                click here
+                {t('login_hint_click_here')}
               </span>
             </p>
           </>
@@ -198,54 +198,54 @@ const Login = () => {
 
         {state === "verify" && (
           <div className="w-full">
-            <p>Verification code</p>
+            <p>{t('login_label_verification_code')}</p>
             <input
               onChange={(e) => setVerificationCode(e.target.value)}
               value={verificationCode}
-              placeholder="6-digit code"
+              placeholder={t('login_placeholder_verification_code')}
               className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
               type="text"
             />
             <p className="text-xs text-gray-500 mt-1">
-              We sent a code to <span className="font-medium">{email}</span>.
+              {t('login_verify_sent_hint')} <span className="font-medium">{email}</span>.
             </p>
           </div>
         )}
 
         {state === "forgot" && (
           <p className="text-xs text-gray-500">
-            Enter your email to receive a password reset code.
+            {t('login_forgot_hint')}
           </p>
         )}
 
         {state === "reset" && (
           <>
             <div className="w-full">
-              <p>Reset code</p>
+              <p>{t('login_label_reset_code')}</p>
               <input
                 onChange={(e) => setVerificationCode(e.target.value)}
                 value={verificationCode}
-                placeholder="6-digit code"
+                placeholder={t('login_placeholder_verification_code')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="text"
               />
             </div>
             <div className="w-full">
-              <p>New password</p>
+              <p>{t('login_label_new_password')}</p>
               <input
                 onChange={(e) => setResetPassword(e.target.value)}
                 value={resetPassword}
-                placeholder="type here"
+                placeholder={t('login_placeholder_type_here')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="password"
               />
             </div>
             <div className="w-full">
-              <p>Confirm new password</p>
+              <p>{t('login_label_confirm_new_password')}</p>
               <input
                 onChange={(e) => setResetPasswordConfirm(e.target.value)}
                 value={resetPasswordConfirm}
-                placeholder="type here"
+                placeholder={t('login_placeholder_type_here')}
                 className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
                 type="password"
               />
@@ -255,23 +255,23 @@ const Login = () => {
 
         {state === "register" && (
           <p>
-            Already have account?{" "}
+            {t('login_text_already_have_account')}{" "}
             <span
               onClick={() => setState("login")}
               className="text-primary cursor-pointer"
             >
-              click here
+              {t('login_hint_click_here')}
             </span>
           </p>
         )}
         {state === "login" && (
           <p>
-            Create an account?{" "}
+            {t('login_text_create_account')}{" "}
             <span
               onClick={() => setState("register")}
               className="text-primary cursor-pointer"
             >
-              click here
+              {t('login_hint_click_here')}
             </span>
           </p>
         )}
@@ -283,16 +283,16 @@ const Login = () => {
               setVerificationCode("")
             }}
           >
-            Back to login
+            {t('login_text_back_to_login')}
           </p>
         )}
 
         <button className="bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md cursor-pointer">
-          {state === "login" && "Login"}
-          {state === "register" && "Create Account"}
-          {state === "verify" && "Verify Email"}
-          {state === "forgot" && "Send Code"}
-          {state === "reset" && "Reset Password"}
+          {state === "login" && t('login_button_login')}
+          {state === "register" && t('login_button_create_account')}
+          {state === "verify" && t('login_button_verify_email')}
+          {state === "forgot" && t('login_button_send_code')}
+          {state === "reset" && t('login_button_reset_password')}
         </button>
       </form>
     </div>

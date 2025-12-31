@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext'
 
 const CarCard = ({car}) => {
 
-    const { formatCurrency } = useAppContext()
+    const { formatCurrency, t } = useAppContext()
     const navigate = useNavigate()
 
   return (
@@ -14,11 +14,11 @@ const CarCard = ({car}) => {
       <div className='relative h-48 overflow-hidden'> 
         <img src={car.image} alt="Car Image" className='w-full h-full object-cover transition-transform duration-500 group-hover:scale-105'/>
 
-        {car.isAvaliable && <p className='absolute top-4 left-4 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full'>Available Now</p>}
+        {car.isAvaliable && <p className='absolute top-4 left-4 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full'>{t('car_card_available_now')}</p>}
 
         <div className='absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg'>
             <span className='font-semibold'>{formatCurrency(car.pricePerDay)}</span>
-            <span className='text-sm text-white/80'> / day</span>
+            <span className='text-sm text-white/80'>{t('car_card_per_day')}</span>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ const CarCard = ({car}) => {
         <div className='mt-4 grid grid-cols-2 gap-y-2 text-gray-600 min-h-16'>
             <div className='flex items-center text-sm text-muted-foreground'>
                 <img src={assets.users_icon} alt="" className='h-4 mr-2'/>
-                <span>{car.seating_capacity} Seats</span>
+                <span>{car.seating_capacity} {t('car_card_seats')}</span>
             </div>
             <div className='flex items-center text-sm text-muted-foreground'>
                 <img src={assets.fuel_icon} alt="" className='h-4 mr-2'/>

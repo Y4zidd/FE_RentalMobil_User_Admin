@@ -91,7 +91,7 @@ const Hero = () => {
   const geoCacheRef = useRef({})
   const pendingProvinceRef = useRef(null)
 
-  const { pickupDate, setPickupDate, returnDate, setReturnDate, navigate } = useAppContext()
+  const { pickupDate, setPickupDate, returnDate, setReturnDate, navigate, t } = useAppContext()
 
   useEffect(() => {
     let isMounted = true
@@ -314,7 +314,7 @@ const Hero = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     if (!pickupLocation) {
-      toast.error('Silakan pilih pickup location terlebih dahulu')
+      toast.error(t('hero_toast_pick_location_first'))
       return
     }
     const searchParams = new URLSearchParams()
@@ -417,7 +417,7 @@ const Hero = () => {
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('Browser tidak mendukung geolokasi')
+      toast.error(t('hero_toast_geolocation_not_supported'))
       return
     }
 
@@ -438,7 +438,7 @@ const Hero = () => {
             encodeURIComponent(center.lng)
           )
           if (!res.ok) {
-            setPickupLocation('Current Location')
+            setPickupLocation(t('hero_current_location'))
             return
           }
           const data = await res.json()
@@ -477,13 +477,13 @@ const Hero = () => {
             }
           }
 
-          setPickupLocation('Current Location')
+          setPickupLocation(t('hero_current_location'))
         } catch {
-          setPickupLocation('Current Location')
+          setPickupLocation(t('hero_current_location'))
         }
       },
       () => {
-        toast.error('Gagal mengambil lokasi Anda')
+        toast.error(t('hero_toast_geolocation_failed'))
       }
     )
   }
@@ -501,7 +501,7 @@ const Hero = () => {
         transition={{ duration: 0.8, delay: 0.2 }}
         className='text-4xl md:text-5xl font-semibold'
       >
-        Luxury cars on Rent
+        {t('hero_heading')}
       </Motion.h1>
 
       <Motion.form
@@ -513,14 +513,14 @@ const Hero = () => {
       >
         <div className='flex flex-col md:flex-row items-stretch md:items-center gap-6 md:gap-8 w-full md:w-auto'>
           <div className='flex flex-col gap-1.5 w-full md:w-48 border-b md:border-b-0 border-gray-100 pb-4 md:pb-0 relative md:pl-4'>
-            <label className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>Pickup Location</label>
+            <label className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>{t('hero_pickup_location_label')}</label>
             <button
               type='button'
               onClick={() => setIsMapOpen(true)}
               className='text-left w-full group focus:outline-none'
             >
               <div className='text-sm text-gray-500 truncate group-hover:text-primary transition-colors'>
-                {pickupLocation || 'Select Location'}
+                {pickupLocation || t('hero_select_location_placeholder')}
               </div>
             </button>
           </div>
@@ -528,7 +528,7 @@ const Hero = () => {
           <div className='hidden md:block w-px h-10 bg-gray-200' />
 
           <div className='flex flex-col gap-1.5 w-full md:w-auto border-b md:border-b-0 border-gray-100 pb-4 md:pb-0'>
-            <label htmlFor='pickup-date' className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>Pick-up Date</label>
+            <label htmlFor='pickup-date' className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>{t('hero_pickup_date_label')}</label>
             <input
               value={pickupDate}
               onChange={(e) => setPickupDate(e.target.value)}
@@ -543,7 +543,7 @@ const Hero = () => {
           <div className='hidden md:block w-px h-10 bg-gray-200' />
 
           <div className='flex flex-col gap-1.5 w-full md:w-auto'>
-            <label htmlFor='return-date' className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>Return Date</label>
+            <label htmlFor='return-date' className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>{t('hero_return_date_label')}</label>
             <input
               value={returnDate}
               onChange={(e) => setReturnDate(e.target.value)}
@@ -565,8 +565,8 @@ const Hero = () => {
             alt='search'
             className='brightness-0 invert w-5 h-5'
           />
-          <span className='md:hidden'>Search Cars</span>
-          <span className='hidden md:inline'>Search</span>
+          <span className='md:hidden'>{t('hero_search_button_mobile')}</span>
+          <span className='hidden md:inline'>{t('hero_search_button_desktop')}</span>
         </Motion.button>
       </Motion.form>
 
@@ -600,7 +600,7 @@ const Hero = () => {
           >
             <div className='flex items-center justify-between'>
               <h2 className='text-base sm:text-lg font-semibold text-gray-900'>
-                Pickup location
+                {t('hero_modal_title')}
               </h2>
               <button
                 type='button'
@@ -613,7 +613,7 @@ const Hero = () => {
 
             <div className='grid gap-3 sm:grid-cols-1'>
               <div className='flex flex-col gap-2'>
-                <label className='text-xs text-gray-500'>Province / City</label>
+                <label className='text-xs text-gray-500'>{t('hero_modal_province_city_label')}</label>
                 <select
                   className='w-full rounded-xl border border-borderColor px-3 py-2 text-sm'
                   value={pickupLocation}
@@ -621,8 +621,8 @@ const Hero = () => {
                 >
                   <option value=''>
                     {isLoadingLocations
-                      ? 'Loading locations...'
-                      : 'Select province or city'}
+                      ? t('hero_modal_loading_locations')
+                      : t('hero_modal_select_province_city')}
                   </option>
                   {provinces.map((location) => (
                     <option key={location.label} value={location.label}>
@@ -706,7 +706,7 @@ const Hero = () => {
                 onClick={handleUseMyLocation}
                 className='absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-gray-700 shadow-md hover:bg-white'
               >
-                My Location
+                {t('hero_modal_my_location_button')}
               </button>
             </div>
           </Motion.div>

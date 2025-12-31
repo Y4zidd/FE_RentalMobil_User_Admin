@@ -1,6 +1,7 @@
 import React from "react";
 import { assets } from "../assets/assets";
 import { motion as Motion } from "motion/react";
+import { useAppContext } from "../context/AppContext";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -9,6 +10,7 @@ const fadeUp = (delay = 0) => ({
 });
 
 const Footer = () => {
+  const { t } = useAppContext();
   return (
     <footer className="px-6 md:px-16 lg:px-24 xl:px-32 mt-48 text-sm text-gray-500">
       <Motion.div
@@ -24,8 +26,7 @@ const Footer = () => {
           />
 
           <Motion.p {...fadeUp(0.3)} className="leading-relaxed">
-            Premium Rent-A-Car service with a wide selection of luxury and
-            everyday vehicles for all your driving needs.
+            {t('footer_tagline')}
           </Motion.p>
 
           <Motion.div
@@ -48,47 +49,69 @@ const Footer = () => {
         >
           <div>
             <h2 className="text-base font-medium text-gray-900 uppercase tracking-wide">
-              Quick Links
+              {t('footer_quick_links')}
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
-              {["Home", "Browse Cars", "List Your Car", "About Us"].map(
-                (item) => (
-                  <li key={item}>
-                    <a className="hover:text-gray-700 transition" href="#">
-                      {item}
-                    </a>
-                  </li>
-                )
-              )}
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_home')}
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_browse_cars')}
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_list_your_car')}
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_about_us')}
+                </a>
+              </li>
             </ul>
           </div>
 
           <div>
             <h2 className="text-base font-medium text-gray-900 uppercase tracking-wide">
-              Resources
+              {t('footer_resources')}
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
-              {["Help Center", "Terms of Service", "Privacy Policy", "Insurance"].map(
-                (item) => (
-                  <li key={item}>
-                    <a className="hover:text-gray-700 transition" href="#">
-                      {item}
-                    </a>
-                  </li>
-                )
-              )}
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_help_center')}
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_terms_of_service')}
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_privacy_policy')}
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-gray-700 transition" href="#">
+                  {t('footer_link_insurance')}
+                </a>
+              </li>
             </ul>
           </div>
 
           <div>
             <h2 className="text-base font-medium text-gray-900 uppercase tracking-wide">
-              Contact
+              {t('footer_contact')}
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
-              <li>1234 Luxury Drive</li>
-              <li>Jakarta Selatan, Indonesia</li>
-              <li>+62 8123 5557 6078</li>
-              <li>info@example.com</li>
+              <li>{t('footer_contact_address_line1')}</li>
+              <li>{t('footer_contact_address_line2')}</li>
+              <li>{t('footer_contact_phone')}</li>
+              <li>{t('footer_contact_email')}</li>
             </ul>
           </div>
         </Motion.div>
@@ -98,19 +121,28 @@ const Footer = () => {
         {...fadeUp(0.5)}
         className="flex flex-col md:flex-row gap-3 items-center justify-between py-6 text-gray-600"
       >
-        <p>© {new Date().getFullYear()} Brand. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Brand. {t('footer_copyright')}</p>
 
         <ul className="flex items-center gap-4">
-          {["Privacy", "Terms", "Cookies"].map((item, i) => (
-            <React.Fragment key={item}>
-              <li>
-                <a className="hover:text-gray-800 transition" href="#">
-                  {item}
-                </a>
-              </li>
-              {i < 2 && <span>|</span>}
-            </React.Fragment>
-          ))}
+          <React.Fragment>
+            <li>
+              <a className="hover:text-gray-800 transition" href="#">
+                {t('footer_link_privacy')}
+              </a>
+            </li>
+            <span>|</span>
+            <li>
+              <a className="hover:text-gray-800 transition" href="#">
+                {t('footer_link_terms')}
+              </a>
+            </li>
+            <span>|</span>
+            <li>
+              <a className="hover:text-gray-800 transition" href="#">
+                {t('footer_link_cookies')}
+              </a>
+            </li>
+          </React.Fragment>
         </ul>
       </Motion.div>
     </footer>

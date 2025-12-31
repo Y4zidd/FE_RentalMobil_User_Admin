@@ -10,7 +10,7 @@ import { toast } from "react-hot-toast"
 const BookingDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { axios, token, formatCurrency } = useAppContext()
+  const { axios, token, formatCurrency, t, language } = useAppContext()
 
   const [booking, setBooking] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -58,7 +58,7 @@ const BookingDetails = () => {
         setBooking(found || null)
       } catch (error) {
         console.error(error)
-        toast.error("Failed to fetch booking details")
+        toast.error(t('booking_details_toast_failed_fetch'))
       } finally {
         setLoading(false)
       }
@@ -69,7 +69,7 @@ const BookingDetails = () => {
   if (loading) {
     return (
       <div className="px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-48 mt-16 text-sm max-w-5xl mx-auto w-full">
-        <p className="text-gray-600">Loading booking details...</p>
+        <p className="text-gray-600">{t('booking_details_loading')}</p>
       </div>
     )
   }
@@ -86,9 +86,9 @@ const BookingDetails = () => {
             alt=""
             className="h-4 w-4 rotate-180 opacity-65"
           />
-          Back
+          {t('booking_details_back')}
         </button>
-        <p className="text-gray-600">Booking not found.</p>
+        <p className="text-gray-600">{t('booking_details_not_found')}</p>
       </div>
     )
   }
@@ -98,11 +98,11 @@ const BookingDetails = () => {
 
   const handleRetryPayment = async () => {
     if (!token) {
-      toast.error("Please login again to continue payment")
+      toast.error(t('booking_details_toast_login_required'))
       return
     }
     if (!window.snap) {
-      toast.error("Payment service is not available right now")
+      toast.error(t('booking_details_toast_payment_service_unavailable'))
       return
     }
 
@@ -130,26 +130,26 @@ const BookingDetails = () => {
             } catch (error) {
               console.error(error)
             }
-            toast.success("Payment successful")
+            toast.success(t('booking_details_toast_payment_success'))
             navigate("/my-bookings")
           },
           onPending: () => {
-            toast.success("Payment pending, we will update your booking soon")
+            toast.success(t('booking_details_toast_payment_pending'))
             navigate("/my-bookings")
           },
           onError: () => {
-            toast.error("Payment failed")
+            toast.error(t('booking_details_toast_payment_failed'))
           },
           onClose: () => {
-            toast("Payment popup was closed without completing the payment")
+            toast(t('booking_details_toast_payment_popup_closed'))
           },
         })
       } else {
-        toast.error("Failed to start payment session")
+        toast.error(t('booking_details_toast_payment_start_failed'))
       }
     } catch (error) {
       console.error(error)
-      toast.error(error.response?.data?.message || "Payment initialization failed")
+      toast.error(error.response?.data?.message || t('booking_details_toast_payment_init_failed'))
     } finally {
       setIsPaying(false)
     }
@@ -172,11 +172,11 @@ const BookingDetails = () => {
             alt=""
             className="h-4 w-4 rotate-180 opacity-65 group-hover:opacity-100 transition-opacity"
           />
-          <span className="font-medium">Back to bookings</span>
+          <span className="font-medium">{t('booking_details_back_to_bookings')}</span>
         </button>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Details</h1>
-        <p className="text-gray-500 text-base mb-8">Review the details of your Rent-A-Car booking</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('booking_details_heading')}</h1>
+        <p className="text-gray-500 text-base mb-8">{t('booking_details_subtitle')}</p>
 
         {/* Card 1: Car Summary */}
         <Motion.div
@@ -208,7 +208,7 @@ const BookingDetails = () => {
           className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8"
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <h3 className="text-lg font-bold text-gray-900">Booking Information</h3>
+            <h3 className="text-lg font-bold text-gray-900">{t('booking_details_information_heading')}</h3>
             <span
               className={`px-4 py-1.5 text-xs font-semibold rounded-md uppercase tracking-wide w-fit ${
                 booking.status === "confirmed" || booking.status === "completed"
@@ -226,11 +226,11 @@ const BookingDetails = () => {
             {/* Row 1: ID and Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6 pb-6 border-b border-gray-100">
               <div>
-                <p className="text-xs text-gray-500 font-medium mb-1">Booking ID</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_booking_id_label')}</p>
                 <p className="text-base font-medium text-gray-900">#{String(booking.id || booking.bookingId).slice(-8).toUpperCase()}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium mb-1">Status</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_status_label')}</p>
                 <p className="text-base font-medium text-gray-900 capitalize">{booking.status}</p>
               </div>
             </div>
@@ -238,45 +238,57 @@ const BookingDetails = () => {
             {/* Row 2: Dates */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6 pb-6 border-b border-gray-100">
               <div>
-                <p className="text-xs text-gray-500 font-medium mb-1">Pick-up Date</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_pickup_date_label')}</p>
                 <p className="text-base font-medium text-gray-900 mb-0.5">
-                  {new Date(booking.pickupDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  {new Date(booking.pickupDate).toLocaleDateString(
+                    language === 'id' ? 'id-ID' : 'en-US',
+                    { month: 'long', day: 'numeric', year: 'numeric' }
+                  )}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {new Date(booking.pickupDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(booking.pickupDate).toLocaleTimeString(
+                    language === 'id' ? 'id-ID' : 'en-US',
+                    { hour: '2-digit', minute: '2-digit' }
+                  )}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium mb-1">Drop-off Date</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_dropoff_date_label')}</p>
                 <p className="text-base font-medium text-gray-900 mb-0.5">
-                  {new Date(booking.returnDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  {new Date(booking.returnDate).toLocaleDateString(
+                    language === 'id' ? 'id-ID' : 'en-US',
+                    { month: 'long', day: 'numeric', year: 'numeric' }
+                  )}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {new Date(booking.returnDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(booking.returnDate).toLocaleTimeString(
+                    language === 'id' ? 'id-ID' : 'en-US',
+                    { hour: '2-digit', minute: '2-digit' }
+                  )}
                 </p>
               </div>
             </div>
 
             <div className="pb-6 border-b border-gray-100">
-              <p className="text-xs text-gray-500 font-medium mb-1">Pick-up Location</p>
+              <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_pickup_location_label')}</p>
               <p className="text-base font-medium text-gray-900">{booking.car.location}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 mb-6 pb-6 border-b border-gray-100">
               <div>
-                <p className="text-xs text-gray-500 font-medium mb-1">Payment Method</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_payment_method_label')}</p>
                 <p className="text-base font-medium text-gray-900">
-                  {booking.paymentMethod === "online_full" ? "Online payment" : "Pay at location"}
+                  {booking.paymentMethod === "online_full" ? t('booking_details_payment_method_online') : t('booking_details_payment_method_location')}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium mb-1">Payment Status</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_payment_status_label')}</p>
                 <p className="text-base font-medium text-gray-900 capitalize">
                   {booking.status === "completed" || booking.status === "confirmed"
-                    ? "Paid"
+                    ? t('booking_details_payment_status_paid')
                     : booking.status === "pending"
-                      ? "Pending"
-                      : "Unpaid / Cancelled"}
+                      ? t('booking_details_payment_status_pending')
+                      : t('booking_details_payment_status_unpaid')}
                 </p>
               </div>
             </div>
@@ -285,31 +297,31 @@ const BookingDetails = () => {
           <div className="bg-gray-50 rounded-xl p-6 mb-8 mt-6">
             <div className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between items-center text-gray-600">
-                <span>Rental Duration</span>
+                <span>{t('booking_details_rental_duration')}</span>
                 <span className="font-medium text-gray-900">
-                  {Math.max(1, Math.ceil((new Date(booking.returnDate) - new Date(booking.pickupDate)) / (1000 * 60 * 60 * 24)))} Days
+                  {Math.max(1, Math.ceil((new Date(booking.returnDate) - new Date(booking.pickupDate)) / (1000 * 60 * 60 * 24)))} {t('booking_details_days_suffix')}
                 </span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span>Daily Rate</span>
+                <span>{t('booking_details_daily_rate')}</span>
                 <span className="font-medium text-gray-900">
                   {formatCurrency(booking.price / Math.max(1, Math.ceil((new Date(booking.returnDate) - new Date(booking.pickupDate)) / (1000 * 60 * 60 * 24))))}
                 </span>
               </div>
               {booking.extras && booking.extras.length > 0 && (
                 <div className="flex justify-between items-center text-gray-600">
-                  <span>Extras</span>
-                  <span className="font-medium text-gray-900">Included</span>
+                  <span>{t('booking_details_extras')}</span>
+                  <span className="font-medium text-gray-900">{t('booking_details_extras_included')}</span>
                 </div>
               )}
               <div className="flex justify-between items-center text-gray-600">
-                <span>Insurance</span>
-                <span className="font-medium text-gray-900">Included</span>
+                <span>{t('booking_details_insurance')}</span>
+                <span className="font-medium text-gray-900">{t('booking_details_insurance_included')}</span>
               </div>
             </div>
             <div className="h-px bg-gray-200 mt-3 mb-3"></div>
             <div className="flex justify-between items-end">
-              <span className="font-bold text-gray-900 text-base">Total Amount</span>
+              <span className="font-bold text-gray-900 text-base">{t('booking_details_total_amount')}</span>
               <span className="font-bold text-primary text-xl md:text-2xl">{formatCurrency(booking.price)}</span>
             </div>
           </div>
@@ -319,7 +331,7 @@ const BookingDetails = () => {
               type="button"
               className="px-6 py-3 rounded-lg bg-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-300 transition-colors"
             >
-              Download Receipt
+              {t('booking_details_download_receipt')}
             </button>
 
             {canRetryPayment && (
@@ -329,7 +341,7 @@ const BookingDetails = () => {
                 disabled={isPaying}
                 className="px-8 py-3 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary-dull transition-colors shadow-md shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isPaying ? "Processing..." : "Pay Now"}
+                {isPaying ? t('booking_details_pay_now_processing') : t('booking_details_pay_now')}
               </button>
             )}
           </div>

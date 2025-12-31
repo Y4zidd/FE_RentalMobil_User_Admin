@@ -6,7 +6,7 @@ import { motion as Motion } from 'motion/react'
 
 const Navbar = () => {
 
-    const {setShowLogin, user, logout} = useAppContext()
+    const {setShowLogin, user, logout, t, language, setLanguage} = useAppContext()
 
     const location = useLocation()
     const [open, setOpen] = useState(false)
@@ -14,6 +14,12 @@ const Navbar = () => {
     const navigate = useNavigate()
 
     const avatarSrc = user?.avatar_url || assets.user_profile
+
+    const menuLabelKeyByPath = {
+        '/': 'menu_home',
+        '/cars': 'menu_cars',
+        '/my-bookings': 'menu_my_bookings',
+    }
 
   return (
     <Motion.div 
@@ -34,7 +40,7 @@ const Navbar = () => {
                     onClick={() => setOpen(false)}
                     className="w-full sm:w-auto"
                 >
-                    {link.name}
+                    {menuLabelKeyByPath[link.path] ? t(menuLabelKeyByPath[link.path]) : link.name}
                 </Link>
             ))}
 
@@ -45,7 +51,7 @@ const Navbar = () => {
                         onClick={() => setOpen(false)}
                         className="w-full sm:hidden"
                     >
-                        Profile
+                        {t('navbar_profile')}
                     </Link>
                     <button
                         type="button"
@@ -55,17 +61,33 @@ const Navbar = () => {
                         }}
                         className="w-full sm:hidden text-left cursor-pointer"
                     >
-                        Logout
+                        {t('navbar_logout')}
                     </button>
                 </>
             )}
 
             <div className='hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56'>
-                <input type="text" className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" placeholder="Search cars"/>
+                <input type="text" className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" placeholder={t('navbar_search_placeholder')}/>
                 <img src={assets.search_icon} alt="search" />
             </div>
 
             <div className='flex max-sm:flex-col items-start sm:items-center gap-6'>
+                <div className="flex items-center gap-1 border border-borderColor rounded-full px-1 py-0.5 text-xs">
+                    <button
+                        type="button"
+                        onClick={() => setLanguage('en')}
+                        className={`px-2 py-0.5 rounded-full cursor-pointer ${language === 'en' ? 'bg-primary text-white' : 'text-gray-600'}`}
+                    >
+                        EN
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setLanguage('id')}
+                        className={`px-2 py-0.5 rounded-full cursor-pointer ${language === 'id' ? 'bg-primary text-white' : 'text-gray-600'}`}
+                    >
+                        ID
+                    </button>
+                </div>
                 {!user && (
                     <button
                         onClick={() => {
@@ -74,7 +96,7 @@ const Navbar = () => {
                         }}
                         className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg"
                     >
-                        Login
+                        {t('navbar_login')}
                     </button>
                 )}
 
@@ -104,7 +126,7 @@ const Navbar = () => {
                                     }}
                                     className="w-full text-left px-3 py-2 hover:bg-light cursor-pointer"
                                 >
-                                    Profile
+                                    {t('navbar_profile')}
                                 </button>
                                 <button
                                     type="button"
@@ -115,7 +137,7 @@ const Navbar = () => {
                                     }}
                                     className="w-full text-left px-3 py-2 hover:bg-light cursor-pointer"
                                 >
-                                    Logout
+                                    {t('navbar_logout')}
                                 </button>
                             </div>
                         )}
@@ -140,10 +162,10 @@ const Navbar = () => {
                     />
                     <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">
-                            {user?.name || "Guest User"}
+                            {user?.name || t('navbar_guest_user')}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
-                            Profile
+                            {t('navbar_profile')}
                         </p>
                     </div>
                 </button>

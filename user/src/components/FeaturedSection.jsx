@@ -9,7 +9,7 @@ import { motion as Motion } from 'motion/react'
 const FeaturedSection = () => {
 
     const navigate = useNavigate()
-    const {cars} = useAppContext()
+    const {cars, t} = useAppContext()
 
   return (
     <Motion.div 
@@ -23,7 +23,7 @@ const FeaturedSection = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.5 }}
         >
-            <Title title='Featured Vehicles' subTitle='Explore our selection of premium vehicles available for your next adventure.'/>
+            <Title title={t('featured_title')} subTitle={t('featured_subtitle')}/>
         </Motion.div>
 
         <Motion.div 
@@ -52,7 +52,7 @@ const FeaturedSection = () => {
             navigate('/cars'); scrollTo(0,0)
         }}
          className='flex items-center justify-center gap-2 px-6 py-2 border border-borderColor hover:bg-gray-50 rounded-md mt-18 cursor-pointer'>
-            Explore all cars <img src={assets.arrow_icon} alt="arrow" />
+            {t('featured_button')} <img src={assets.arrow_icon} alt="arrow" />
         </Motion.button>
       
     </Motion.div>

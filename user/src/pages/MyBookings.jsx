@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast'
 
 const MyBookings = () => {
 
-  const { axios, token, formatCurrency } = useAppContext()
+  const { axios, token, formatCurrency, t, language } = useAppContext()
   const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
 
@@ -44,11 +44,12 @@ const MyBookings = () => {
     if (!value) return ''
     const date = new Date(value)
     if (isNaN(date.getTime())) return value
-    return date.toLocaleString('en-US', {
+    const locale = language === 'id' ? 'id-ID' : 'en-US'
+    return date.toLocaleString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
-      hour: 'numeric',
+      hour: '2-digit',
       minute: '2-digit'
     })
   }
@@ -60,7 +61,7 @@ const MyBookings = () => {
       setBookings(mapped)
     } catch (error) {
       console.error(error)
-      toast.error('Failed to fetch bookings')
+      toast.error(t('my_bookings_toast_fetch_failed'))
     }
   }
 
@@ -78,13 +79,15 @@ const MyBookings = () => {
     
     className='px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-48 mt-16 text-sm w-full'>
 
-      <Title title='My Bookings'
-       subTitle='View and manage your all car bookings'
-       align="left"/>
+      <Title
+        title={t('my_bookings_title')}
+        subTitle={t('my_bookings_subtitle')}
+        align="left"
+      />
 
        {!token ? (
         <div className='mt-12 text-gray-500'>
-          <p>Please log in or create an account to view your bookings.</p>
+          <p>{t('my_bookings_login_prompt')}</p>
         </div>
        ) : (
         <div>
@@ -109,7 +112,7 @@ const MyBookings = () => {
               {/* Booking Info */}
               <div className='md:col-span-2'>
                 <div className='flex items-center gap-2'>
-                  <p className='px-3 py-1.5 bg-light rounded'>Booking #{index+1}</p>
+                  <p className='px-3 py-1.5 bg-light rounded'>{t('my_bookings_badge_booking_number')} #{index+1}</p>
                   <p
                     className={`px-3 py-1 text-xs rounded-full capitalize ${
                       booking.status === 'confirmed' || booking.status === 'completed'
@@ -128,15 +131,15 @@ const MyBookings = () => {
                 <div className='flex items-start gap-2 mt-3'>
                   <img src={assets.calendar_icon_colored} alt="" className='w-4 h-4 mt-1'/>
                   <div>
-                    <p className='text-gray-500'>Rental Period</p>
-                    <p>{formatDateTime(booking.pickupDate)} To {formatDateTime(booking.returnDate)}</p>
+                    <p className='text-gray-500'>{t('my_bookings_rental_period')}</p>
+                    <p>{formatDateTime(booking.pickupDate)} {t('common_to')} {formatDateTime(booking.returnDate)}</p>
                   </div>
                 </div>
 
                 <div className='flex items-start gap-2 mt-3'>
                   <img src={assets.location_icon_colored} alt="" className='w-4 h-4 mt-1'/>
                   <div>
-                    <p className='text-gray-500'>Pick-up Location</p>
+                    <p className='text-gray-500'>{t('my_bookings_pickup_location_label')}</p>
                     <p>{booking.car.location}</p>
                   </div>
                 </div>
@@ -144,16 +147,16 @@ const MyBookings = () => {
 
              <div className='md:col-span-1 flex flex-col justify-between gap-6'>
                 <div className='text-sm text-gray-500 text-right'>
-                  <p>Total Price</p>
+                  <p>{t('my_bookings_total_price')}</p>
                   <h1 className='text-2xl font-semibold text-primary'>{formatCurrency(booking.price)}</h1>
-                  <p>Booked on {booking.createdAt.split('T')[0]}</p>
+                  <p>{t('my_bookings_booked_on')} {booking.createdAt.split('T')[0]}</p>
                 </div>
                 <button
                   type='button'
                   onClick={()=> navigate(`/my-bookings/${booking.id}`)}
                   className='ml-auto px-4 py-2 text-xs rounded-lg border border-borderColor hover:bg-light cursor-pointer'
                 >
-                  View details
+                  {t('my_bookings_view_details')}
                 </button>
              </div>
 

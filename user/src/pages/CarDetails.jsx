@@ -41,28 +41,42 @@ const CarDetails = () => {
       id: 'theftProtection',
       label: 'Theft protection',
       pricePerDay: 60000,
+      description: 'Covers the cost of replacing the vehicle if it is stolen.'
     },
     {
       id: 'collisionDamage',
       label: 'Collision damage waiver',
       pricePerDay: 60000,
+      description: 'Reduces your financial liability for damage to the rental vehicle.'
     },
     {
       id: 'fullInsurance',
       label: 'Full insurance',
       pricePerDay: 90000,
+      description: 'Comprehensive coverage including theft, collision, and third-party liability.'
     },
     {
       id: 'additionalDriver',
       label: 'Driver service',
       pricePerDay: 200000,
+      description: 'Includes a professional driver for your entire rental period.'
     },
   ]
+
+  const [expandedOptions, setExpandedOptions] = useState({})
 
   const toggleOption = (id) => {
     setBookingOptions((prev) => ({
       ...prev,
       [id]: !prev[id],
+    }))
+  }
+
+  const toggleDescription = (id, e) => {
+    e.stopPropagation()
+    setExpandedOptions((prev) => ({
+      ...prev,
+      [id]: !prev[id]
     }))
   }
 
@@ -336,30 +350,44 @@ const CarDetails = () => {
             <p>Additional Services</p>
             <div className='border border-borderColor rounded-xl p-4 space-y-3'>
               {optionConfig.map((opt) => (
-                <button
-                  key={opt.id}
-                  type='button'
-                  onClick={() => toggleOption(opt.id)}
-                  className='w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-light transition-colors'
-                >
-                  <div className='text-left'>
-                    <p className='text-sm text-gray-800'>{opt.label}</p>
-                    <p className='text-xs text-gray-400'>
-                      {rentalDays > 0
-                        ? `+ ${formatCurrency(opt.pricePerDay * rentalDays)}`
-                        : `+ ${formatCurrency(opt.pricePerDay)}/day`}
-                    </p>
-                  </div>
-                  <span
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full border border-borderColor transition-colors ${bookingOptions[opt.id] ? 'bg-primary' : 'bg-gray-200'
-                      }`}
+                <div key={opt.id} className='flex flex-col rounded-lg hover:bg-light transition-colors'>
+                  <div
+                    className='w-full flex items-center justify-between gap-3 px-3 py-2 cursor-pointer'
+                    onClick={() => toggleOption(opt.id)}
                   >
+                    <div className='flex items-center gap-3'>
+                      <button
+                        type='button'
+                        onClick={(e) => toggleDescription(opt.id, e)}
+                        className={`p-1 rounded-full hover:bg-gray-200 transition-transform ${expandedOptions[opt.id] ? 'rotate-90' : ''}`}
+                      >
+                        <img src={assets.arrow_icon} className='w-3 h-3 opacity-50' alt="details" />
+                      </button>
+                      <div className='text-left'>
+                        <p className='text-sm text-gray-800'>{opt.label}</p>
+                        <p className='text-xs text-gray-400'>
+                          {rentalDays > 0
+                            ? `+ ${formatCurrency(opt.pricePerDay * rentalDays)}`
+                            : `+ ${formatCurrency(opt.pricePerDay)}/day`}
+                        </p>
+                      </div>
+                    </div>
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${bookingOptions[opt.id] ? 'translate-x-4' : 'translate-x-0'
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full border border-borderColor transition-colors ${bookingOptions[opt.id] ? 'bg-primary' : 'bg-gray-200'
                         }`}
-                    />
-                  </span>
-                </button>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${bookingOptions[opt.id] ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                      />
+                    </span>
+                  </div>
+                  {expandedOptions[opt.id] && (
+                    <div className='px-3 pb-2 ml-9'>
+                      <p className='text-xs text-gray-500'>{opt.description}</p>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

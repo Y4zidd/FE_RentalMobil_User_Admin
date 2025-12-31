@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 
-const USER_APP_URL = process.env.NEXT_PUBLIC_USER_APP_URL;
+const USER_APP_URL = process.env.NEXT_PUBLIC_USER_APP_URL || 'http://localhost:5173';
 
 type AdminAuthGuardProps = {
   children: ReactNode;
@@ -13,6 +13,11 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const pathname = window.location.pathname;
+    if (pathname.startsWith('/auth')) {
+      setAllowed(true);
+      return;
+    }
     const token = window.localStorage.getItem('admin_token');
     if (!token) {
       if (USER_APP_URL) {

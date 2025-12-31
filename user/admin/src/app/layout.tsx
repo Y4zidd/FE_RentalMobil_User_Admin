@@ -9,6 +9,7 @@ import NextTopLoader from 'nextjs-toploader';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import './globals.css';
 import './theme.css';
+import AdminAuthGuard from '@/components/layout/admin-auth-guard';
 
 const META_THEME_COLORS = {
   light: '#ffffff',
@@ -90,7 +91,9 @@ export default async function RootLayout({
           >
             <Providers activeThemeValue={activeThemeValue as string}>
               <Toaster />
-              {children}
+              <AdminAuthGuard>
+                {children}
+              </AdminAuthGuard>
             </Providers>
           </ThemeProvider>
         </NuqsAdapter>

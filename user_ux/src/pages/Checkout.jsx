@@ -9,7 +9,7 @@ import { ShieldCheck, Calendar, MapPin, Car, CreditCard, ArrowLeft } from "lucid
 const Checkout = () => {
     const navigate = useNavigate()
     const location = useLocation()
-    const { cars, token, formatCurrency, user, setShowLogin, bookings, setBookings } = useAppContext()
+    const { cars, token, formatCurrency, user, setShowLogin, bookings, setBookings, t, language } = useAppContext()
     const { carId, pickupDate, returnDate, pickupTime, returnTime, preselectedOptions } = location.state || {}
     const [car, setCar] = useState(null)
 
@@ -51,7 +51,7 @@ const Checkout = () => {
 
     useEffect(() => {
         if (!carId || !pickupDate || !returnDate) {
-            toast.error("Invalid booking details. Please select a car first.")
+            toast.error(t('checkout_toast_invalid_booking'))
             navigate("/cars")
             return
         }
@@ -60,42 +60,42 @@ const Checkout = () => {
         if (foundCar) {
             setCar(foundCar)
         } else {
-            // Fallback if car not found in context (e.g. refresh), ideally fetch single car
-            toast.error("Car details not found")
+            toast.error(t('checkout_toast_car_not_found'))
             navigate("/cars")
         }
-    }, [carId, pickupDate, returnDate, cars, navigate])
+    }, [carId, pickupDate, returnDate, cars, navigate, t])
 
 
     const optionConfig = [
         {
             id: "theftProtection",
-            label: "Theft protection",
-            description: "Covers theft of the rental vehicle.",
+            labelKey: "extras_theft_label",
+            descriptionKey: "extras_theft_description",
             pricePerDay: 60000,
         },
         {
             id: "collisionDamage",
-            label: "Collision damage waiver",
-            description: "Limits liability for damage to the vehicle.",
+            labelKey: "extras_collision_label",
+            descriptionKey: "extras_collision_description",
             pricePerDay: 60000,
         },
         {
             id: "fullInsurance",
-            label: "Full insurance",
-            description: "Complete peace of mind coverage.",
+            labelKey: "extras_full_insurance_label",
+            descriptionKey: "extras_full_insurance_description",
             pricePerDay: 90000,
         },
         {
             id: "additionalDriver",
-            label: "Driver service",
-            description: "Add a professional driver to your trip.",
+            labelKey: "extras_driver_service_label",
+            descriptionKey: "extras_driver_service_description",
             pricePerDay: 200000,
         },
     ]
 
     const pickupDateTimeString = pickupDate && pickupTime ? `${pickupDate}T${pickupTime}` : pickupDate
     const returnDateTimeString = returnDate && returnTime ? `${returnDate}T${returnTime}` : returnDate
+    const dateLocale = language === 'id' ? 'id-ID' : 'en-US'
 
     const getRentalDays = () => {
         if (!pickupDateTimeString || !returnDateTimeString) return 0
@@ -120,12 +120,12 @@ const Checkout = () => {
     const handleApplyCoupon = () => {
         const trimmed = couponCode.trim()
         if (!trimmed) {
-            toast.error("Please enter a promo code")
+            toast.error(t('checkout_toast_enter_coupon'))
             return
         }
 
         if (!car || rentalDays <= 0 || !totalCost) {
-            toast.error("Please select valid dates first")
+            toast.error(t('checkout_toast_invalid_booking'))
             return
         }
 
@@ -139,18 +139,18 @@ const Checkout = () => {
         setCouponDiscount(discount)
         setCouponApplied(true)
         setCouponLoading(false)
-        toast.success("Coupon applied")
+        toast.success(t('checkout_toast_coupon_applied'))
     }
 
     const handleBooking = () => {
         if (!token) {
-            toast.error('Please login or register before making a booking')
+            toast.error(t('checkout_toast_login_required'))
             setShowLogin(true)
             return
         }
 
         if (!car || rentalDays <= 0) {
-            toast.error("Please select valid dates before booking")
+            toast.error(t('checkout_toast_invalid_booking'))
             return
         }
 
@@ -175,7 +175,7 @@ const Checkout = () => {
                 .filter((opt) => bookingOptions[opt.id])
                 .map((opt) => ({
                     id: opt.id,
-                    label: opt.label,
+                    label: t(opt.labelKey),
                     price_per_day: opt.pricePerDay,
                 })),
             car: {
@@ -202,7 +202,7 @@ const Checkout = () => {
                 return [...list, newBooking]
             })
             setLoading(false)
-            toast.success('Booking completed for UX demo')
+            toast.success(t('checkout_toast_booking_confirmed'))
             navigate(`/my-bookings/${newBookingId}`)
         }, 600)
     }
@@ -223,11 +223,11 @@ const Checkout = () => {
                     className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 group"
                 >
                     <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                    <span>Back</span>
+                    <span>{t('checkout_back_button')}</span>
                 </button>
 
                 <div className="mb-8">
-                    <Title title="Checkout" subTitle="Review your trip details and complete your booking" align="left" />
+                    <Title title={t('checkout_title')} subTitle={t('checkout_subtitle')} align="left" />
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
@@ -236,54 +236,53 @@ const Checkout = () => {
                     <div className="flex-1 space-y-8">
 
                         {/* 1. Primary Driver */}
-                        {/* 1. Primary Driver */}
                         <section>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Primary driver</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">{t('checkout_primary_driver_heading')}</h2>
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">{t('checkout_full_name_label')}</label>
                                         <input
                                             type="text"
                                             value={driverDetails.name}
                                             onChange={(e) => setDriverDetails({ ...driverDetails, name: e.target.value })}
                                             className="w-full px-3 py-2 rounded-md border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                            placeholder="Enter full name"
+                                            placeholder={t('checkout_full_name_placeholder')}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">{t('checkout_phone_label')}</label>
                                         <input
                                             type="text"
                                             value={driverDetails.phone}
                                             onChange={(e) => setDriverDetails({ ...driverDetails, phone: e.target.value })}
                                             className="w-full px-3 py-2 rounded-md border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                            placeholder="Enter phone number"
+                                            placeholder={t('checkout_phone_placeholder')}
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">{t('checkout_email_label')}</label>
                                     <input
                                         type="email"
                                         value={driverDetails.email}
                                         onChange={(e) => setDriverDetails({ ...driverDetails, email: e.target.value })}
                                         className="w-full px-3 py-2 rounded-md border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                        placeholder="Enter email address"
+                                        placeholder={t('checkout_email_placeholder')}
                                     />
                                 </div>
                                 <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-md text-sm flex gap-3 items-start">
                                     <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>After booking, you'll need to submit your driver's license for verification.</p>
+                                    <p>{t('checkout_license_info')}</p>
                                 </div>
                             </div>
                         </section>
 
 
 
-                        {/* 3. Choose when to pay */}
+                        {/* 2. Choose when to pay */}
                         <section>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Choose when to pay</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">{t('checkout_choose_when_to_pay_heading')}</h2>
                             <div className="bg-gray-50/50 rounded-xl border border-gray-200 p-1">
                                 <div
                                     onClick={() => setPaymentOption('pay_now')}
@@ -292,11 +291,11 @@ const Checkout = () => {
                                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentOption === 'pay_now' ? 'border-primary bg-primary' : 'border-gray-400'}`}>
                                             {paymentOption === 'pay_now' && <div className="w-2 h-2 rounded-full bg-white"></div>}
                                         </div>
-                                        <span className="font-medium text-gray-900">Pay now</span>
+                                        <span className="font-medium text-gray-900">{t('checkout_pay_now_option')}</span>
                                     </div>
                                     {paymentOption === 'pay_now' && (
                                         <div className="ml-8 mt-2 text-xs text-gray-500">
-                                            You will be redirected to Midtrans to complete your secure payment.
+                                            {t('checkout_pay_now_description')}
                                         </div>
                                     )}
                                 </div>
@@ -308,11 +307,11 @@ const Checkout = () => {
                                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentOption === 'pay_later' ? 'border-primary bg-primary' : 'border-gray-400'}`}>
                                             {paymentOption === 'pay_later' && <div className="w-2 h-2 rounded-full bg-white"></div>}
                                         </div>
-                                        <span className="font-medium text-gray-900">Pay at pick-up</span>
+                                        <span className="font-medium text-gray-900">{t('checkout_pay_later_option')}</span>
                                     </div>
                                     {paymentOption === 'pay_later' && (
                                         <div className="ml-8 mt-2 text-xs text-gray-500">
-                                            Pay the full amount when you pick up the vehicle at the location.
+                                            {t('checkout_pay_later_description')}
                                         </div>
                                     )}
                                 </div>
@@ -322,11 +321,11 @@ const Checkout = () => {
                         {/* Payment Method Preview (Only if Pay Now) */}
                         {paymentOption === 'pay_now' && (
                             <section className="animate-in fade-in slide-in-from-top-4 duration-300">
-                                <h2 className="text-xl font-bold text-gray-900 mb-4">Payment method</h2>
+                                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('checkout_payment_method_heading')}</h2>
                                 <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
                                     <div className="flex items-center gap-3 mb-3">
                                         <CreditCard className="w-5 h-5 text-gray-500" />
-                                        <span className="text-sm font-medium text-gray-700">Online Payment Gateway</span>
+                                        <span className="text-sm font-medium text-gray-700">{t('checkout_payment_method_gateway')}</span>
                                     </div>
                                     <div className="flex gap-2">
                                         {/* Mock Icons for Midtrans, Visa, Mastercard */}
@@ -343,7 +342,7 @@ const Checkout = () => {
                             <div className="flex items-start gap-3 mb-6">
                                 <input type="checkbox" id="terms" className="mt-1 w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary" />
                                 <label htmlFor="terms" className="text-xs text-gray-500 leading-relaxed">
-                                    I agree to pay the total amount shown and to the <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Cancellation Policy</a>.
+                                    {t('checkout_terms_text')} <a href="#" className="text-primary hover:underline">{t('checkout_terms_link')}</a> <a href="#" className="text-primary hover:underline">{t('checkout_cancellation_link')}</a>.
                                 </label>
                             </div>
 
@@ -351,7 +350,7 @@ const Checkout = () => {
                                 onClick={handleBooking}
                                 disabled={loading}
                                 className="w-full bg-primary hover:bg-primary-dull text-white text-base font-semibold py-3.5 rounded-xl shadow-lg shadow-primary/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-                                {loading ? 'Processing...' : 'Book trip'}
+                                {loading ? t('checkout_book_button_processing') : t('checkout_book_button')}
                             </button>
                         </div>
 
@@ -384,12 +383,12 @@ const Checkout = () => {
                                             <p className="text-xs text-gray-500 mb-0.5">Pick-up</p>
                                             <p className="font-medium text-gray-900">
                                                 {pickupDateTimeString
-                                                    ? new Date(pickupDateTimeString).toLocaleDateString('en-US', {
+                                                    ? new Date(pickupDateTimeString).toLocaleString(dateLocale, {
                                                         weekday: 'short',
                                                         month: 'short',
                                                         day: 'numeric',
-                                                        hour: 'numeric',
-                                                        minute: 'numeric'
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
                                                     })
                                                     : '-'}
                                             </p>
@@ -398,12 +397,12 @@ const Checkout = () => {
                                             <p className="text-xs text-gray-500 mb-0.5">Return</p>
                                             <p className="font-medium text-gray-900">
                                                 {returnDateTimeString
-                                                    ? new Date(returnDateTimeString).toLocaleDateString('en-US', {
+                                                    ? new Date(returnDateTimeString).toLocaleString(dateLocale, {
                                                         weekday: 'short',
                                                         month: 'short',
                                                         day: 'numeric',
-                                                        hour: 'numeric',
-                                                        minute: 'numeric'
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
                                                     })
                                                     : '-'}
                                             </p>
@@ -419,28 +418,23 @@ const Checkout = () => {
                             {/* Price Breakdown */}
                             <div className="p-5 space-y-3">
                                 <div className="flex justify-between text-sm text-gray-600">
-                                    <span>{formatCurrency(car.pricePerDay)} x {rentalDays} days</span>
+                                    <span>{formatCurrency(car.pricePerDay)} x {rentalDays} {t('checkout_price_days')}</span>
                                     <span>{formatCurrency(baseCost)}</span>
                                 </div>
                                 {extrasCost > 0 && (
                                     <div className="flex justify-between text-sm text-gray-600">
-                                        <span>Protection & Extras</span>
+                                        <span>{t('checkout_price_protection_extras')}</span>
                                         <span>{formatCurrency(extrasCost)}</span>
                                     </div>
                                 )}
                                 {couponApplied && couponDiscount > 0 && (
                                     <div className="flex justify-between text-sm text-gray-600">
-                                        <span>Coupon Discount</span>
+                                        <span>{t('checkout_price_coupon_discount')}</span>
                                         <span>-{formatCurrency(couponDiscount)}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-sm text-gray-600">
-                                    <span>Trip fee (service)</span>
-                                    <span>{formatCurrency(0)}</span>
-                                </div>
-
                                 <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-                                    <span className="font-bold text-gray-900">Trip total</span>
+                                    <span className="font-bold text-gray-900">{t('checkout_price_trip_total')}</span>
                                     <span className="font-bold text-xl text-gray-900">{formatCurrency(finalCost)}</span>
                                 </div>
                                 {!showPromoForm && (
@@ -450,24 +444,23 @@ const Checkout = () => {
                                             onClick={() => setShowPromoForm(true)}
                                             className="text-sm font-medium text-gray-900 underline underline-offset-2"
                                         >
-                                            Promo code
+                                            {t('checkout_promo_toggle')}
                                         </button>
                                     </div>
                                 )}
                                 {showPromoForm && (
                                     <div className="mt-3 space-y-2">
                                         <label className="block text-sm font-medium text-gray-900">
-                                            Promo code
+                                            {t('checkout_promo_label')}
                                         </label>
                                         <input
                                             value={couponCode}
                                             onChange={(e) => setCouponCode(e.target.value)}
-                                            placeholder="Enter promo code"
+                                            placeholder={t('checkout_promo_placeholder')}
                                             className="w-full h-10 px-3 rounded-md border border-gray-200 text-sm outline-none"
                                         />
                                         <p className="text-xs text-gray-500">
-                                            Only one promo code can be applied per trip. If multiple codes are added,
-                                            only the last one will apply.
+                                            {t('checkout_promo_help')}
                                         </p>
                                         <button
                                             type="button"
@@ -475,7 +468,7 @@ const Checkout = () => {
                                             disabled={couponLoading}
                                             className="inline-flex items-center justify-center px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-dull disabled:opacity-60"
                                         >
-                                            {couponLoading ? "Checking..." : "Apply"}
+                                            {couponLoading ? t('checkout_promo_button_checking') : t('checkout_promo_button_apply')}
                                         </button>
                                     </div>
                                 )}

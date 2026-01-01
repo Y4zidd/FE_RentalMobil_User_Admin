@@ -57,7 +57,7 @@ const INDONESIAN_PROVINCES = [
 ]
 
 const Profile = () => {
-  const { user, setUser, navigate } = useAppContext()
+  const { user, setUser, navigate, t } = useAppContext()
 
   const baseUser = useMemo(() => user || {}, [user])
 
@@ -162,30 +162,28 @@ const Profile = () => {
     }))
 
     if (!emailChanged) {
-      toast.success("Profile updated")
+      toast.success(t("profile_toast_profile_updated"))
       return
     }
 
     setPendingEmail(trimmedEmail)
     setEmailVerificationCode("")
-    toast.success(
-      "A 6-digit verification code has been sent to your new email (demo)."
-    )
+    toast.success(t("profile_toast_verification_sent"))
   }
 
   const handleConfirmEmailChange = (e) => {
     e.preventDefault()
     if (!pendingEmail) {
-      toast.error("No email change in progress.")
+      toast.error(t("profile_toast_no_email_change"))
       return
     }
     if (!emailVerificationCode.trim()) {
-      toast.error("Please enter the verification code.")
+      toast.error(t("profile_toast_enter_verification_code"))
       return
     }
 
     if (emailVerificationCode.trim() !== "123456") {
-      toast.error("Invalid verification code for this demo. Use 123456.")
+      toast.error(t("profile_toast_email_verify_failed"))
       return
     }
 
@@ -199,7 +197,7 @@ const Profile = () => {
     }))
     setPendingEmail("")
     setEmailVerificationCode("")
-    toast.success("Email updated successfully (demo).")
+    toast.success(t("profile_toast_email_updated"))
   }
 
   const handleSaveRental = async (e) => {
@@ -210,7 +208,7 @@ const Profile = () => {
       default_city: rentalForm.defaultCity || prev.default_city,
       rental_preferences: rentalForm.preferences || prev.rental_preferences,
     }))
-    toast.success("Rental details updated")
+    toast.success(t("profile_toast_rental_updated"))
   }
 
   const handleSavePassword = async (e) => {
@@ -220,14 +218,14 @@ const Profile = () => {
       !passwordForm.newPassword ||
       !passwordForm.confirmPassword
     ) {
-      toast.error("Please fill all password fields")
+      toast.error(t("profile_toast_password_fill_all"))
       return
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error("New password and confirmation do not match")
+      toast.error(t("profile_toast_password_mismatch"))
       return
     }
-    toast.success("Password updated")
+    toast.success(t("profile_toast_password_updated"))
     setPasswordForm({
       currentPassword: "",
       newPassword: "",
@@ -239,7 +237,7 @@ const Profile = () => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type?.startsWith("image/")) {
-      toast.error("Please upload an image file")
+      toast.error(t("profile_toast_avatar_not_image"))
       e.target.value = ""
       return
     }
@@ -252,11 +250,11 @@ const Profile = () => {
         ...prev,
         avatar_url: url || prev?.avatar_url,
       }))
-      toast.success("Photo updated")
+      toast.success(t("profile_toast_avatar_updated"))
       e.target.value = ""
     }
     reader.onerror = () => {
-      toast.error("Failed to load image")
+      toast.error(t("profile_toast_avatar_update_failed"))
       e.target.value = ""
     }
     reader.readAsDataURL(file)
@@ -268,9 +266,9 @@ const Profile = () => {
   const labelClassName = "block text-xs font-medium text-gray-700 mb-1"
 
   const tabs = [
-    { id: "personal", label: "Personal information" },
-    { id: "rental", label: "Rental details" },
-    { id: "security", label: "Security" },
+    { id: "personal", label: t("profile_tabs_personal") },
+    { id: "rental", label: t("profile_tabs_rental") },
+    { id: "security", label: t("profile_tabs_security") },
   ]
 
   return (
@@ -282,8 +280,8 @@ const Profile = () => {
           className="mb-8"
         >
           <Title
-            title="Profile settings"
-            subTitle="Update your personal and company details here."
+            title={t("profile_title")}
+            subTitle={t("profile_subtitle")}
             align="left"
           />
         </Motion.div>
@@ -335,7 +333,7 @@ const Profile = () => {
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-base font-semibold text-gray-900 mb-1">
-                          Overview of your details
+                          {t("profile_overview_heading")}
                         </h3>
                         <div className="border-t border-gray-100 mt-4 pt-4"></div>
                       </div>
@@ -357,10 +355,10 @@ const Profile = () => {
                         </div>
                         <div className="flex-1">
                           <h4 className="text-sm font-medium text-gray-900 mb-1">
-                            Profile picture
+                            {t("profile_picture_heading")}
                           </h4>
                           <p className="text-xs text-gray-500 mb-3">
-                            This photo is visible on the dashboard.
+                            {t("profile_picture_subtitle")}
                           </p>
                           <div className="flex items-center gap-3">
                             <input
@@ -374,7 +372,7 @@ const Profile = () => {
                               htmlFor="avatar-upload"
                               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-colors shadow-sm"
                             >
-                              Change
+                              {t("profile_picture_change_button")}
                             </label>
                           </div>
                         </div>
@@ -382,13 +380,13 @@ const Profile = () => {
 
                       <div className="border-t border-gray-100 pt-4">
                         <h4 className="text-sm font-medium text-gray-900 mb-4">
-                          Personal information
+                          {t("profile_personal_section_heading")}
                         </h4>
                         <form onSubmit={handleSaveAccount} className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label htmlFor="name" className={labelClassName}>
-                                First name (Full Name)
+                                {t("profile_name_label")}
                               </label>
                               <input
                                 type="text"
@@ -402,7 +400,7 @@ const Profile = () => {
                             <div>
                               {/* Placeholder for Last Name if we split it, but we only have 'name' in DB. Keeping structure. */}
                               <label htmlFor="email" className={labelClassName}>
-                                Email address
+                                {t("profile_email_label")}
                               </label>
                               <input
                                 type="email"
@@ -415,7 +413,7 @@ const Profile = () => {
                             </div>
                             <div>
                               <label htmlFor="phone" className={labelClassName}>
-                                Phone number
+                                {t("profile_phone_label")}
                               </label>
                               <input
                                 type="tel"
@@ -429,7 +427,7 @@ const Profile = () => {
                             {pendingEmail && (
                               <div className="max-w-sm space-y-1">
                                 <label className={labelClassName}>
-                                  Email verification code
+                                  {t("profile_email_verification_label")}
                                 </label>
                                 <div className="flex items-stretch gap-2">
                                   <input
@@ -443,7 +441,9 @@ const Profile = () => {
                                       )
                                     }
                                     className={inputClassName}
-                                    placeholder="Enter verification code"
+                                    placeholder={t(
+                                      "profile_email_verification_placeholder"
+                                    )}
                                   />
                                   <button
                                     type="button"
@@ -451,18 +451,15 @@ const Profile = () => {
                                     disabled={!emailVerificationCode}
                                     className="px-3 py-1.5 rounded-md bg-primary hover:bg-primary-dull text-white text-[11px] font-medium disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                                   >
-                                    Verify
+                                    {t("profile_email_verification_button_verify")}
                                   </button>
                                 </div>
                                 <p className="text-[11px] text-gray-500">
-                                  For this demo, we pretend to send a 6-digit
-                                  code to{" "}
+                                  {t("profile_email_verification_help_prefix")}{" "}
                                   <span className="font-medium">
                                     {pendingEmail}
                                   </span>
-                                  . Use code{" "}
-                                  <span className="font-mono">123456</span> to
-                                  confirm your new email address.
+                                  . {t("profile_email_verification_help_suffix")}
                                 </p>
                               </div>
                             )}
@@ -473,7 +470,7 @@ const Profile = () => {
                               type="submit"
                               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-dull text-white text-xs font-medium transition-colors"
                             >
-                              Save changes
+                              {t("profile_save_changes_button")}
                             </button>
                           </div>
                         </form>
@@ -484,18 +481,34 @@ const Profile = () => {
                   {activeTab === "rental" && (
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-base font-semibold text-gray-900">Rental Details</h3>
+                        <h3 className="text-base font-semibold text-gray-900">
+                          {t("profile_rental_heading")}
+                        </h3>
                       </div>
                       <form onSubmit={handleSaveRental} className="space-y-4">
                         {/* ... same fields, smaller spacing ... */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label htmlFor="licenseNumber" className={labelClassName}>Driver License</label>
-                            <input type="text" id="licenseNumber" name="licenseNumber" value={rentalForm.licenseNumber} onChange={handleRentalChange} className={inputClassName} />
+                            <label
+                              htmlFor="licenseNumber"
+                              className={labelClassName}
+                            >
+                              {t("profile_license_label")}
+                            </label>
+                            <input
+                              type="text"
+                              id="licenseNumber"
+                              name="licenseNumber"
+                              value={rentalForm.licenseNumber}
+                              onChange={handleRentalChange}
+                              className={inputClassName}
+                            />
                           </div>
                         </div>
                         <div>
-                          <label className={labelClassName}>Default Pickup Location (Province)</label>
+                          <label className={labelClassName}>
+                            {t("profile_default_pickup_label")}
+                          </label>
                           <select
                             value={selectedProvince}
                             onChange={(e) => handleProvinceChange(e.target.value)}
@@ -510,11 +523,28 @@ const Profile = () => {
                           </select>
                         </div>
                         <div>
-                          <label htmlFor="preferences" className={labelClassName}>Rental Preferences</label>
-                          <textarea id="preferences" name="preferences" value={rentalForm.preferences} onChange={handleRentalChange} rows={3} className={inputClassName} />
+                          <label
+                            htmlFor="preferences"
+                            className={labelClassName}
+                          >
+                            {t("profile_preferences_label")}
+                          </label>
+                          <textarea
+                            id="preferences"
+                            name="preferences"
+                            value={rentalForm.preferences}
+                            onChange={handleRentalChange}
+                            rows={3}
+                            className={inputClassName}
+                          />
                         </div>
                         <div className="flex justify-start pt-2">
-                          <button type="submit" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dull text-white text-xs font-medium">Save Details</button>
+                          <button
+                            type="submit"
+                            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dull text-white text-xs font-medium"
+                          >
+                            {t("profile_save_details_button")}
+                          </button>
                         </div>
                       </form>
                     </div>
@@ -522,12 +552,19 @@ const Profile = () => {
 
                   {activeTab === "security" && (
                     <div className="space-y-6">
-                      <div><h3 className="text-base font-semibold text-gray-900">Security</h3></div>
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900">
+                          {t("profile_security_heading")}
+                        </h3>
+                      </div>
                       <form onSubmit={handleSavePassword} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="col-span-1 md:col-span-2 max-w-sm">
-                            <label htmlFor="currentPassword" className={labelClassName}>
-                              Current Password
+                            <label
+                              htmlFor="currentPassword"
+                              className={labelClassName}
+                            >
+                              {t("profile_current_password_label")}
                             </label>
                             <input
                               type="password"
@@ -539,8 +576,11 @@ const Profile = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="newPassword" className={labelClassName}>
-                              New Password
+                            <label
+                              htmlFor="newPassword"
+                              className={labelClassName}
+                            >
+                              {t("profile_new_password_label")}
                             </label>
                             <input
                               type="password"
@@ -552,8 +592,11 @@ const Profile = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="confirmPassword" className={labelClassName}>
-                              Confirm New Password
+                            <label
+                              htmlFor="confirmPassword"
+                              className={labelClassName}
+                            >
+                              {t("profile_confirm_new_password_label")}
                             </label>
                             <input
                               type="password"
@@ -572,7 +615,7 @@ const Profile = () => {
                             type="submit"
                             className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dull text-white text-xs font-medium"
                           >
-                            Update Password
+                            {t("profile_update_password_button")}
                           </button>
                         </div>
                       </form>

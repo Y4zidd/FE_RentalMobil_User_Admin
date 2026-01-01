@@ -16,7 +16,7 @@ const CarDetails = () => {
 
   const { id } = useParams()
 
-  const { cars, pickupDate, setPickupDate, returnDate, setReturnDate, token, setShowLogin, formatCurrency } = useAppContext()
+  const { cars, pickupDate, setPickupDate, returnDate, setReturnDate, token, setShowLogin, formatCurrency, t } = useAppContext()
 
   const navigate = useNavigate()
   const [car, setCar] = useState(null)
@@ -34,31 +34,30 @@ const CarDetails = () => {
     additionalDriver: false,
   })
 
-  // Re-defining option config
   const optionConfig = [
     {
       id: 'theftProtection',
-      label: 'Theft protection',
+      labelKey: 'extras_theft_label',
+      descriptionKey: 'extras_theft_description',
       pricePerDay: 60000,
-      description: 'Covers the cost of replacing the vehicle if it is stolen.'
     },
     {
       id: 'collisionDamage',
-      label: 'Collision damage waiver',
+      labelKey: 'extras_collision_label',
+      descriptionKey: 'extras_collision_description',
       pricePerDay: 60000,
-      description: 'Reduces your financial liability for damage to the rental vehicle.'
     },
     {
       id: 'fullInsurance',
-      label: 'Full insurance',
+      labelKey: 'extras_full_insurance_label',
+      descriptionKey: 'extras_full_insurance_description',
       pricePerDay: 90000,
-      description: 'Comprehensive coverage including theft, collision, and third-party liability.'
     },
     {
       id: 'additionalDriver',
-      label: 'Driver service',
+      labelKey: 'extras_driver_service_label',
+      descriptionKey: 'extras_driver_service_description',
       pricePerDay: 200000,
-      description: 'Includes a professional driver for your entire rental period.'
     },
   ]
 
@@ -106,7 +105,7 @@ const CarDetails = () => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!pickupDate || !returnDate) {
-      toast.error('Please select pickup and return dates')
+      toast.error(t('car_details_toast_dates_required'))
       return
     }
 
@@ -114,17 +113,17 @@ const CarDetails = () => {
     const returnDateTime = new Date(`${returnDate}T${returnTime}`)
 
     if (isNaN(pickupDateTime.getTime()) || isNaN(returnDateTime.getTime())) {
-      toast.error('Please select valid pickup and return times')
+      toast.error(t('car_details_toast_times_invalid'))
       return
     }
 
     if (returnDateTime <= pickupDateTime) {
-      toast.error('Return time must be after pickup time')
+      toast.error(t('car_details_toast_return_after_pickup'))
       return
     }
 
     if (!token) {
-      toast.error('Please login or register before continuing')
+      toast.error(t('car_details_toast_login_required'))
       setShowLogin(true)
       return
     }
@@ -188,7 +187,7 @@ const CarDetails = () => {
 
       <button onClick={() => navigate(-1)} className='flex items-center gap-2 mb-6 text-gray-500 cursor-pointer'>
         <img src={assets.arrow_icon} alt="" className='rotate-180 opacity-65' />
-        Back to all cars
+        {t('car_details_back_to_cars')}
       </button>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12'>
@@ -242,7 +241,7 @@ const CarDetails = () => {
 
             <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
               {[
-                { icon: assets.users_icon, text: `${car.seating_capacity} Seats` },
+                { icon: assets.users_icon, text: `${car.seating_capacity} ${t('car_card_seats')}` },
                 { icon: assets.fuel_icon, text: car.fuel_type },
                 { icon: assets.car_icon, text: car.transmission },
                 { icon: assets.location_icon, text: car.location },
@@ -261,13 +260,13 @@ const CarDetails = () => {
 
             {/* Description */}
             <div>
-              <h1 className='text-xl font-medium mb-3'>Description</h1>
+              <h1 className='text-xl font-medium mb-3'>{t('car_details_description_heading')}</h1>
               <p className='text-gray-500'>{car.description}</p>
             </div>
 
             {car.features && car.features.length > 0 && (
               <div>
-                <h1 className='text-xl font-medium mb-3'>Features</h1>
+                <h1 className='text-xl font-medium mb-3'>{t('car_details_features_heading')}</h1>
                 <ul className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                   {car.features.map((item) => (
                     <li key={item} className='flex items-center text-gray-500'>
@@ -290,7 +289,7 @@ const CarDetails = () => {
 
           onSubmit={handleSubmit} className='shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500'>
 
-          <p className='flex items-center justify-between text-2xl text-gray-800 font-semibold'>{formatCurrency(car.pricePerDay)}<span className='text-base text-gray-400 font-normal'>per day</span></p>
+          <p className='flex items-center justify-between text-2xl text-gray-800 font-semibold'>{formatCurrency(car.pricePerDay)}<span className='text-base text-gray-400 font-normal'>{t('car_card_per_day')}</span></p>
 
           <hr className='border-borderColor my-6' />
 
@@ -346,7 +345,7 @@ const CarDetails = () => {
           </div>
 
           <div className='flex flex-col gap-2'>
-            <p>Additional Services</p>
+            <p>{t('car_details_additional_services_heading')}</p>
             <div className='border border-borderColor rounded-xl p-4 space-y-3'>
               {optionConfig.map((opt) => (
                 <div key={opt.id} className='flex flex-col rounded-lg hover:bg-light transition-colors'>
@@ -363,7 +362,7 @@ const CarDetails = () => {
                         <img src={assets.arrow_icon} className='w-3 h-3 opacity-50' alt="details" />
                       </button>
                       <div className='text-left'>
-                        <p className='text-sm text-gray-800'>{opt.label}</p>
+                        <p className='text-sm text-gray-800'>{t(opt.labelKey)}</p>
                         <p className='text-xs text-gray-400'>
                           {rentalDays > 0
                             ? `+ ${formatCurrency(opt.pricePerDay * rentalDays)}`
@@ -383,7 +382,7 @@ const CarDetails = () => {
                   </div>
                   {expandedOptions[opt.id] && (
                     <div className='px-3 pb-2 ml-9'>
-                      <p className='text-xs text-gray-500'>{opt.description}</p>
+                      <p className='text-xs text-gray-500'>{t(opt.descriptionKey)}</p>
                     </div>
                   )}
                 </div>
@@ -392,40 +391,40 @@ const CarDetails = () => {
           </div>
 
           <div className='flex flex-col gap-2'>
-            <p>Your booking details</p>
+            <p>{t('car_details_your_booking_details_heading')}</p>
             <div className='border border-borderColor rounded-xl p-4'>
               {rentalDays > 0 ? (
                 <div className='text-sm text-gray-600 space-y-1'>
                   <p>
-                    Days: <span className='font-semibold text-gray-800'>{rentalDays}</span>
+                    {t('car_details_days_label')}: <span className='font-semibold text-gray-800'>{rentalDays}</span>
                   </p>
                   <p>
-                    Pickup: <span className='font-medium'>{pickupDate} {pickupTime}</span>
+                    {t('car_details_pickup_label')}: <span className='font-medium'>{pickupDate} {pickupTime}</span>
                   </p>
                   <p>
-                    Return: <span className='font-medium'>{returnDate} {returnTime}</span>
+                    {t('car_details_return_label')}: <span className='font-medium'>{returnDate} {returnTime}</span>
                   </p>
                   <p className='flex items-center justify-between pt-2 mt-2 border-t border-borderColor'>
-                    <span className='text-gray-700'>Estimated Total</span>
+                    <span className='text-gray-700'>{t('car_details_estimated_total_label')}</span>
                     <span className='font-semibold text-gray-900'>{formatCurrency(totalCost)}</span>
                   </p>
                 </div>
               ) : (
-                <p className='text-xs text-gray-400'>Select pickup and return dates to see estimated price.</p>
+                <p className='text-xs text-gray-400'>{t('car_details_select_dates_hint')}</p>
               )}
             </div>
           </div>
 
           <div className='bg-primary/5 rounded-lg p-3 text-xs text-primary/80 mb-4 flex items-start gap-2'>
             <img src={assets.check_icon} className='w-4 h-4 mt-0.5 opacity-50' alt="" />
-            <p>Free cancellation before {new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleDateString()}, 10:00 AM</p>
+            <p>{t('car_details_free_cancellation_prefix')} {new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleDateString()}{t('car_details_free_cancellation_suffix')}</p>
           </div>
 
           <button
             type='submit'
             className='w-full bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl cursor-pointer'
           >
-            Continue
+            {t('car_details_continue_button')}
           </button>
 
         </Motion.form>

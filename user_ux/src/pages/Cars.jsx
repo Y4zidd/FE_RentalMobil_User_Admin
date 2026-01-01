@@ -9,7 +9,7 @@ import { useAppContext } from '../context/AppContext'
 
 const Cars = () => {
 
-  const { cars, axios } = useAppContext()
+  const { cars, axios, t } = useAppContext()
 
   // getting search params from url
   const [searchParams] = useSearchParams()
@@ -192,11 +192,11 @@ const Cars = () => {
 
         className='flex flex-col items-center py-20 bg-light max-md:px-4'>
         <Title
-          title='Available Cars'
+          title={t('cars_title')}
           subTitle={
             hasSearchParams
-              ? 'Showing cars based on your selected rental details'
-              : 'Browse our selection of premium vehicles available for your next adventure'
+              ? t('cars_subtitle_with_search')
+              : t('cars_subtitle_without_search')
           }
         />
 
@@ -208,7 +208,7 @@ const Cars = () => {
         >
           <img src={assets.search_icon} alt="" className='w-4.5 h-4.5 mr-2' />
 
-          <input onChange={(e) => setInput(e.target.value)} value={input} type="text" placeholder='Search by make, model, or features' className='w-full h-full outline-none text-gray-500' />
+          <input onChange={(e) => setInput(e.target.value)} value={input} type="text" placeholder={t('cars_search_placeholder')} className='w-full h-full outline-none text-gray-500' />
 
           <button
             type='button'
@@ -229,7 +229,7 @@ const Cars = () => {
               className='bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[80vh] flex flex-col overflow-hidden'
             >
               <div className='flex items-center justify-between px-5 py-4 border-b border-gray-100'>
-                <p className='text-xl font-bold text-gray-900'>All filters</p>
+                <p className='text-xl font-bold text-gray-900'>{t('cars_filters_title')}</p>
                 <button
                   type='button'
                   onClick={() => setShowFilters(false)}
@@ -240,7 +240,7 @@ const Cars = () => {
               </div>
               <div className='flex-1 overflow-y-auto px-5 py-4 space-y-5 text-sm'>
                 <div>
-                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Category</p>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>{t('cars_filter_category')}</p>
                   <div className='flex flex-wrap gap-3'>
                     {categories.map((cat) => (
                       <button
@@ -264,7 +264,7 @@ const Cars = () => {
                 </div>
 
                 <div>
-                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Transmission</p>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>{t('cars_filter_transmission')}</p>
                   <div className='flex flex-wrap gap-3'>
                     {transmissions.map((tr) => (
                       <button
@@ -287,7 +287,7 @@ const Cars = () => {
                   </div>
                 </div>
                 <div>
-                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Fuel type</p>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>{t('cars_filter_fuel_type')}</p>
                   <div className='flex flex-wrap gap-3'>
                     {fuels.map((fuel) => (
                       <button
@@ -310,7 +310,7 @@ const Cars = () => {
                   </div>
                 </div>
                 <div>
-                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Province / City</p>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>{t('cars_filter_province_city')}</p>
                   <div className='flex flex-wrap gap-3'>
                     {provinces.map((prov) => (
                       <button
@@ -333,7 +333,7 @@ const Cars = () => {
                   </div>
                 </div>
                 <div>
-                  <p className='text-xs font-medium text-gray-500 mb-1.5'>Max price / day</p>
+                  <p className='text-xs font-medium text-gray-500 mb-1.5'>{t('cars_filter_max_price')}</p>
                   <input
                     type='number'
                     min='0'
@@ -365,14 +365,14 @@ const Cars = () => {
                   }}
                   className='text-xs font-medium text-gray-500 hover:text-gray-700'
                 >
-                  Reset
+                  {t('cars_filter_reset')}
                 </button>
                 <button
                   type='button'
                   onClick={() => setShowFilters(false)}
                   className='px-4 py-2 rounded-full bg-primary text-white text-xs font-semibold hover:bg-primary-dull'
                 >
-                  Show {filteredCars.length} cars
+                  {t('cars_filter_show_cars_button')} {filteredCars.length} {t('cars_filter_show_cars_suffix')}
                 </button>
               </div>
             </Motion.div>
@@ -386,7 +386,7 @@ const Cars = () => {
         transition={{ delay: 0.6, duration: 0.5 }}
 
         className='px-6 md:px-16 lg:px-24 xl:px-32 mt-10'>
-        <p className='text-gray-500 xl:px-20 max-w-7xl mx-auto'>Showing {filteredCars.length} Cars</p>
+        <p className='text-gray-500 xl:px-20 max-w-7xl mx-auto'>{t('cars_showing_cars_label')} {filteredCars.length} {t('cars_showing_cars_suffix')}</p>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-8 mt-4 xl:px-20 max-w-7xl mx-auto'>
           {filteredCars.map((car, index) => (

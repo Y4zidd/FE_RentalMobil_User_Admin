@@ -172,9 +172,6 @@ const Cars = () => {
   const categories = Array.from(
     new Set(currentList.map((c) => c.category).filter(Boolean))
   )
-  const models = Array.from(
-    new Set(currentList.map((c) => c.model).filter(Boolean))
-  )
   const transmissions = Array.from(
     new Set(currentList.map((c) => c.transmission).filter(Boolean))
   )

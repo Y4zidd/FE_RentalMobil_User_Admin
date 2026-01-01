@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion as Motion } from 'motion/react';
+import { useAppContext } from '../context/AppContext';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 25 },
@@ -9,6 +10,8 @@ const fadeUp = (delay = 0) => ({
 });
 
 const Newsletter = () => {
+  const { t } = useAppContext();
+
   return (
     <Motion.div
       {...fadeUp(0)}
@@ -18,14 +21,14 @@ const Newsletter = () => {
         {...fadeUp(0.2)}
         className="md:text-4xl text-2xl font-semibold"
       >
-        Never Miss a Deal!
+        {t('newsletter_title')}
       </Motion.h1>
 
       <Motion.p
         {...fadeUp(0.3)}
         className="md:text-lg text-gray-500/70 pb-8 max-w-xl"
       >
-        Subscribe to get the latest offers, new arrivals, and exclusive discounts
+        {t('newsletter_subtitle')}
       </Motion.p>
 
       <Motion.form
@@ -35,7 +38,7 @@ const Newsletter = () => {
         <input
           className="h-full w-full px-4 outline-none text-gray-700 border border-gray-300 focus:border-primary transition"
           type="email"
-          placeholder="Enter your email"
+          placeholder={t('newsletter_placeholder_email')}
           required
         />
 
@@ -43,7 +46,7 @@ const Newsletter = () => {
           type="submit"
           className="md:px-12 px-8 h-full bg-primary hover:bg-primary-dull transition text-white font-medium"
         >
-          Subscribe
+          {t('newsletter_button_subscribe')}
         </button>
       </Motion.form>
     </Motion.div>

@@ -142,7 +142,7 @@ const Profile = () => {
     setSelectedProvince(value)
     setRentalForm((prev) => ({
       ...prev,
-      defaultCity: value ? `${value}, Indonesia` : "",
+      defaultCity: value || "",
     }))
   }
 

@@ -2,26 +2,26 @@ import React from "react";
 import Title from "./Title";
 import { assets } from "../assets/assets";
 import { motion as Motion } from "motion/react";
+import { useAppContext } from "../context/AppContext";
 
 const Testimonial = () => {
+  const { t } = useAppContext();
+
   const testimonials = [
     {
       name: "Yazid Istiqlal",
-      location: "Jakarta, indonesia",
-      testimonial:
-        "The entire rental experience was smooth and hassle-free. Highly impressed with the service quality!",
+      location: t("testimonial_1_location"),
+      testimonial: t("testimonial_1_text"),
     },
     {
       name: "Setiadi Agusnawan",
-      location: "Sumedang, indonesia",
-      testimonial:
-        "Excellent cars and even better customer support! They made my trip extremely comfortable.",
+      location: t("testimonial_2_location"),
+      testimonial: t("testimonial_2_text"),
     },
     {
       name: "Arcitta",
-      location: "Bandung, indonesia",
-      testimonial:
-        "Reliable, affordable, and premium quality service. I recommend them to everyone looking for Rent-A-Cars.",
+      location: t("testimonial_3_location"),
+      testimonial: t("testimonial_3_text"),
     },
   ];
 
@@ -29,8 +29,8 @@ const Testimonial = () => {
     <div className="py-28 px-6 md:px-16 lg:px-24 xl:px-44">
 
       <Title
-        title="What Our Customers Say"
-        subTitle="See why travelers across indonesia trust us for a premium and reliable travel experience."
+        title={t("testimonial_title")}
+        subTitle={t("testimonial_subtitle")}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-18">

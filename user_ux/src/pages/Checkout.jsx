@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAppContext } from "../context/AppContext"
-import { assets } from "../assets/assets"
 import { motion as Motion } from "motion/react"
 import Title from "../components/Title"
 import toast from "react-hot-toast"
@@ -15,7 +14,7 @@ const Checkout = () => {
     const [car, setCar] = useState(null)
 
     // State for form, initialized with preselectedOptions if available
-    const [bookingOptions, setBookingOptions] = useState(preselectedOptions || {
+    const [bookingOptions] = useState(preselectedOptions || {
         theftProtection: false,
         collisionDamage: false,
         fullInsurance: false,
@@ -95,13 +94,6 @@ const Checkout = () => {
         },
     ]
 
-    const toggleOption = (id) => {
-        setBookingOptions((prev) => ({
-            ...prev,
-            [id]: !prev[id],
-        }))
-    }
-
     const pickupDateTimeString = pickupDate && pickupTime ? `${pickupDate}T${pickupTime}` : pickupDate
     const returnDateTimeString = returnDate && returnTime ? `${returnDate}T${returnTime}` : returnDate
 
@@ -137,6 +129,8 @@ const Checkout = () => {
             return
         }
 
+        setCouponLoading(true)
+
         let discount = Math.round(totalCost * 0.1)
         if (discount > totalCost) {
             discount = totalCost
@@ -144,6 +138,7 @@ const Checkout = () => {
 
         setCouponDiscount(discount)
         setCouponApplied(true)
+        setCouponLoading(false)
         toast.success("Coupon applied")
     }
 

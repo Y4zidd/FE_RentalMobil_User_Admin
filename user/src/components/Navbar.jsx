@@ -71,8 +71,8 @@ const Navbar = () => {
                 <img src={assets.search_icon} alt="search" />
             </div>
 
-            <div className='flex max-sm:flex-col items-start sm:items-center gap-6'>
-                <div className="flex items-center gap-1 border border-borderColor rounded-full px-1 py-0.5 text-xs">
+            <div className='flex max-sm:flex-col max-sm:w-full items-start sm:items-center gap-4 sm:gap-6'>
+                <div className="flex items-center gap-1 border border-borderColor rounded-full px-1 py-0.5 text-xs max-sm:w-full max-sm:justify-between">
                     <button
                         type="button"
                         onClick={() => setLanguage('en')}
@@ -94,7 +94,7 @@ const Navbar = () => {
                             setShowLogin(true)
                             setOpen(false)
                         }}
-                        className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg"
+                        className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg max-sm:w-full text-center"
                     >
                         {t('navbar_login')}
                     </button>

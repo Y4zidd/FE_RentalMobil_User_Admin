@@ -5,6 +5,7 @@ import Loader from '../components/Loader'
 import { useAppContext } from '../context/AppContext'
 import toast from 'react-hot-toast'
 import { motion as Motion } from 'motion/react'
+import { ChevronRight } from 'lucide-react'
 
 const timeOptions = Array.from({ length: 48 }, (_, index) => {
   const hours = String(Math.floor(index / 2)).padStart(2, '0')
@@ -360,7 +361,7 @@ const CarDetails = () => {
                         onClick={(e) => toggleDescription(opt.id, e)}
                         className={`p-1 rounded-full hover:bg-gray-200 transition-transform ${expandedOptions[opt.id] ? 'rotate-90' : ''}`}
                       >
-                        <img src={assets.arrow_icon} className='w-3 h-3 opacity-50' alt="details" />
+                        <ChevronRight className='w-3 h-3 text-gray-500' />
                       </button>
                         <div className='text-left'>
                         <p className='text-sm text-gray-800'>{t(opt.labelKey)}</p>

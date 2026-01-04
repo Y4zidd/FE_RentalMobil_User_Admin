@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import apiClient from '@/lib/api-client';
+import { adminLogout } from '@/lib/api-admin-auth';
 import { getInitials } from '@/lib/utils';
 import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 
@@ -47,7 +47,7 @@ export function NavUser({
 
   const handleLogout = async () => {
     try {
-      await apiClient.post('/api/admin/logout');
+      await adminLogout();
     } catch (error) {
     }
     if (typeof window !== 'undefined') {

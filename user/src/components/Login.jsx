@@ -1,12 +1,19 @@
 import React from 'react'
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import {
+  loginRequest,
+  registerRequest,
+  requestVerificationCode,
+  verifyEmailCode,
+  resetPasswordWithCode,
+} from '../lib/api/auth'
 
 const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_URL;
 
 const Login = () => {
 
-    const {setShowLogin, setToken, setUser, axios, t} = useAppContext()
+    const {setShowLogin, setToken, setUser, t} = useAppContext()
 
     const [state, setState] = React.useState("login"); // login | register | verify | forgot | reset
     const [name, setName] = React.useState("");
@@ -41,12 +48,12 @@ const Login = () => {
 
         try {
             if (state === 'login') {
-                const { data } = await axios.post('/api/user/login', { email, password })
+                const { data } = await loginRequest(email, password)
                 if (data.token && data.user) {
                     handleAfterAuthSuccess(data.user, data.token)
                 }
             } else if (state === 'register') {
-                await axios.post('/api/user/register-with-verification', { name, email, password })
+                await registerRequest(name, email, password)
                 toast.success(t('login_verification_sent'))
                 setState('verify')
             } else if (state === 'verify') {
@@ -54,15 +61,12 @@ const Login = () => {
                     toast.error(t('login_enter_verification_code'))
                     return
                 }
-                const { data } = await axios.post('/api/user/verify-email-code', {
-                    email,
-                    code: verificationCode.trim()
-                })
+                const { data } = await verifyEmailCode(email, verificationCode.trim())
                 if (data.token && data.user) {
                     handleAfterAuthSuccess(data.user, data.token)
                 }
             } else if (state === 'forgot') {
-                await axios.post('/api/user/forgot-password', { email })
+                await requestVerificationCode(email)
                 toast.success(t('login_reset_email_sent'))
                 setState('reset')
             } else if (state === 'reset') {
@@ -78,7 +82,7 @@ const Login = () => {
                     toast.error(t('login_passwords_do_not_match'))
                     return
                 }
-                await axios.post('/api/user/reset-password-with-code', {
+                await resetPasswordWithCode({
                     email,
                     code: verificationCode.trim(),
                     password: resetPassword,

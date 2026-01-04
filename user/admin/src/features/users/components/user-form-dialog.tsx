@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import { cn, getInitials } from '@/lib/utils';
 import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 
 import type { User } from './users-table/columns';
+import { createAdminUser, updateAdminUser, uploadAdminUserAvatar } from '@/lib/api-admin-users';
 
 type Mode = 'create' | 'edit';
 
@@ -91,13 +91,12 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
       let currentUserId = user?.id;
 
       if (mode === 'create') {
-        const response = await apiClient.post('/api/admin/users', {
+        const createdUser = await createAdminUser({
           ...form,
           password: target.password?.value || 'password123',
           role: form.role.toLowerCase(),
           status: form.status.toLowerCase()
         });
-        const createdUser = response.data;
         currentUserId = createdUser?.id ?? currentUserId;
         toast.success('User created successfully');
       } else {
@@ -107,21 +106,14 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
           status: form.status.toLowerCase()
         };
         const newPassword = target.resetPassword?.value;
-        if (newPassword) {
-          payload.password = newPassword;
-        }
-        await apiClient.put(`/api/admin/users/${user?.id}`, payload);
+        await updateAdminUser(user?.id, payload, newPassword);
         toast.success('User updated successfully');
       }
 
       if (avatarFile && currentUserId) {
         const formData = new FormData();
         formData.append('avatar', avatarFile);
-        await apiClient.post(`/api/admin/users/${currentUserId}/avatar`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        await uploadAdminUserAvatar(currentUserId, formData);
       }
 
       onOpenChange(false);

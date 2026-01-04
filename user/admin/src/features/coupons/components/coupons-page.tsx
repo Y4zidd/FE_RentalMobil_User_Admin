@@ -7,7 +7,6 @@ import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
 import { ColumnDef, Column } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
-import apiClient from '@/lib/api-client';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -43,41 +42,29 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '@/components/forms/form-input';
 import { FormSelect } from '@/components/forms/form-select';
 import { FormDatePicker } from '@/components/forms/form-date-picker';
+import {
+  createAdminCoupon,
+  deleteAdminCoupon,
+  fetchAdminCoupons,
+  updateAdminCoupon
+} from '@/lib/api-admin-coupons';
 import { FormCheckbox } from '@/components/forms/form-checkbox';
 import { toast } from 'sonner';
 import { useDataTable } from '@/hooks/use-data-table';
 import { Input } from '@/components/ui/input';
 import { CouponCellAction } from './coupon-cell-action';
 
-type Coupon = {
-  id: number;
-  code: string;
-  discount_type: 'percent' | 'fixed';
-  discount_value: number;
-  min_order_total?: number | null;
-  max_uses?: number | null;
-  used_count?: number | null;
-  starts_at?: string | null;
-  expires_at?: string | null;
-  is_active: boolean;
-  created_at?: string;
-};
+import type { Coupon } from '@/lib/api-admin-coupons';
 
 const formSchema = z.object({
   code: z.string().min(2, 'Code must be at least 2 characters'),
   discount_type: z.enum(['percent', 'fixed']),
-  discount_value: z
-    .number({ invalid_type_error: 'Enter a valid number' })
-    .min(1, 'Minimum 1'),
-  min_order_total: z
-    .number({ invalid_type_error: 'Enter a valid number' })
-    .optional(),
-  max_uses: z
-    .number({ invalid_type_error: 'Enter a valid number' })
-    .optional(),
+  discount_value: z.number().min(1, 'Minimum 1'),
+  min_order_total: z.number().optional(),
+  max_uses: z.number().optional(),
   starts_at: z.date().optional(),
   expires_at: z.date().optional(),
-  is_active: z.boolean().default(true)
+  is_active: z.boolean()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -104,19 +91,19 @@ export default function CouponsPage() {
   });
 
   useEffect(() => {
-    const fetchCoupons = async () => {
+    const fetchData = async () => {
       try {
-        const res = await apiClient.get('/api/admin/coupons');
-        const data = Array.isArray(res.data) ? res.data : res.data.data || [];
+        const data = await fetchAdminCoupons();
         setCoupons(data);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch coupons', err);
         toast.error('Failed to load coupons');
       } finally {
         setLoading(false);
       }
     };
-    fetchCoupons();
+
+    fetchData();
   }, []);
 
   const resetForm = () => {
@@ -174,18 +161,13 @@ export default function CouponsPage() {
 
     try {
       if (editing) {
-        const res = await apiClient.put(
-          `/api/admin/coupons/${editing.id}`,
-          payload
-        );
-        const updated = res.data;
+        const updated = await updateAdminCoupon(editing.id, payload);
         setCoupons((prev) =>
           prev.map((c) => (c.id === updated.id ? updated : c))
         );
         toast.success('Coupon updated');
       } else {
-        const res = await apiClient.post('/api/admin/coupons', payload);
-        const created = res.data;
+        const created = await createAdminCoupon(payload);
         setCoupons((prev) => [created, ...prev]);
         toast.success('Coupon created');
       }
@@ -201,7 +183,7 @@ export default function CouponsPage() {
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
-      await apiClient.delete(`/api/admin/coupons/${id}`);
+      await deleteAdminCoupon(id);
       setCoupons((prev) => prev.filter((c) => c.id !== id));
       toast.success('Coupon deleted');
     } catch (err: any) {

@@ -19,7 +19,6 @@ import { useDataTable } from '@/hooks/use-data-table';
 import { Column, ColumnDef } from '@tanstack/react-table';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
-import apiClient from '@/lib/api-client';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -35,18 +34,12 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-
-type BookingRow = {
-  id: number;
-  customerName: string;
-  customerEmail: string;
-  carName: string;
-  pickupDate: string;
-  returnDate: string;
-  totalPrice: number;
-  paymentMethod: string;
-  status: string;
-};
+import { fetchAdminOverview } from '@/lib/api-admin-overview';
+import {
+  BookingRow,
+  fetchAdminBookings,
+  updateAdminBookingStatus
+} from '@/lib/api-admin-bookings';
 
 const bookingStatisticsCardData = [
   {
@@ -137,12 +130,12 @@ export default function BookingsPage() {
     const fetchData = async () => {
       try {
         const [overviewResult, bookingsResult] = await Promise.allSettled([
-          apiClient.get('/api/admin/overview'),
-          apiClient.get('/api/admin/bookings')
+          fetchAdminOverview(),
+          fetchAdminBookings()
         ]);
 
         if (overviewResult.status === 'fulfilled') {
-          const metrics = overviewResult.value.data?.metrics || {};
+          const metrics = overviewResult.value.metrics || {};
           applyOverviewMetricsToStats(metrics);
         } else {
           console.error('Failed to fetch overview metrics', overviewResult.reason);
@@ -150,27 +143,7 @@ export default function BookingsPage() {
 
         if (bookingsResult.status === 'fulfilled') {
           const bookingsRes = bookingsResult.value;
-          const rawBookings = Array.isArray(bookingsRes.data)
-            ? bookingsRes.data
-            : bookingsRes.data.data || [];
-
-          const mapped: BookingRow[] = rawBookings.map((b: any) => ({
-            id: b.id,
-            customerName: b.user?.name || 'Unknown',
-            customerEmail: b.user?.email || '',
-            carName: b.car
-              ? `${b.car.brand ?? ''} ${b.car.model ?? ''}`.trim() ||
-                b.car.name ||
-                'Unknown car'
-              : 'Unknown car',
-            pickupDate: b.pickup_date,
-            returnDate: b.return_date,
-            totalPrice: Number(b.total_price ?? 0),
-            paymentMethod: b.payment_method,
-            status: b.status
-          }));
-
-          setBookings(mapped);
+          setBookings(bookingsRes);
         } else {
           console.error('Failed to fetch bookings', bookingsResult.reason);
         }
@@ -187,10 +160,7 @@ export default function BookingsPage() {
   const handleStatusChange = async (id: number, status: string) => {
     setUpdatingId(id);
     try {
-      const response = await apiClient.put(`/api/admin/bookings/${id}`, {
-        status
-      });
-      const updated = response.data;
+      const updated = await updateAdminBookingStatus(id, status);
       setBookings((prev) =>
         prev.map((b) =>
           b.id === id
@@ -203,8 +173,8 @@ export default function BookingsPage() {
       );
       toast.success(`Booking #${id} status updated to ${status}`);
       try {
-        const overviewRes = await apiClient.get('/api/admin/overview');
-        const metrics = overviewRes.data?.metrics || {};
+        const overviewRes = await fetchAdminOverview();
+        const metrics = overviewRes.metrics || {};
         applyOverviewMetricsToStats(metrics);
       } catch (err) {
         console.error('Failed to refresh overview metrics after status change', err);

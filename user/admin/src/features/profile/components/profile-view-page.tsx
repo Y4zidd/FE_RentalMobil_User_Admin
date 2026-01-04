@@ -16,9 +16,14 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
 import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
-import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
+import {
+  updateAdminAvatar,
+  updateAdminPassword,
+  updateAdminProfile
+} from '@/lib/api-admin-profile';
+import { fetchCurrentAdminUser } from '@/lib/api-admin-current-user';
 
 type AccountFormState = {
   name: string;
@@ -52,14 +57,13 @@ export default function ProfileViewPage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await apiClient.get('/api/user/data');
-        const user = response.data;
+        const user = await fetchCurrentAdminUser();
         setAccountForm({
           name: user.name ?? '',
           email: user.email ?? '',
           phone: user.phone ?? ''
         });
-        setAvatarPreview(user.avatar_url ?? '');
+        setAvatarPreview(user.avatarUrl ?? '');
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('admin_user', JSON.stringify(user));
         }
@@ -96,8 +100,7 @@ export default function ProfileViewPage() {
         email: accountForm.email,
         phone: accountForm.phone
       };
-      const response = await apiClient.put('/api/user/profile', payload);
-      const user = response.data;
+      const user = await updateAdminProfile(payload);
       setAccountForm({
         name: user.name ?? '',
         email: user.email ?? '',
@@ -111,7 +114,7 @@ export default function ProfileViewPage() {
       const message =
         error?.response?.data?.message ||
         (error?.response?.data?.errors &&
-          Object.values(error.response.data.errors)[0][0]) ||
+          (Object.values(error.response.data.errors as any)[0] as any)?.[0]) ||
         'Failed to update profile';
       toast.error(message);
     } finally {
@@ -135,7 +138,7 @@ export default function ProfileViewPage() {
     }
     setSavingPassword(true);
     try {
-      await apiClient.put('/api/user/password', {
+      await updateAdminPassword({
         current_password: passwordForm.currentPassword,
         new_password: passwordForm.newPassword,
         new_password_confirmation: passwordForm.confirmPassword
@@ -150,7 +153,7 @@ export default function ProfileViewPage() {
       const message =
         error?.response?.data?.message ||
         (error?.response?.data?.errors &&
-          Object.values(error.response.data.errors)[0][0]) ||
+          (Object.values(error.response.data.errors as any)[0] as any)?.[0]) ||
         'Failed to update password';
       toast.error(message);
     } finally {
@@ -174,12 +177,7 @@ export default function ProfileViewPage() {
 
     setSavingAvatar(true);
     try {
-      const response = await apiClient.post('/api/user/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      const user = response.data;
+      const user = await updateAdminAvatar(formData);
       setAvatarPreview(user.avatar_url ?? '');
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('admin_user', JSON.stringify(user));
@@ -189,7 +187,7 @@ export default function ProfileViewPage() {
       const message =
         error?.response?.data?.message ||
         (error?.response?.data?.errors &&
-          Object.values(error.response.data.errors)[0][0]) ||
+          (Object.values(error.response.data.errors as any)[0] as any)?.[0]) ||
         'Failed to update photo';
       toast.error(message);
     } finally {

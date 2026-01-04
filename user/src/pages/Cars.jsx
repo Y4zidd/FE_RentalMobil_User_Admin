@@ -6,10 +6,11 @@ import CarCard from '../components/CarCard'
 import { useSearchParams } from 'react-router-dom'
 import { motion as Motion } from 'motion/react'
 import { useAppContext } from '../context/AppContext'
+import { fetchAvailableCarsRequest } from '../lib/api/cars'
 
 const Cars = () => {
 
-  const { cars, axios, t } = useAppContext()
+  const { cars, t } = useAppContext()
 
   // getting search params from url
   const [searchParams] = useSearchParams()
@@ -34,11 +35,9 @@ const Cars = () => {
 
   const searchCarAvailablity = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/user/cars', {
-        params: {
-          pickup_date: pickupDate || undefined,
-          return_date: returnDate || undefined,
-        },
+      const { data } = await fetchAvailableCarsRequest({
+        pickup_date: pickupDate || undefined,
+        return_date: returnDate || undefined,
       })
       const list = Array.isArray(data) ? data : []
       const mapped = list.map((car) => {
@@ -81,7 +80,7 @@ const Cars = () => {
       console.error('Failed to fetch available cars by date', error)
       setBaseCars([])
     }
-  }, [axios, pickupDate, returnDate])
+  }, [pickupDate, returnDate])
 
   const applyFilter = useCallback(() => {
     const source = baseCars.length ? baseCars : cars

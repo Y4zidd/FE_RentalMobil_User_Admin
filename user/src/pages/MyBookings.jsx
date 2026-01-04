@@ -5,10 +5,11 @@ import { useAppContext } from '../context/AppContext'
 import { motion as Motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
+import { fetchUserBookingsRequest } from '../lib/api/booking'
 
 const MyBookings = () => {
 
-  const { axios, token, formatCurrency, t, language } = useAppContext()
+  const { token, formatCurrency, t, language } = useAppContext()
   const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
 
@@ -56,7 +57,7 @@ const MyBookings = () => {
 
   const fetchBookings = async () => {
     try {
-      const { data } = await axios.get('/api/bookings/user')
+      const { data } = await fetchUserBookingsRequest()
       const mapped = Array.isArray(data) ? data.map(mapBookingFromApi) : []
       setBookings(mapped)
     } catch (error) {

@@ -14,6 +14,14 @@ import {
   Camera,
   ChevronRight,
 } from "lucide-react"
+import {
+  confirmEmailChangeRequest,
+  requestEmailChangeCodeRequest,
+  updatePasswordRequest,
+  updateProfileRequest,
+  updateRentalDetailsRequest,
+  uploadAvatarRequest,
+} from "../lib/api/user"
 
 const INDONESIAN_PROVINCES = [
   "Aceh",
@@ -57,7 +65,7 @@ const INDONESIAN_PROVINCES = [
 ]
 
 const Profile = () => {
-  const { user, setUser, axios, navigate, t } = useAppContext()
+  const { user, setUser, navigate, t } = useAppContext()
 
   const baseUser = useMemo(() => user || {}, [user])
 
@@ -160,10 +168,7 @@ const Profile = () => {
         phone: accountForm.phone,
       }
 
-      const { data: updatedUser } = await axios.put(
-        "/api/user/profile",
-        payload
-      )
+      const { data: updatedUser } = await updateProfileRequest(payload)
       setUser(updatedUser)
 
       if (!emailChanged) {
@@ -171,12 +176,7 @@ const Profile = () => {
         return
       }
 
-      const { data } = await axios.post(
-        "/api/user/profile/request-email-change-code",
-        {
-          new_email: trimmedEmail,
-        }
-      )
+      const { data } = await requestEmailChangeCodeRequest(trimmedEmail)
       setPendingEmail(trimmedEmail)
       setEmailVerificationCode("")
       toast.success(
@@ -204,13 +204,10 @@ const Profile = () => {
 
     try {
       setIsVerifyingEmailCode(true)
-      const { data } = await axios.post(
-        "/api/user/profile/confirm-email-change",
-        {
-          new_email: pendingEmail,
-          code: emailVerificationCode.trim(),
-        }
-      )
+      const { data } = await confirmEmailChangeRequest({
+        new_email: pendingEmail,
+        code: emailVerificationCode.trim(),
+      })
 
       const updatedUser = data?.user || data
       setUser(updatedUser)
@@ -240,7 +237,7 @@ const Profile = () => {
         default_city: rentalForm.defaultCity,
         rental_preferences: rentalForm.preferences,
       }
-      const { data } = await axios.put("/api/user/rental-details", payload)
+      const { data } = await updateRentalDetailsRequest(payload)
       setUser(data)
       toast.success(t('profile_toast_rental_updated'))
     } catch (error) {
@@ -264,7 +261,7 @@ const Profile = () => {
       return
     }
     try {
-      await axios.put("/api/user/password", {
+      await updatePasswordRequest({
         current_password: passwordForm.currentPassword,
         new_password: passwordForm.newPassword,
         new_password_confirmation: passwordForm.confirmPassword,
@@ -294,9 +291,7 @@ const Profile = () => {
     formData.append("avatar", file)
 
     try {
-      const { data } = await axios.post("/api/user/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      const { data } = await uploadAvatarRequest(formData)
       setUser(data)
       setAvatarPreview(data.avatar_url || "")
       toast.success(t('profile_toast_avatar_updated'))

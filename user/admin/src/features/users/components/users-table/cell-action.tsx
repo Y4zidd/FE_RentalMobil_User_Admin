@@ -18,8 +18,8 @@ import {
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import { deactivateAdminUser, deleteAdminUser } from '@/lib/api-admin-users';
 
 import type { User } from './columns';
 import { UserFormDialog } from '../user-form-dialog';
@@ -39,12 +39,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
     try {
       setLoading(true);
       if (action === 'deactivate') {
-        await apiClient.patch(`/api/admin/users/${data.id}`, {
-          status: 'inactive'
-        });
+        await deactivateAdminUser(data.id);
         toast.success('User deactivated successfully');
       } else if (action === 'delete') {
-        await apiClient.delete(`/api/admin/users/${data.id}`);
+        await deleteAdminUser(data.id);
         toast.success('User deleted successfully');
       }
       router.refresh();

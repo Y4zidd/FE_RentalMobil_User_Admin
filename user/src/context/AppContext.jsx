@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useNavigate } from "react-router-dom";
+import { apiClient } from '../lib/api/client'
+import { fetchCarsRequest } from '../lib/api/cars'
+import { fetchUserRequest } from '../lib/api/user'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+apiClient.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
 const DEFAULT_CURRENCY = {
     code: 'IDR',
@@ -658,7 +660,7 @@ export const AppProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
-            const { data } = await axios.get('/api/user/data')
+            const { data } = await fetchUserRequest()
             setUser(data)
         } catch (error) {
             console.error('Failed to fetch user', error)
@@ -669,7 +671,7 @@ export const AppProvider = ({ children }) => {
 
     const fetchCars = async () => {
         try {
-            const { data } = await axios.get('/api/user/cars')
+            const { data } = await fetchCarsRequest()
             const list = Array.isArray(data) ? data.map(mapCarFromApi) : []
             setCars(list)
         } catch (error) {
@@ -700,7 +702,7 @@ export const AppProvider = ({ children }) => {
         localStorage.removeItem('token')
         setToken(null)
         setUser(null)
-        axios.defaults.headers.common['Authorization'] = ''
+        apiClient.defaults.headers.common['Authorization'] = ''
         toast.success(t('toast_logged_out'))
         navigate('/')
     }
@@ -743,13 +745,13 @@ export const AppProvider = ({ children }) => {
 
     useEffect(() => {
         if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
             fetchUser()
         }
     }, [token])
 
     const value = {
-        navigate, currency, axios, user, setUser,
+        navigate, currency, axios: apiClient, user, setUser,
         token, setToken, fetchUser, showLogin, setShowLogin, logout, fetchCars, cars, setCars,
         pickupDate, setPickupDate, returnDate, setReturnDate,
         formatCurrency,

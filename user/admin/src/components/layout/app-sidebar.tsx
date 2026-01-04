@@ -43,7 +43,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { toast } from 'sonner';
-import apiClient from '@/lib/api-client';
+import { adminLogout } from '@/lib/api-admin-auth';
+import { fetchCurrentAdminUser } from '@/lib/api-admin-current-user';
 
 const USER_APP_URL = process.env.NEXT_PUBLIC_USER_APP_URL;
 
@@ -58,9 +59,9 @@ export default function AppSidebar() {
     avatarUrl?: string | null;
   } | null>(null);
 
-   const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
-      await apiClient.post('/api/admin/logout');
+      await adminLogout();
     } catch (error) {
     }
     if (typeof window !== 'undefined') {
@@ -85,7 +86,7 @@ export default function AppSidebar() {
           setCurrentUser({
             name: parsed.name ?? '',
             email: parsed.email ?? '',
-            avatarUrl: parsed.avatar_url ?? ''
+            avatarUrl: parsed.avatarUrl ?? ''
           });
           return;
         } catch {
@@ -93,15 +94,9 @@ export default function AppSidebar() {
       }
 
       try {
-        const response = await apiClient.get('/api/user/data');
-        const user = response.data;
-        const mapped = {
-          name: user.name ?? '',
-          email: user.email ?? '',
-          avatarUrl: user.avatar_url ?? ''
-        };
+        const mapped = await fetchCurrentAdminUser();
         setCurrentUser(mapped);
-        window.localStorage.setItem('admin_user', JSON.stringify(user));
+        window.localStorage.setItem('admin_user', JSON.stringify(mapped));
       } catch {
       }
     };

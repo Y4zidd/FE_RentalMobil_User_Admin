@@ -16,7 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import apiClient from "@/lib/api-client";
+import { fetchAdminOverview } from "@/lib/api-admin-overview";
 
 const chartConfig = {
   revenue: {
@@ -36,8 +36,8 @@ export function RevenueLineGraph() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiClient.get("/api/admin/overview");
-        const items = res.data?.revenue_by_day;
+        const res = await fetchAdminOverview();
+        const items = (res as any)?.revenue_by_day;
         if (Array.isArray(items) && items.length > 0) {
           const mapped: RevenueDay[] = items.map((item: any) => ({
             date: String(item.date),

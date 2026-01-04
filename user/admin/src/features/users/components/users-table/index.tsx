@@ -6,8 +6,9 @@ import { useDataTable } from '@/hooks/use-data-table';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import apiClient from '@/lib/api-client';
-import { User, columns } from './columns';
+import { fetchAdminUsers } from '@/lib/api-admin-users';
+import type { User } from './columns';
+import { columns } from './columns';
 
 export function UsersTable() {
   const [pageSize] = useQueryState('perPage', parseAsInteger.withDefault(10));
@@ -23,36 +24,12 @@ export function UsersTable() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await apiClient.get('/api/admin/users', {
-          params: {
-            search,
-            role: roleFilter ? roleFilter.toLowerCase() : undefined,
-            status: statusFilter ? statusFilter.toLowerCase() : undefined
-          }
+        const users = await fetchAdminUsers({
+          search,
+          role: roleFilter,
+          status: statusFilter
         });
-        const users = Array.isArray(response.data)
-          ? response.data
-          : response.data.data || [];
-        const mappedUsers = users.map((u: any) => {
-          let role: User['role'];
-          if (u.role === 'admin') {
-            role = 'Admin';
-          } else if (u.role === 'staff') {
-            role = 'Staff';
-          } else {
-            role = 'Customer';
-          }
-
-          return {
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            role,
-            status: u.status === 'active' ? 'Active' : 'Inactive',
-            avatarUrl: u.avatar_url || ''
-          };
-        });
-        setData(mappedUsers);
+        setData(users);
       } catch (error) {
         console.error('Failed to fetch users', error);
       } finally {

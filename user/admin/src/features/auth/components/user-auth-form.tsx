@@ -13,10 +13,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import * as z from 'zod';
 import { FormInput } from '@/components/forms/form-input';
-import apiClient from '@/lib/api-client';
+import { toast } from 'sonner';
+import { adminLogin } from '@/lib/api-admin-auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
@@ -42,10 +42,10 @@ export default function UserAuthForm() {
   const onSubmit = async (data: UserFormValue) => {
     startTransition(async () => {
       try {
-        const response = await apiClient.post('/api/admin/login', data);
-        if (response.data.token) {
-          localStorage.setItem('admin_token', response.data.token);
-          localStorage.setItem('admin_user', JSON.stringify(response.data.user));
+        const result = await adminLogin(data);
+        if (result.token) {
+          localStorage.setItem('admin_token', result.token);
+          localStorage.setItem('admin_user', JSON.stringify(result.user));
           toast.success('Signed In Successfully!');
           router.push('/dashboard');
         } else {

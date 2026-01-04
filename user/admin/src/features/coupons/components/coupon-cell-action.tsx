@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
-import apiClient from '@/lib/api-client';
+import { deleteAdminCoupon } from '@/lib/api-admin-coupons';
 
 type Coupon = {
   id: number;
@@ -47,7 +47,7 @@ export function CouponCellAction({
   const handleDelete = async () => {
     try {
       setLoading(true);
-      await apiClient.delete(`/api/admin/coupons/${data.id}`);
+      await deleteAdminCoupon(data.id);
       toast.success('Coupon deleted');
       onDeleted(data.id);
       router.refresh();
@@ -109,4 +109,3 @@ export function CouponCellAction({
     </>
   );
 }
-

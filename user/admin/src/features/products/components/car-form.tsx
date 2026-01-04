@@ -24,9 +24,9 @@ import {
   TRANSMISSION_OPTIONS
 } from './product-tables/options';
 import { Map, MapMarker, MapPopup, MapTileLayer, MapZoomControl } from '@/components/ui/map';
-import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { createAdminCar, updateAdminCar } from '@/lib/api-admin-cars';
 
 const MAX_FILE_SIZE = 5000000;
 const ACCEPTED_IMAGE_TYPES = [
@@ -114,10 +114,10 @@ const formSchema = z.object({
   pricePerDay: z.number().min(0, {
     message: 'Price must be a positive number.'
   }),
-  seatingCapacity: z.coerce.number().min(1, {
+  seatingCapacity: z.number().min(1, {
     message: 'Capacity must be at least 1.'
   }),
-  year: z.coerce.number().min(1900, {
+  year: z.number().min(1900, {
     message: 'Year must be valid.'
   }),
   category: z.string().min(1, {
@@ -132,11 +132,13 @@ const formSchema = z.object({
   province: z.string().min(1, {
     message: 'Province or region is required.'
   }),
-  status: z.string().default('available'),
+  status: z.string().min(1, {
+    message: 'Status is required.'
+  }),
   description: z.string().min(10, {
     message: 'Description must be at least 10 characters.'
   }),
-  features: z.array(z.string()).default([])
+  features: z.array(z.string())
 });
 
 type CarFormValues = z.infer<typeof formSchema>;
@@ -332,19 +334,10 @@ export default function CarForm({
       }
 
       if (initialData) {
-        formData.append('_method', 'PUT');
-        await apiClient.post(`/api/admin/cars/${initialData.id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        await updateAdminCar(initialData.id, formData);
         toast.success('Car updated successfully');
       } else {
-        await apiClient.post('/api/admin/cars', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        await createAdminCar(formData);
         toast.success('Car created successfully');
       }
 
@@ -369,7 +362,8 @@ export default function CarForm({
         }
 
         const firstError =
-          Object.values(fieldErrors)?.[0]?.[0] || 'Validation error';
+          (Object.values(fieldErrors as any)[0] as any)?.[0] ||
+          'Validation error';
         toast.error(firstError);
       } else {
         const message =

@@ -6,11 +6,16 @@ import { useAppContext } from "../context/AppContext"
 import { motion as Motion } from "motion/react"
 import { ExternalLink, Headphones, ShieldCheck } from "lucide-react"
 import { toast } from "react-hot-toast"
+import {
+  checkoutPaymentRequest,
+  fetchUserBookingsRequest,
+  markBookingPaidRequest,
+} from "../lib/api/booking"
 
 const BookingDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { axios, token, formatCurrency, t, language } = useAppContext()
+  const { token, formatCurrency, t, language } = useAppContext()
 
   const [booking, setBooking] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -52,7 +57,7 @@ const BookingDetails = () => {
         return
       }
       try {
-        const { data } = await axios.get("/api/bookings/user")
+        const { data } = await fetchUserBookingsRequest()
         const list = Array.isArray(data) ? data.map(mapBookingFromApi) : []
         const found = list.find((item) => String(item.id) === String(id))
         setBooking(found || null)
@@ -64,7 +69,7 @@ const BookingDetails = () => {
       }
     }
     fetchBooking()
-  }, [axios, token, id])
+  }, [token, id])
 
   if (loading) {
     return (
@@ -108,25 +113,13 @@ const BookingDetails = () => {
 
     setIsPaying(true)
     try {
-      const { data: payment } = await axios.post(
-        "/api/payments/checkout",
-        { booking_id: booking.bookingId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      )
+      const { data: payment } = await checkoutPaymentRequest(booking.bookingId)
 
       if (payment.token && window.snap) {
         window.snap.pay(payment.token, {
           onSuccess: async () => {
             try {
-              await axios.post(
-                `/api/bookings/${booking.bookingId}/mark-paid`,
-                {},
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              )
+              await markBookingPaidRequest(booking.bookingId)
             } catch (error) {
               console.error(error)
             }

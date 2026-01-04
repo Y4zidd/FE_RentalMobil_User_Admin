@@ -5,9 +5,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
 import Link from 'next/link';
 import { UserFormDialog } from '@/features/users/components/user-form-dialog';
+import { fetchAdminUserById } from '@/lib/api-admin-users';
 
 type User = {
   id: number;
@@ -29,20 +29,14 @@ export default function Page() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await apiClient.get(`/api/admin/users/${userId}`);
-        const u = response.data;
+        const u = await fetchAdminUserById(userId);
         setUser({
           id: u.id,
           name: u.name,
           email: u.email,
-          role:
-            u.role === 'admin'
-              ? 'Admin'
-              : u.role === 'customer'
-                ? 'Customer'
-                : 'Staff',
-          status: u.status === 'active' ? 'Active' : 'Inactive',
-          avatarUrl: u.avatar_url
+          role: u.role,
+          status: u.status,
+          avatarUrl: u.avatarUrl
         });
       } catch (error) {
         console.error('Failed to fetch user', error);
@@ -110,4 +104,3 @@ export default function Page() {
     </PageContainer>
   );
 }
-

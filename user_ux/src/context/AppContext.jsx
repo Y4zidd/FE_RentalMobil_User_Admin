@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { mockUser, mockCars, mockBookings } from "../assets/mockData";
+import { apiClient } from "../lib/api/client";
 
 const DEFAULT_CURRENCY = {
     code: 'IDR',
@@ -810,6 +811,7 @@ export const AppProvider = ({ children }) => {
         localStorage.removeItem('token')
         setToken(null)
         setUser(null)
+        apiClient.defaults.headers.common['Authorization'] = ''
         toast.success(t('toast_logged_out'))
         navigate('/')
     }
@@ -850,6 +852,12 @@ export const AppProvider = ({ children }) => {
         }
     }, [language])
 
+    useEffect(() => {
+        if (token) {
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        }
+    }, [token])
+
     const value = {
         navigate,
         currency,
@@ -874,6 +882,7 @@ export const AppProvider = ({ children }) => {
         language,
         setLanguage,
         t,
+        axios: apiClient,
     }
 
     return (

@@ -15,8 +15,8 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn, getInitials } from '@/lib/utils';
 import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
 import { useParams } from 'next/navigation';
+import { fetchAdminUserById } from '@/lib/api-admin-users';
 
 type User = {
   id: number;
@@ -36,20 +36,14 @@ export default function Page() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await apiClient.get(`/api/admin/users/${userId}`);
-        const u = response.data;
+        const u = await fetchAdminUserById(userId);
         setUser({
           id: u.id,
           name: u.name,
           email: u.email,
-          role:
-            u.role === 'admin'
-              ? 'Admin'
-              : u.role === 'customer'
-                ? 'Customer'
-                : 'Staff',
-          status: u.status === 'active' ? 'Active' : 'Inactive',
-          avatarUrl: u.avatar_url || DEFAULT_USER_AVATAR
+          role: u.role,
+          status: u.status,
+          avatarUrl: u.avatarUrl || DEFAULT_USER_AVATAR
         });
       } catch (error) {
         console.error('Failed to fetch user', error);

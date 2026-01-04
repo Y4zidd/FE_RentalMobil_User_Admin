@@ -17,8 +17,8 @@ import {
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import { deleteAdminCar } from '@/lib/api-admin-cars';
 
 interface CellActionProps {
   data: Product;
@@ -32,7 +32,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const onConfirm = async () => {
     try {
       setLoading(true);
-      await apiClient.delete(`/api/admin/cars/${data.id}`);
+      await deleteAdminCar(data.id);
       toast.success('Car deleted successfully');
       router.refresh();
       // Since we are client-side rendering the list, refresh() might not update the list immediately if it doesn't trigger re-fetch.

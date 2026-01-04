@@ -13,7 +13,8 @@ import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import apiClient from '@/lib/api-client';
+import { adminLogout } from '@/lib/api-admin-auth';
+import { fetchCurrentAdminUser } from '@/lib/api-admin-current-user';
 
 const USER_APP_URL = process.env.NEXT_PUBLIC_USER_APP_URL;
 
@@ -37,7 +38,7 @@ export function UserNav() {
           setCurrentUser({
             name: parsed.name ?? '',
             email: parsed.email ?? '',
-            avatarUrl: parsed.avatar_url ?? ''
+            avatarUrl: parsed.avatarUrl ?? ''
           });
           return;
         } catch {
@@ -45,15 +46,9 @@ export function UserNav() {
       }
 
       try {
-        const response = await apiClient.get('/api/user/data');
-        const user = response.data;
-        const mapped: CurrentUser = {
-          name: user.name ?? '',
-          email: user.email ?? '',
-          avatarUrl: user.avatar_url ?? ''
-        };
+        const mapped = await fetchCurrentAdminUser();
         setCurrentUser(mapped);
-        window.localStorage.setItem('admin_user', JSON.stringify(user));
+        window.localStorage.setItem('admin_user', JSON.stringify(mapped));
       } catch {
       }
     };
@@ -63,7 +58,7 @@ export function UserNav() {
 
   const handleLogout = async () => {
     try {
-      await apiClient.post('/api/admin/logout');
+      await adminLogout();
     } catch (error) {
     }
     if (typeof window !== 'undefined') {

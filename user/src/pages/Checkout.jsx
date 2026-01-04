@@ -5,11 +5,17 @@ import { motion as Motion } from "motion/react"
 import Title from "../components/Title"
 import toast from "react-hot-toast"
 import { ShieldCheck, Calendar, MapPin, Car, CreditCard, ArrowLeft } from "lucide-react"
+import {
+  checkoutPaymentRequest,
+  createBookingRequest,
+  markBookingPaidRequest,
+} from "../lib/api/booking"
+import { validateCouponRequest } from "../lib/api/user"
 
 const Checkout = () => {
     const navigate = useNavigate()
     const location = useLocation()
-    const { cars, token, formatCurrency, user, axios, setShowLogin, t, language } = useAppContext()
+    const { cars, token, formatCurrency, user, setShowLogin, t, language } = useAppContext()
     const { carId, pickupDate, returnDate, pickupTime, returnTime, preselectedOptions } = location.state || {}
     const [car, setCar] = useState(null)
 
@@ -132,7 +138,7 @@ const Checkout = () => {
             }))
         setCouponLoading(true)
         try {
-            const { data } = await axios.post('/api/user/coupons/validate', {
+            const { data } = await validateCouponRequest({
                 code: couponCode.trim(),
                 car_id: car.id,
                 pickup_date: pickupDateTimeString,
@@ -183,38 +189,26 @@ const Checkout = () => {
                 pickup_date: pickupDateTimeString,
                 return_date: returnDateTimeString,
                 payment_method: paymentMethodBackend,
-                pickup_location_id: car.locationId || 1, // Fallback need valid ID logic if not present
+                pickup_location_id: car.locationId || 1,
                 dropoff_location_id: car.locationId || 1,
                 options: selectedOptions,
                 coupon_code: couponApplied ? couponCode.trim() : undefined,
             }
 
-            const { data: booking } = await axios.post('/api/bookings', payload, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
+            const { data: booking } = await createBookingRequest(payload)
 
             if (paymentMethodBackend === 'online_full') {
                 try {
-                    const { data: payment } = await axios.post(
-                        '/api/payments/checkout',
-                        { booking_id: booking.id },
-                        {
-                            headers: { Authorization: `Bearer ${token}` },
-                        },
-                    )
+                    const { data: payment } = await checkoutPaymentRequest(booking.id)
 
                     if (payment.token && window.snap) {
                         window.snap.pay(payment.token, {
                             onSuccess: async () => {
                                 try {
-                                    await axios.post(
-                                        `/api/bookings/${booking.id}/mark-paid`,
-                                        {},
-                                        {
-                                            headers: { Authorization: `Bearer ${token}` },
-                                        }
-                                    )
-                                } catch (err) { console.error(err) }
+                                    await markBookingPaidRequest(booking.id)
+                                } catch (err) {
+                                    console.error(err)
+                                }
                                 toast.success(t('checkout_toast_payment_success'))
                                 navigate('/my-bookings')
                             },

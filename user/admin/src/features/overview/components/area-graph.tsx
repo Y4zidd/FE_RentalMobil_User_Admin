@@ -18,7 +18,7 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
-import apiClient from '@/lib/api-client';
+import { fetchAdminOverview } from '@/lib/api-admin-overview';
 
 const chartConfig = {
   revenue: {
@@ -69,8 +69,8 @@ export function AreaGraph() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiClient.get('/api/admin/overview');
-        const items = res.data?.revenue_by_month;
+        const overview = await fetchAdminOverview();
+        const items = overview.revenue_by_month;
         if (Array.isArray(items) && items.length > 0) {
           const mapped: RevenueMonth[] = items.map((item: any) => ({
             month: formatMonthLabel(String(item.month)),

@@ -65,15 +65,10 @@ class BookingController extends Controller
             'options' => 'array',
         ]);
 
-        // Calculate prices (simplified for now)
-        // Ideally fetch car price and calculate based on days
-        // Here we assume frontend sends some data or we recalculate.
-        // Best practice: Recalculate everything backend side.
-
         $car = \App\Models\Car::findOrFail($request->car_id);
         $pickup = \Carbon\Carbon::parse($request->pickup_date);
         $return = \Carbon\Carbon::parse($request->return_date);
-        $days = $pickup->diffInDays($return) ?: 1; // Minimum 1 day
+        $days = $pickup->diffInDays($return) ?: 1;
 
         $basePrice = $car->price_per_day * $days;
         $extrasTotal = 0;
@@ -97,17 +92,15 @@ class BookingController extends Controller
                 'coupon_id' => null,
                 'coupon_code' => null,
                 'base_price' => $basePrice,
-                'extras_total' => 0, // updated below
-                'discount_amount' => 0, // updated below
-                'total_price' => 0, // updated below
+                'extras_total' => 0,
+                'discount_amount' => 0,
+                'total_price' => 0,
                 'notes' => $request->notes ?? null,
             ]);
 
             if ($request->has('options')) {
                 foreach ($request->options as $opt) {
-                    // Assume opt has code, label, price_per_day
-                    // In real app, validate option prices from a master config or DB
-                    $optPrice = $opt['price'] ?? 0; // simplified
+                    $optPrice = $opt['price'] ?? 0;
                     $optTotal = $optPrice * $days;
                     $extrasTotal += $optTotal;
 
@@ -149,8 +142,6 @@ class BookingController extends Controller
             $booking->discount_amount = $discountAmount;
             $booking->total_price = ($basePrice + $extrasTotal) - $discountAmount;
             $booking->save();
-
-            // Keep car available while booking is pending.
 
             DB::commit();
 

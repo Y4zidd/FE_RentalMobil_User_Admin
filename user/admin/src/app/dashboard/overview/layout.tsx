@@ -22,7 +22,9 @@ import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AreaGraph } from '@/features/overview/components/area-graph';
-import apiClient from '@/lib/api-client';
+import { fetchAdminOverview } from '@/lib/api-admin-overview';
+import { fetchAdminCarsPreview } from '@/lib/api-admin-cars';
+import { fetchAdminUsers } from '@/lib/api-admin-users';
 
 const statisticsCardData = [
   {
@@ -106,26 +108,23 @@ export default function OverViewLayout({
     const fetchData = async () => {
       try {
         const [carsResult, usersResult, overviewResult] = await Promise.allSettled([
-          apiClient.get('/api/admin/cars'),
-          apiClient.get('/api/admin/users'),
-          apiClient.get('/api/admin/overview')
+          fetchAdminCarsPreview(),
+          fetchAdminUsers({}),
+          fetchAdminOverview()
         ]);
 
         let carsCount = 0;
 
         if (carsResult.status === 'fulfilled') {
-          const carsRes = carsResult.value;
-          const carsData = Array.isArray(carsRes.data)
-            ? carsRes.data
-            : carsRes.data.data || [];
+          const carsData = carsResult.value;
           carsCount = carsData.length;
           setPreviewCars(
-            carsData.slice(0, 5).map((c: any) => ({
+            carsData.map((c) => ({
               id: c.id,
-              photo: c.photo_url || 'https://via.placeholder.com/150',
+              photo: c.photoUrl || 'https://via.placeholder.com/150',
               name: c.name,
-              plate: c.license_plate,
-              price: Number(c.price_per_day).toLocaleString('id-ID'),
+              plate: c.licensePlate,
+              price: Number(c.pricePerDay ?? 0).toLocaleString('id-ID'),
               status: c.status
             }))
           );
@@ -134,25 +133,15 @@ export default function OverViewLayout({
         }
 
         if (usersResult.status === 'fulfilled') {
-          const usersRes = usersResult.value;
-          const usersData = Array.isArray(usersRes.data)
-            ? usersRes.data
-            : usersRes.data.data || [];
+          const usersData = usersResult.value;
           setPreviewUsers(
             usersData.slice(0, 5).map((u: any) => {
-              let role = 'Customer';
-              if (u.role === 'admin') {
-                role = 'Admin';
-              } else if (u.role === 'staff') {
-                role = 'Staff';
-              }
-
               return {
                 id: u.id,
-                avatar: u.avatar_url || DEFAULT_USER_AVATAR,
+                avatar: u.avatarUrl || DEFAULT_USER_AVATAR,
                 name: u.name,
                 email: u.email,
-                role
+                role: u.role
               };
             })
           );
@@ -162,7 +151,7 @@ export default function OverViewLayout({
 
         if (overviewResult.status === 'fulfilled') {
           const overviewRes = overviewResult.value;
-          const metrics = overviewRes.data?.metrics || {};
+          const metrics = overviewRes.metrics || {};
           applyOverviewMetricsToStats(metrics, carsCount);
         } else {
           console.error('Failed to fetch overview metrics', overviewResult.reason);

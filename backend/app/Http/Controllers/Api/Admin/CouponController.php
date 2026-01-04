@@ -62,4 +62,26 @@ class CouponController extends Controller
         $coupon->delete();
         return response()->json(['message' => 'Deleted']);
     }
+
+    public function cleanupStatus()
+    {
+        $now = now();
+        $affected = 0;
+        $coupons = Coupon::all();
+        foreach ($coupons as $coupon) {
+            $shouldDeactivate = false;
+            if ($coupon->expires_at && $now->gt($coupon->expires_at)) {
+                $shouldDeactivate = true;
+            }
+            if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
+                $shouldDeactivate = true;
+            }
+            if ($shouldDeactivate && $coupon->is_active) {
+                $coupon->is_active = false;
+                $coupon->save();
+                $affected++;
+            }
+        }
+        return response()->json(['updated' => $affected]);
+    }
 }

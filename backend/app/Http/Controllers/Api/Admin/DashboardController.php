@@ -12,6 +12,8 @@ class DashboardController extends Controller
 {
     public function overview()
     {
+        $this->cleanupOverdueBookings();
+        $this->cleanupCoupons();
         $totalBookings = Booking::count();
         $pendingBookings = Booking::where('status', 'pending')->count();
         $confirmedBookings = Booking::where('status', 'confirmed')->count();
@@ -78,5 +80,44 @@ class DashboardController extends Controller
             'revenue_by_day' => $revenueByDay,
             'revenue_by_month' => $revenueByMonth,
         ]);
+    }
+
+    protected function cleanupOverdueBookings()
+    {
+        $overdue = Booking::with('car')
+            ->where('status', 'confirmed')
+            ->where('return_date', '<', now())
+            ->get();
+        foreach ($overdue as $booking) {
+            $booking->status = 'completed';
+            $booking->save();
+            $car = $booking->car;
+            if ($car && $car->status !== 'maintenance') {
+                $hasActiveBookings = $car->bookings()
+                    ->where('status', 'confirmed')
+                    ->exists();
+                $car->status = $hasActiveBookings ? 'rented' : 'available';
+                $car->save();
+            }
+        }
+    }
+
+    protected function cleanupCoupons()
+    {
+        $now = now();
+        $coupons = \App\Models\Coupon::all();
+        foreach ($coupons as $coupon) {
+            $shouldDeactivate = false;
+            if ($coupon->expires_at && $now->gt($coupon->expires_at)) {
+                $shouldDeactivate = true;
+            }
+            if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
+                $shouldDeactivate = true;
+            }
+            if ($shouldDeactivate && $coupon->is_active) {
+                $coupon->is_active = false;
+                $coupon->save();
+            }
+        }
     }
 }

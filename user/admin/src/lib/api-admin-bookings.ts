@@ -40,3 +40,7 @@ export async function updateAdminBookingStatus(id: number, status: string) {
   return res.data
 }
 
+export async function cleanupOverdueBookings(): Promise<{ updated: number }> {
+  const res = await apiClient.post('/api/admin/bookings/cleanup-overdue')
+  return res.data
+}

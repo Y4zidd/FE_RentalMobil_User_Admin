@@ -44,3 +44,7 @@ export async function deleteAdminCoupon(id: number): Promise<void> {
   await apiClient.delete(`/api/admin/coupons/${id}`)
 }
 
+export async function cleanupAdminCoupons(): Promise<{ updated: number }> {
+  const res = await apiClient.post('/api/admin/coupons/cleanup-status')
+  return res.data
+}

@@ -87,6 +87,8 @@ const Hero = () => {
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [locations, setLocations] = useState([])
   const [provinces, setProvinces] = useState([])
+  const [regencies, setRegencies] = useState([])
+  const [provinceIdMap, setProvinceIdMap] = useState({})
   const [isLoadingLocations, setIsLoadingLocations] = useState(false)
   const geoCacheRef = useRef({})
   const pendingProvinceRef = useRef(null)
@@ -192,14 +194,8 @@ const Hero = () => {
         const controller = new AbortController()
         statesControllerRef.current = controller
 
-        const response = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            country: selectedCountry,
-          }),
+        const response = await fetch('http://localhost:8000/api/regions/provinces', {
+          method: 'GET',
           signal: controller.signal,
         })
 
@@ -207,25 +203,27 @@ const Hero = () => {
           return
         }
 
-        const json = await response.json()
+        const data = await response.json()
 
         if (!isMounted) {
           return
         }
 
-        const states = json?.data?.states ?? []
-
-        const options = states
-          .map((state) => ({
-            label: `${state.name}, ${selectedCountry}`,
-            city: state.name,
-            country: selectedCountry,
-          }))
-          .sort((a, b) =>
-            a.label.localeCompare(b.label)
-          )
+        const idMap = {}
+        const options = (Array.isArray(data) ? data : [])
+          .map((p) => {
+            const name = String(p.name || '').toLowerCase().split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+            idMap[name] = Number(p.id || 0)
+            return {
+              label: `${name}, ${selectedCountry}`,
+              city: name,
+              country: selectedCountry,
+            }
+          })
+          .sort((a, b) => a.label.localeCompare(b.label))
 
         setProvinces(options)
+        setProvinceIdMap(idMap)
 
         const pendingProvince = pendingProvinceRef.current
         if (pendingProvince) {
@@ -311,6 +309,38 @@ const Hero = () => {
     }
   }, [selectedCountry])
 
+  useEffect(() => {
+    setRegencies([])
+    if (!pickupLocation && selectedCountry === 'Indonesia') return
+    const [maybeProvince] = (pickupLocation || '').split(',').map((s) => s.trim())
+    const key = maybeProvince || ''
+    const id = provinceIdMap[key] || provinceIdMap[(key || '').toLowerCase().split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')]
+    if (!id) return
+    let isMounted = true
+    ;(async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/regions/provinces/${id}/regencies`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (!isMounted) return
+        const options = (Array.isArray(data) ? data : []).map((c) => {
+          const name = String(c.name || '').toLowerCase().split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+          return {
+            label: `${name}, ${selectedCountry}`,
+            city: name,
+            country: selectedCountry,
+          }
+        }).sort((a, b) => a.label.localeCompare(b.label))
+        setRegencies(options)
+      } catch (error) {
+        void error
+      }
+    })()
+    return () => {
+      isMounted = false
+    }
+  }, [pickupLocation, selectedCountry, provinceIdMap])
+
   const handleSearch = (e) => {
     e.preventDefault()
     if (!pickupLocation) {
@@ -342,9 +372,12 @@ const Hero = () => {
     const selectedProvince = provinces.find(
       (location) => location.label === value
     )
+    const selectedRegency = regencies.find(
+      (location) => location.label === value
+    )
 
-    if (selectedProvince) {
-      const label = selectedProvince.label
+    if (selectedRegency || selectedProvince) {
+      const label = (selectedRegency || selectedProvince).label
       const cached = geoCacheRef.current[label]
       if (cached) {
         const center = { lat: cached.lat, lng: cached.lng }
@@ -611,9 +644,9 @@ const Hero = () => {
               </button>
             </div>
 
-            <div className='grid gap-3 sm:grid-cols-1'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
               <div className='flex flex-col gap-2'>
-                <label className='text-xs text-gray-500'>{t('hero_modal_province_city_label')}</label>
+                <label className='text-xs text-gray-500'>{t('hero_modal_label_province')}</label>
                 <select
                   className='w-full rounded-xl border border-borderColor px-3 py-2 text-sm'
                   value={pickupLocation}
@@ -622,9 +655,28 @@ const Hero = () => {
                   <option value=''>
                     {isLoadingLocations
                       ? t('hero_modal_loading_locations')
-                      : t('hero_modal_select_province_city')}
+                      : t('hero_modal_placeholder_province')}
                   </option>
                   {provinces.map((location) => (
+                    <option key={location.label} value={location.label}>
+                      {location.city || location.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className='flex flex-col gap-2'>
+                <label className='text-xs text-gray-500'>{t('hero_modal_label_regency')}</label>
+                <select
+                  className='w-full rounded-xl border border-borderColor px-3 py-2 text-sm'
+                  value={pickupLocation}
+                  onChange={(e) => handleLocationChange(e.target.value)}
+                >
+                  <option value=''>
+                    {regencies.length === 0
+                      ? t('hero_modal_placeholder_regency_default')
+                      : t('hero_modal_placeholder_regency_active')}
+                  </option>
+                  {regencies.map((location) => (
                     <option key={location.label} value={location.label}>
                       {location.city || location.label}
                     </option>

@@ -48,6 +48,7 @@ import {
   fetchAdminCoupons,
   updateAdminCoupon
 } from '@/lib/api-admin-coupons';
+import { cleanupAdminCoupons } from '@/lib/api-admin-coupons';
 import { FormCheckbox } from '@/components/forms/form-checkbox';
 import { toast } from 'sonner';
 import { useDataTable } from '@/hooks/use-data-table';
@@ -330,6 +331,31 @@ export default function CouponsPage() {
       pageTitle='Manage Coupons'
       pageDescription='Manage discount coupons for bookings (CRUD) connected to the Laravel backend.'
     >
+      <div className='mb-2 flex justify-end'>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={async () => {
+            try {
+              const res = await cleanupAdminCoupons();
+              toast.success(`Updated ${res.updated} coupons`);
+              setLoading(true);
+              try {
+                const data = await fetchAdminCoupons();
+                setCoupons(data);
+              } finally {
+                setLoading(false);
+              }
+            } catch (err: any) {
+              const message =
+                err?.response?.data?.message || 'Failed to cleanup coupon statuses';
+              toast.error(message);
+            }
+          }}
+        >
+          Sync coupon statuses
+        </Button>
+      </div>
       <Card>
         <CardHeader className='flex items-center justify-between'>
           <CardTitle>Coupons</CardTitle>

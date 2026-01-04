@@ -23,46 +23,7 @@ import {
   uploadAvatarRequest,
 } from "../lib/api/user"
 
-const INDONESIAN_PROVINCES = [
-  "Aceh",
-  "Sumatera Utara",
-  "Sumatera Barat",
-  "Riau",
-  "Kepulauan Riau",
-  "Jambi",
-  "Sumatera Selatan",
-  "Kepulauan Bangka Belitung",
-  "Bengkulu",
-  "Lampung",
-  "DKI Jakarta",
-  "Jawa Barat",
-  "Banten",
-  "Jawa Tengah",
-  "DI Yogyakarta",
-  "Jawa Timur",
-  "Bali",
-  "Nusa Tenggara Barat",
-  "Nusa Tenggara Timur",
-  "Kalimantan Barat",
-  "Kalimantan Tengah",
-  "Kalimantan Selatan",
-  "Kalimantan Timur",
-  "Kalimantan Utara",
-  "Sulawesi Utara",
-  "Sulawesi Tengah",
-  "Sulawesi Selatan",
-  "Sulawesi Tenggara",
-  "Gorontalo",
-  "Sulawesi Barat",
-  "Maluku",
-  "Maluku Utara",
-  "Papua",
-  "Papua Barat",
-  "Papua Barat Daya",
-  "Papua Tengah",
-  "Papua Pegunungan",
-  "Papua Selatan",
-]
+// Provinces will be fetched from backend API
 
 const Profile = () => {
   const { user, setUser, navigate, t } = useAppContext()
@@ -83,7 +44,10 @@ const Profile = () => {
     preferences: "",
   })
   const [selectedProvince, setSelectedProvince] = useState("")
-  const [provinceOptions] = useState(INDONESIAN_PROVINCES)
+  const [provinceOptions, setProvinceOptions] = useState([])
+  const [selectedRegency, setSelectedRegency] = useState("")
+  const [regencyOptions, setRegencyOptions] = useState([])
+  const [provinceIdMap, setProvinceIdMap] = useState({})
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -124,12 +88,77 @@ const Profile = () => {
     const defaultCity = baseUser.default_city || ""
     if (defaultCity) {
       const parts = defaultCity.split(",").map((part) => part.trim())
-      setSelectedProvince(parts[0] || defaultCity)
+      setSelectedProvince(parts[parts.length - 1] || defaultCity)
+      if (parts.length > 1) {
+        setSelectedRegency(parts[0])
+      }
     } else {
       setSelectedProvince("")
+      setSelectedRegency("")
     }
     setAvatarPreview(baseUser?.avatar_url || "")
   }, [baseUser])
+
+  useEffect(() => {
+    let isMounted = true
+    ;(async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/regions/provinces")
+        if (!res.ok) return
+        const data = await res.json()
+        if (!isMounted) return
+        const idMap = {}
+        const options = (Array.isArray(data) ? data : []).map((p) => {
+          const name = String(p.name || "")
+            .toLowerCase()
+            .split(" ")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")
+          idMap[name] = Number(p.id || 0)
+          return name
+        })
+        setProvinceIdMap(idMap)
+        setProvinceOptions(options)
+      } catch (error) {
+        void error
+      }
+    })()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setRegencyOptions([])
+    setSelectedRegency("")
+    if (!selectedProvince) return
+    const id = provinceIdMap[selectedProvince]
+    if (!id) return
+    let isMounted = true
+    ;(async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8000/api/regions/provinces/${id}/regencies`
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (!isMounted) return
+        const options = (Array.isArray(data) ? data : []).map((c) =>
+          String(c.name || "")
+            .toLowerCase()
+            .split(" ")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")
+        )
+        setRegencyOptions(options)
+      } catch (error) {
+        void error
+      }
+    })()
+    return () => {
+      isMounted = false
+    }
+  }, [selectedProvince, provinceIdMap])
 
   const handleAccountChange = (e) => {
     const { name, value } = e.target
@@ -150,7 +179,16 @@ const Profile = () => {
     setSelectedProvince(value)
     setRentalForm((prev) => ({
       ...prev,
-      defaultCity: value || "",
+      defaultCity: selectedRegency ? `${selectedRegency}, ${value}` : value || "",
+    }))
+  }
+  const handleRegencyChange = (value) => {
+    setSelectedRegency(value)
+    setRentalForm((prev) => ({
+      ...prev,
+      defaultCity: value
+        ? `${value}, ${selectedProvince || ""}`.trim()
+        : selectedProvince || "",
     }))
   }
 
@@ -549,6 +587,18 @@ const Profile = () => {
                               {provinceOptions.map((p) => (
                                 <option key={p} value={p}>
                                   {p}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              value={selectedRegency}
+                              onChange={(e) => handleRegencyChange(e.target.value)}
+                              className={inputClassName}
+                            >
+                              <option value="">Select Regency/City</option>
+                              {regencyOptions.map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
                                 </option>
                               ))}
                             </select>

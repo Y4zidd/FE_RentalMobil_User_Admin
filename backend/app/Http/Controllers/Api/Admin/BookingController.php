@@ -49,4 +49,31 @@ class BookingController extends Controller
 
         return response()->json($booking->load(['user', 'car', 'options']));
     }
+
+    public function cleanupOverdue()
+    {
+        $overdue = Booking::with('car')
+            ->where('status', 'confirmed')
+            ->where('return_date', '<', now())
+            ->get();
+
+        $updated = 0;
+        foreach ($overdue as $booking) {
+            $booking->status = 'completed';
+            $booking->save();
+            $updated++;
+
+            $car = $booking->car;
+            if ($car && $car->status !== 'maintenance') {
+                $hasActiveBookings = $car->bookings()
+                    ->where('status', 'confirmed')
+                    ->exists();
+
+                $car->status = $hasActiveBookings ? 'rented' : 'available';
+                $car->save();
+            }
+        }
+
+        return response()->json(['updated' => $updated]);
+    }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\RegionsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +82,14 @@ Route::prefix('admin')->group(function () {
 
         // Manage Bookings
         Route::apiResource('bookings', AdminBookingController::class)->except(['store', 'destroy']); // Admin usually edits status
+        Route::post('bookings/cleanup-overdue', [AdminBookingController::class, 'cleanupOverdue']);
         Route::apiResource('coupons', \App\Http\Controllers\Api\Admin\CouponController::class);
+        Route::post('coupons/cleanup-status', [\App\Http\Controllers\Api\Admin\CouponController::class, 'cleanupStatus']);
     });
+});
+
+// Regions (Provinces & Regencies)
+Route::prefix('regions')->group(function () {
+    Route::get('provinces', [RegionsController::class, 'provinces']);
+    Route::get('provinces/{provinceId}/regencies', [RegionsController::class, 'regenciesByProvince']);
 });

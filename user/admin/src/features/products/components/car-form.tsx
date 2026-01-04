@@ -38,47 +38,6 @@ const ACCEPTED_IMAGE_TYPES = [
 
 const INDONESIA_DEFAULT_CENTER: [number, number] = [-2, 115];
 
-const INDONESIAN_PROVINCES: FormOption[] = [
-  { value: 'Aceh', label: 'Aceh' },
-  { value: 'Sumatera Utara', label: 'Sumatera Utara' },
-  { value: 'Sumatera Barat', label: 'Sumatera Barat' },
-  { value: 'Riau', label: 'Riau' },
-  { value: 'Kepulauan Riau', label: 'Kepulauan Riau' },
-  { value: 'Jambi', label: 'Jambi' },
-  { value: 'Sumatera Selatan', label: 'Sumatera Selatan' },
-  { value: 'Kepulauan Bangka Belitung', label: 'Kepulauan Bangka Belitung' },
-  { value: 'Bengkulu', label: 'Bengkulu' },
-  { value: 'Lampung', label: 'Lampung' },
-  { value: 'DKI Jakarta', label: 'DKI Jakarta' },
-  { value: 'Jawa Barat', label: 'Jawa Barat' },
-  { value: 'Banten', label: 'Banten' },
-  { value: 'Jawa Tengah', label: 'Jawa Tengah' },
-  { value: 'DI Yogyakarta', label: 'DI Yogyakarta' },
-  { value: 'Jawa Timur', label: 'Jawa Timur' },
-  { value: 'Bali', label: 'Bali' },
-  { value: 'Nusa Tenggara Barat', label: 'Nusa Tenggara Barat' },
-  { value: 'Nusa Tenggara Timur', label: 'Nusa Tenggara Timur' },
-  { value: 'Kalimantan Barat', label: 'Kalimantan Barat' },
-  { value: 'Kalimantan Tengah', label: 'Kalimantan Tengah' },
-  { value: 'Kalimantan Selatan', label: 'Kalimantan Selatan' },
-  { value: 'Kalimantan Timur', label: 'Kalimantan Timur' },
-  { value: 'Kalimantan Utara', label: 'Kalimantan Utara' },
-  { value: 'Sulawesi Utara', label: 'Sulawesi Utara' },
-  { value: 'Sulawesi Tengah', label: 'Sulawesi Tengah' },
-  { value: 'Sulawesi Selatan', label: 'Sulawesi Selatan' },
-  { value: 'Sulawesi Tenggara', label: 'Sulawesi Tenggara' },
-  { value: 'Gorontalo', label: 'Gorontalo' },
-  { value: 'Sulawesi Barat', label: 'Sulawesi Barat' },
-  { value: 'Maluku', label: 'Maluku' },
-  { value: 'Maluku Utara', label: 'Maluku Utara' },
-  { value: 'Papua', label: 'Papua' },
-  { value: 'Papua Barat', label: 'Papua Barat' },
-  { value: 'Papua Barat Daya', label: 'Papua Barat Daya' },
-  { value: 'Papua Tengah', label: 'Papua Tengah' },
-  { value: 'Papua Pegunungan', label: 'Papua Pegunungan' },
-  { value: 'Papua Selatan', label: 'Papua Selatan' }
-];
-
 const formSchema = z.object({
   image: z
     .array(z.any())
@@ -132,6 +91,9 @@ const formSchema = z.object({
   province: z.string().min(1, {
     message: 'Province or region is required.'
   }),
+  regency: z.string().min(1, {
+    message: 'Regency is required.'
+  }),
   status: z.string().min(1, {
     message: 'Status is required.'
   }),
@@ -141,7 +103,7 @@ const formSchema = z.object({
   features: z.array(z.string())
 });
 
-type CarFormValues = z.infer<typeof formSchema>;
+  type CarFormValues = z.infer<typeof formSchema>;
 
 export default function CarForm({
   initialData,
@@ -161,12 +123,16 @@ export default function CarForm({
     const location = initialData?.location || '';
     if (!location.includes(',')) {
       return {
-        province: location
+        province: location,
+        regency: ''
       };
     }
-    const [province] = location.split(',').map((part) => part.trim());
+    const parts = location.split(',').map((part) => part.trim());
+    const province = parts[0] || '';
+    const regency = parts.length > 1 ? parts[1] : '';
     return {
-      province
+      province,
+      regency
     };
   })();
 
@@ -180,6 +146,7 @@ export default function CarForm({
     transmission: initialData?.transmission || '',
     fuelType: initialData?.fuel_type || '',
     province: parsedLocation.province,
+    regency: parsedLocation.regency,
     year: initialData?.year || new Date().getFullYear(),
     category: initialData?.category || '',
     status: initialData?.status || 'available',
@@ -193,6 +160,7 @@ export default function CarForm({
   });
 
   const selectedProvince = form.watch('province');
+  const selectedRegency = form.watch('regency');
 
   const handleRemoveExistingImage = (id: number) => {
     setExistingImages((prev) => prev.filter((image) => image.id !== id));
@@ -200,7 +168,11 @@ export default function CarForm({
   };
 
   useEffect(() => {
-    const query = selectedProvince ? `${selectedProvince}, Indonesia` : '';
+    const query = selectedRegency
+      ? `${selectedRegency}, ${selectedProvince}, Indonesia`
+      : selectedProvince
+        ? `${selectedProvince}, Indonesia`
+        : '';
 
     if (!query) {
       return;
@@ -270,6 +242,69 @@ export default function CarForm({
         }
       }
     };
+  }, [selectedProvince, selectedRegency]);
+
+  const [provinceOptions, setProvinceOptions] = useState<FormOption[]>([]);
+  const [regencyOptions, setRegencyOptions] = useState<FormOption[]>([]);
+  const [provinceIdMap, setProvinceIdMap] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProvinces = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/regions/provinces');
+        if (!res.ok) return;
+        const data: { id: number; name: string }[] = await res.json();
+        if (!isMounted) return;
+        const idMap: Record<string, number> = {};
+        const options: FormOption[] = data.map((p) => {
+          const proper = p.name
+            .toLowerCase()
+            .split(' ')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          idMap[proper] = p.id;
+          return { value: proper, label: proper };
+        });
+        setProvinceIdMap(idMap);
+        setProvinceOptions(options);
+      } catch {}
+    };
+    fetchProvinces();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadRegencies = async () => {
+      setRegencyOptions([]);
+      form.setValue('regency', '');
+      const id = provinceIdMap[selectedProvince || ''];
+      if (!id) return;
+      try {
+        const res = await fetch(
+          `http://localhost:8000/api/regions/provinces/${id}/regencies`
+        );
+        if (!res.ok) return;
+        const data: { id: number; name: string }[] = await res.json();
+        if (!isMounted) return;
+        const options: FormOption[] = data.map((c) => {
+          const proper = c.name
+            .toLowerCase()
+            .split(' ')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          return { value: proper, label: proper };
+        });
+        setRegencyOptions(options);
+      } catch {}
+    };
+    loadRegencies();
+    return () => {
+      isMounted = false;
+    };
   }, [selectedProvince]);
 
   const router = useRouter();
@@ -301,8 +336,8 @@ export default function CarForm({
         fuel_type: values.fuelType,
         seating_capacity: values.seatingCapacity,
         price_per_day: values.pricePerDay,
-        location_name: `${values.province}, Indonesia`,
-        location_city: values.province,
+        location_name: `${values.regency}, ${values.province}, Indonesia`,
+        location_city: values.regency,
         location_address: '',
         location_latitude: markerPosition ? markerPosition[0] : null,
         location_longitude: markerPosition ? markerPosition[1] : null,
@@ -555,7 +590,15 @@ export default function CarForm({
                 label='Province / Region'
                 placeholder='Select province or region'
                 required
-                options={INDONESIAN_PROVINCES}
+                options={provinceOptions}
+              />
+              <FormSelect<CarFormValues>
+                control={form.control}
+                name='regency'
+                label='Regency (Kabupaten/Kota)'
+                placeholder='Select regency'
+                required
+                options={regencyOptions}
               />
             </div>
             <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
@@ -585,8 +628,8 @@ export default function CarForm({
                   {markerPosition && (
                     <MapMarker position={markerPosition}>
                       <MapPopup>
-                        {selectedProvince
-                          ? `${selectedProvince}, Indonesia`
+                        {selectedRegency || selectedProvince
+                          ? `${selectedRegency ? selectedRegency + ', ' : ''}${selectedProvince}, Indonesia`
                           : 'Selected location'}
                       </MapPopup>
                     </MapMarker>

@@ -1,7 +1,6 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
@@ -54,6 +53,7 @@ import { toast } from 'sonner';
 import { useDataTable } from '@/hooks/use-data-table';
 import { Input } from '@/components/ui/input';
 import { CouponCellAction } from './coupon-cell-action';
+import { parseAsInteger, useQueryState } from 'nuqs';
 
 import type { Coupon } from '@/lib/api-admin-coupons';
 
@@ -76,6 +76,7 @@ export default function CouponsPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [pageSize] = useQueryState('perPage', parseAsInteger.withDefault(10));
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -315,7 +316,6 @@ export default function CouponsPage() {
     [coupons]
   );
 
-  const pageSize = 10;
   const pageCount = Math.max(1, Math.ceil(coupons.length / pageSize));
   const { table } = useDataTable({
     data: coupons,
@@ -325,55 +325,22 @@ export default function CouponsPage() {
     debounceMs: 300
   });
 
-  return (
-    <PageContainer
-      scrollable
-      pageTitle='Manage Coupons'
-      pageDescription='Manage discount coupons for bookings (CRUD) connected to the Laravel backend.'
-    >
-      <div className='mb-2 flex justify-end'>
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={async () => {
-            try {
-              const res = await cleanupAdminCoupons();
-              toast.success(`Updated ${res.updated} coupons`);
-              setLoading(true);
-              try {
-                const data = await fetchAdminCoupons();
-                setCoupons(data);
-              } finally {
-                setLoading(false);
-              }
-            } catch (err: any) {
-              const message =
-                err?.response?.data?.message || 'Failed to cleanup coupon statuses';
-              toast.error(message);
-            }
-          }}
+  const pageHeaderAction = (
+    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+      <DialogTrigger asChild>
+        <Button onClick={openCreate}>Add Coupon</Button>
+      </DialogTrigger>
+      <DialogContent className='max-w-lg'>
+        <DialogHeader>
+          <DialogTitle>
+            {editing ? 'Edit Coupon' : 'Add Coupon'}
+          </DialogTitle>
+        </DialogHeader>
+        <Form
+          form={form}
+          onSubmit={form.handleSubmit(onSubmit)}
+          className='grid grid-cols-1 gap-4'
         >
-          Sync coupon statuses
-        </Button>
-      </div>
-      <Card>
-        <CardHeader className='flex items-center justify-between'>
-          <CardTitle>Coupons</CardTitle>
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreate}>Add Coupon</Button>
-            </DialogTrigger>
-            <DialogContent className='max-w-lg'>
-              <DialogHeader>
-                <DialogTitle>
-                  {editing ? 'Edit Coupon' : 'Add Coupon'}
-                </DialogTitle>
-              </DialogHeader>
-              <Form
-                form={form}
-                onSubmit={form.handleSubmit(onSubmit)}
-                className='grid grid-cols-1 gap-4'
-              >
                 <FormInput
                   control={form.control}
                   name='code'
@@ -460,41 +427,46 @@ export default function CouponsPage() {
                     description='Expiry date'
                   />
                 </div>
-                <FormCheckbox
-                  control={form.control}
-                  name='is_active'
-                  checkboxLabel='Active'
-                />
-                <div className='flex gap-2 pt-2'>
-                  <Button type='submit' className='flex-1'>
-                    {editing ? 'Save Changes' : 'Save'}
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    className='flex-1'
-                    onClick={() => {
-                      setOpenDialog(false);
-                      resetForm();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div>Loading coupons...</div>
-          ) : (
-            <DataTable table={table}>
-              <DataTableToolbar table={table} />
-            </DataTable>
-          )}
-        </CardContent>
-      </Card>
+          <FormCheckbox
+            control={form.control}
+            name='is_active'
+            checkboxLabel='Active'
+          />
+          <div className='flex gap-2 pt-2'>
+            <Button type='submit' className='flex-1'>
+              {editing ? 'Save Changes' : 'Save'}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              className='flex-1'
+              onClick={() => {
+                setOpenDialog(false);
+                resetForm();
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  return (
+    <PageContainer
+      scrollable={false}
+      pageTitle='Manage Coupons'
+      pageDescription='Manage discount coupons for bookings (CRUD) connected to the Laravel backend.'
+      pageHeaderAction={pageHeaderAction}
+    >
+      {loading ? (
+        <div>Loading coupons...</div>
+      ) : (
+        <DataTable table={table}>
+          <DataTableToolbar table={table} />
+        </DataTable>
+      )}
     </PageContainer>
   );
 }

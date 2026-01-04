@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CarController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\Admin\CarController as AdminCarController;
+use App\Http\Controllers\Api\Admin\RentalPartnerController as AdminRentalPartnerController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
@@ -75,6 +76,15 @@ Route::prefix('admin')->group(function () {
 
         // Manage Cars
         Route::apiResource('cars', AdminCarController::class);
+
+        // Rental Partners
+        Route::apiResource('rental-partners', AdminRentalPartnerController::class)->only([
+            'index',
+            'store',
+            'show',
+            'update',
+            'destroy',
+        ]);
 
         // Manage Users
         Route::apiResource('users', AdminUserController::class);

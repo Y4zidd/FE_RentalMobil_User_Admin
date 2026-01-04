@@ -22,6 +22,7 @@ class Car extends Model
         'seating_capacity',
         'price_per_day',
         'location_id',
+        'partner_id',
         'description',
         'photo_url',
         'features',
@@ -34,6 +35,11 @@ class Car extends Model
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(RentalPartner::class, 'partner_id');
     }
 
     public function images()

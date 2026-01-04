@@ -42,10 +42,26 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Manage Bookings',
+    url: '/dashboard/bookings',
+    icon: 'bookings',
+    shortcut: ['b', 'b'],
+    isActive: false,
+    items: []
+  },
+  {
     title: 'Manage Cars',
     url: '/dashboard/cars',
     icon: 'cars',
     shortcut: ['c', 'c'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Manage Rental Partners',
+    url: '/dashboard/partners',
+    icon: 'teams',
+    shortcut: ['p', 'r'],
     isActive: false,
     items: []
   },
@@ -60,16 +76,8 @@ export const navItems: NavItem[] = [
   {
     title: 'Manage Coupons',
     url: '/dashboard/coupons',
-    icon: 'settings',
+    icon: 'billing',
     shortcut: ['p', 'c'],
-    isActive: false,
-    items: []
-  },
-  {
-    title: 'Manage Bookings',
-    url: '/dashboard/bookings',
-    icon: 'bookings',
-    shortcut: ['b', 'b'],
     isActive: false,
     items: []
   }

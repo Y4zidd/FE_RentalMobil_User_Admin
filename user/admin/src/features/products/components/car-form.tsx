@@ -27,6 +27,7 @@ import { Map, MapMarker, MapPopup, MapTileLayer, MapZoomControl } from '@/compon
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { createAdminCar, updateAdminCar } from '@/lib/api-admin-cars';
+import apiClient from '@/lib/api-client';
 
 const MAX_FILE_SIZE = 5000000;
 const ACCEPTED_IMAGE_TYPES = [
@@ -94,6 +95,7 @@ const formSchema = z.object({
   regency: z.string().min(1, {
     message: 'Regency is required.'
   }),
+  partnerId: z.string().optional(),
   status: z.string().min(1, {
     message: 'Status is required.'
   }),
@@ -147,6 +149,7 @@ export default function CarForm({
     fuelType: initialData?.fuel_type || '',
     province: parsedLocation.province,
     regency: parsedLocation.regency,
+    partnerId: '',
     year: initialData?.year || new Date().getFullYear(),
     category: initialData?.category || '',
     status: initialData?.status || 'available',
@@ -246,6 +249,7 @@ export default function CarForm({
 
   const [provinceOptions, setProvinceOptions] = useState<FormOption[]>([]);
   const [regencyOptions, setRegencyOptions] = useState<FormOption[]>([]);
+  const [partnerOptions, setPartnerOptions] = useState<FormOption[]>([]);
   const [provinceIdMap, setProvinceIdMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -307,6 +311,32 @@ export default function CarForm({
     };
   }, [selectedProvince]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadPartners = async () => {
+      try {
+        const res = await apiClient.get('/api/admin/rental-partners');
+        const data: { id: number; name: string; province?: string | null; regency?: string | null }[] =
+          Array.isArray(res.data) ? res.data : res.data.data || [];
+        if (!isMounted) return;
+        const options: FormOption[] = data.map((p) => {
+          const regionParts = [];
+          if (p.regency) regionParts.push(p.regency);
+          if (p.province) regionParts.push(p.province);
+          const region = regionParts.join(', ');
+          const label = region ? `${p.name} — ${region}` : p.name;
+          return { value: String(p.id), label };
+        });
+        setPartnerOptions(options);
+      } catch {
+      }
+    };
+    loadPartners();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -336,7 +366,7 @@ export default function CarForm({
         fuel_type: values.fuelType,
         seating_capacity: values.seatingCapacity,
         price_per_day: values.pricePerDay,
-        location_name: `${values.regency}, ${values.province}, Indonesia`,
+        location_name: `${values.regency}, ${values.province}`,
         location_city: values.regency,
         location_address: '',
         location_latitude: markerPosition ? markerPosition[0] : null,
@@ -349,6 +379,10 @@ export default function CarForm({
           formData.append(key, String(value));
         }
       });
+
+      if (values.partnerId) {
+        formData.append('partner_id', values.partnerId);
+      }
 
       if (hasNewImages && values.image) {
         values.image.forEach((file) => {
@@ -599,6 +633,13 @@ export default function CarForm({
                 placeholder='Select regency'
                 required
                 options={regencyOptions}
+              />
+              <FormSelect<CarFormValues>
+                control={form.control}
+                name='partnerId'
+                label='Rental Partner (optional)'
+                placeholder='Select rental partner'
+                options={partnerOptions}
               />
             </div>
             <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>

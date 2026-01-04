@@ -33,7 +33,7 @@ export function getCommonPinningStyles<TData>({
     opacity: isPinned ? 0.97 : 1,
     position: isPinned ? 'sticky' : 'relative',
     background: isPinned ? 'hsl(var(--background))' : 'hsl(var(--background))',
-    width: column.getSize(),
+    width: isPinned ? column.getSize() : undefined,
     zIndex: isPinned ? 1 : 0
   };
 }

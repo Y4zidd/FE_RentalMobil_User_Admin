@@ -174,7 +174,7 @@ export function AreaGraph() {
           </ChartContainer>
         ) : (
           <div className='flex h-[250px] w-full items-center justify-center text-sm text-muted-foreground'>
-            Belum ada data pendapatan bulanan.
+            There is no monthly income data yet.
           </div>
         )}
       </CardContent>
@@ -194,7 +194,7 @@ export function AreaGraph() {
               </>
             ) : (
               <div className='text-muted-foreground flex items-center gap-2 leading-none'>
-                Grafik akan muncul setelah ada transaksi berhasil.
+                The graph will appear after a successful transaction.
               </div>
             )}
           </div>

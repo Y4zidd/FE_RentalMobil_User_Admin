@@ -144,7 +144,9 @@ export default function CarViewPage({
                 {product.seating_capacity} passengers
               </dd>
               <dt className='text-muted-foreground'>Location</dt>
-              <dd className='font-medium'>{product.location}</dd>
+              <dd className='font-medium'>
+                {product.location?.replace(/,\s*Indonesia\s*$/i, '')}
+              </dd>
               <dt className='text-muted-foreground'>Rental price</dt>
               <dd className='font-medium'>Rp {pricePerDay} / day</dd>
             </dl>

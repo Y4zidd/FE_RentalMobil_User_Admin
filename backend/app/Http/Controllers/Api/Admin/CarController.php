@@ -12,7 +12,7 @@ class CarController extends Controller
 {
     public function index()
     {
-        $cars = Car::with(['location', 'images'])->get();
+        $cars = Car::with(['location', 'images', 'partner'])->get();
         return response()->json($cars);
     }
 
@@ -31,6 +31,7 @@ class CarController extends Controller
             'seating_capacity' => 'required|integer',
             'price_per_day' => 'required|numeric',
             'location_id' => 'nullable|exists:locations,id',
+            'partner_id' => 'nullable|exists:rental_partners,id',
             'location_name' => 'required_without:location_id|string',
             'location_city' => 'nullable|string',
             'location_address' => 'nullable|string',
@@ -111,7 +112,7 @@ class CarController extends Controller
             $car->save();
         }
 
-        return response()->json($car->load(['location', 'images']), 201);
+        return response()->json($car->load(['location', 'images', 'partner']), 201);
     }
 
     public function show($id)
@@ -233,7 +234,7 @@ class CarController extends Controller
             }
         }
 
-        return response()->json($car->load(['location', 'images']));
+        return response()->json($car->load(['location', 'images', 'partner']));
     }
 
     public function destroy($id)

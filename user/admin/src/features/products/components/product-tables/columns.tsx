@@ -72,42 +72,6 @@ export const columns: ColumnDef<Product>[] = [
     }
   },
   {
-    accessorKey: 'year',
-    header: 'Year',
-    meta: {
-      label: 'Year'
-    }
-  },
-  {
-    id: 'transmission',
-    accessorKey: 'transmission',
-    header: 'Transmission',
-    enableColumnFilter: true,
-    meta: {
-      label: 'Transmission',
-      variant: 'multiSelect',
-      options: TRANSMISSION_OPTIONS
-    }
-  },
-  {
-    id: 'fuel_type',
-    accessorKey: 'fuel_type',
-    header: 'Fuel Type',
-    enableColumnFilter: true,
-    meta: {
-      label: 'Fuel Type',
-      variant: 'multiSelect',
-      options: FUEL_TYPE_OPTIONS
-    }
-  },
-  {
-    accessorKey: 'seating_capacity',
-    header: 'Seating Capacity',
-    meta: {
-      label: 'Seating Capacity'
-    }
-  },
-  {
     id: 'status',
     accessorKey: 'status',
     header: ({ column }: { column: Column<Product, unknown> }) => (
@@ -153,7 +117,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'price_per_day',
-    header: 'Price / Day',
+    header: 'Price',
     cell: ({ cell }) => {
       const amount = parseFloat(cell.getValue<string>());
       return new Intl.NumberFormat('id-ID', {
@@ -175,6 +139,19 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: 'location',
     header: 'Location',
+    cell: ({ cell }) => {
+      const raw = cell.getValue<string>() || '';
+      const cleaned = raw.replace(/,\s*Indonesia\s*$/i, '');
+      const parts = cleaned.split(',');
+      const cityRaw = (parts[0] ?? '').trim();
+      const province = (parts[1] ?? '').trim();
+      const city = cityRaw
+        .replace(/^Kota Administrasi\s+/i, '')
+        .replace(/^Kota\s+/i, '')
+        .replace(/^Kabupaten\s+/i, '');
+      const short = province ? `${city}, ${province}` : city || cleaned;
+      return <span className='block max-w-[220px] truncate'>{short}</span>;
+    },
     meta: {
       label: 'Location'
     }

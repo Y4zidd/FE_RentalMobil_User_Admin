@@ -10,7 +10,7 @@ class CarController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Car::with(['location', 'images']);
+        $query = Car::with(['location', 'images', 'partner']);
 
         $pickupDate = $request->input('pickup_date');
         $returnDate = $request->input('return_date');
@@ -52,7 +52,7 @@ class CarController extends Controller
 
     public function show($id)
     {
-        $car = Car::with(['location', 'images'])->findOrFail($id);
+        $car = Car::with(['location', 'images', 'partner'])->findOrFail($id);
         return response()->json($car);
     }
 }

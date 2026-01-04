@@ -439,41 +439,6 @@ export default function BookingsPage() {
       pageTitle='Manage Bookings'
       pageDescription='Manage Rent-A-Car bookings connected to the Laravel backend.'
     >
-      <div className='mb-2 flex justify-end'>
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={async () => {
-            try {
-              const res = await cleanupOverdueBookings();
-              toast.success(`Updated ${res.updated} overdue bookings`);
-              setLoading(true);
-              try {
-                const [overviewResult, bookingsResult] = await Promise.allSettled([
-                  fetchAdminOverview(),
-                  fetchAdminBookings()
-                ]);
-                if (overviewResult.status === 'fulfilled') {
-                  const metrics = overviewResult.value.metrics || {};
-                  applyOverviewMetricsToStats(metrics);
-                }
-                if (bookingsResult.status === 'fulfilled') {
-                  setBookings(bookingsResult.value);
-                }
-              } finally {
-                setLoading(false);
-              }
-            } catch (error: any) {
-              const message =
-                error?.response?.data?.message ||
-                'Failed to cleanup overdue bookings';
-              toast.error(message);
-            }
-          }}
-        >
-          Sync overdue statuses
-        </Button>
-      </div>
       <div className='mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5'>
         {stats.map((card) => (
           <StatisticsCard

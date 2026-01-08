@@ -52,12 +52,13 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
   const router = useRouter();
-  const filteredItems = useFilteredNavItems(navItems);
   const [currentUser, setCurrentUser] = React.useState<{
     name?: string | null;
     email?: string | null;
     avatarUrl?: string | null;
+    role?: string | null;
   } | null>(null);
+  const filteredItems = useFilteredNavItems(navItems, currentUser?.role ?? null);
 
   const handleLogout = async () => {
     try {
@@ -86,7 +87,8 @@ export default function AppSidebar() {
           setCurrentUser({
             name: parsed.name ?? '',
             email: parsed.email ?? '',
-            avatarUrl: parsed.avatarUrl ?? ''
+            avatarUrl: parsed.avatarUrl ?? '',
+            role: parsed.role ?? null
           });
           return;
         } catch {

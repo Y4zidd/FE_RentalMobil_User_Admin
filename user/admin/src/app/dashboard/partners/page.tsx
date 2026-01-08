@@ -1,8 +1,5 @@
-'use client';
+export const metadata = {
+  title: 'Dashboard: Manage Rental Partners'
+};
 
-import PartnersPage from '@/features/partners/components/partners-page';
-
-export default function PartnersRoutePage() {
-  return <PartnersPage />;
-}
-
+export { default } from '@/features/partners/components/partners-page';

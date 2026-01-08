@@ -33,6 +33,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const [open, setOpen] = useState(false);
   const [action, setAction] = useState<'deactivate' | 'delete' | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const router = useRouter();
 
   const onConfirm = async () => {
@@ -75,7 +76,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         <DropdownMenuContent align='end'>
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/users/${data.id}`)}
+            onClick={() => setDetailOpen(true)}
           >
             <IconEye className='mr-2 h-4 w-4' /> Detail
           </DropdownMenuItem>
@@ -105,6 +106,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         mode='edit'
         open={editOpen}
         onOpenChange={setEditOpen}
+        user={data}
+      />
+
+      <UserFormDialog
+        mode='view'
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
         user={data}
       />
     </>

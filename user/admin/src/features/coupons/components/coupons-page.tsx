@@ -20,27 +20,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage
-} from '@/components/ui/form';
+import { DialogTrigger } from '@/components/ui/dialog';
+import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FormInput } from '@/components/forms/form-input';
-import { FormSelect } from '@/components/forms/form-select';
-import { FormDatePicker } from '@/components/forms/form-date-picker';
 import {
   createAdminCoupon,
   deleteAdminCoupon,
@@ -48,14 +32,16 @@ import {
   updateAdminCoupon
 } from '@/lib/api-admin-coupons';
 import { cleanupAdminCoupons } from '@/lib/api-admin-coupons';
-import { FormCheckbox } from '@/components/forms/form-checkbox';
 import { toast } from 'sonner';
 import { useDataTable } from '@/hooks/use-data-table';
-import { Input } from '@/components/ui/input';
 import { CouponCellAction } from './coupon-cell-action';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
+import { useRouter } from 'next/navigation';
+
 import type { Coupon } from '@/lib/api-admin-coupons';
+import { CouponFormDialog, type CouponFormValues } from './coupon-form-dialog';
+import { IconPlus } from '@tabler/icons-react';
 
 const formSchema = z.object({
   code: z.string().min(2, 'Code must be at least 2 characters'),
@@ -68,15 +54,33 @@ const formSchema = z.object({
   is_active: z.boolean()
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = CouponFormValues;
 
 export default function CouponsPage() {
+  const router = useRouter();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pageSize] = useQueryState('perPage', parseAsInteger.withDefault(10));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem('admin_user');
+    if (!stored) {
+      router.replace('/dashboard/overview');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as { role?: string };
+      if (!parsed.role || parsed.role.toLowerCase() !== 'admin') {
+        router.replace('/dashboard/overview');
+      }
+    } catch {
+      router.replace('/dashboard/overview');
+    }
+  }, [router]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -326,138 +330,29 @@ export default function CouponsPage() {
   });
 
   const pageHeaderAction = (
-    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-      <DialogTrigger asChild>
-        <Button onClick={openCreate}>Add Coupon</Button>
-      </DialogTrigger>
-      <DialogContent className='max-w-lg'>
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? 'Edit Coupon' : 'Add Coupon'}
-          </DialogTitle>
-        </DialogHeader>
-        <Form
-          form={form}
-          onSubmit={form.handleSubmit(onSubmit)}
-          className='grid grid-cols-1 gap-4'
-        >
-                <FormInput
-                  control={form.control}
-                  name='code'
-                  label='Code'
-                  required
-                />
-                <FormSelect
-                  control={form.control}
-                  name='discount_type'
-                  label='Discount Type'
-                  options={[
-                    { label: 'Percent (%)', value: 'percent' },
-                    { label: 'Fixed (IDR)', value: 'fixed' }
-                  ]}
-                  required
-                />
-                <FormInput
-                  control={form.control}
-                  name='discount_value'
-                  type='number'
-                  label='Discount Value'
-                  step={1}
-                  required
-                />
-                <FormField
-                  control={form.control}
-                  name='min_order_total'
-                  render={({ field }) => {
-                    const displayValue =
-                      field.value === undefined || field.value === null
-                        ? ''
-                        : new Intl.NumberFormat('id-ID').format(
-                            Number(field.value) || 0
-                          );
-                    return (
-                      <FormItem>
-                        <FormLabel>Min. Order (optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            inputMode='numeric'
-                            placeholder='0'
-                            value={displayValue}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const numericString = raw
-                                .replace(/\./g, '')
-                                .replace(/,/g, '');
-                              if (!numericString) {
-                                field.onChange(undefined);
-                                return;
-                              }
-                              const numeric = Number(numericString);
-                              if (Number.isNaN(numeric)) {
-                                field.onChange(undefined);
-                              } else {
-                                field.onChange(numeric);
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-                <FormInput
-                  control={form.control}
-                  name='max_uses'
-                  type='number'
-                  label='Max Uses (optional)'
-                  step={1}
-                />
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                  <FormDatePicker
-                    control={form.control}
-                    name='starts_at'
-                    label='Starts At'
-                    description='Start date'
-                  />
-                  <FormDatePicker
-                    control={form.control}
-                    name='expires_at'
-                    label='Expires At'
-                    description='Expiry date'
-                  />
-                </div>
-          <FormCheckbox
-            control={form.control}
-            name='is_active'
-            checkboxLabel='Active'
-          />
-          <div className='flex gap-2 pt-2'>
-            <Button type='submit' className='flex-1'>
-              {editing ? 'Save Changes' : 'Save'}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              className='flex-1'
-              onClick={() => {
-                setOpenDialog(false);
-                resetForm();
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button onClick={openCreate} className='text-xs md:text-sm'>
+        <IconPlus className='mr-2 h-4 w-4' /> Add Coupon
+      </Button>
+      <CouponFormDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        form={form as any}
+        editing={editing}
+        onSubmit={onSubmit}
+        onCancel={() => {
+          setOpenDialog(false);
+          resetForm();
+        }}
+      />
+    </>
   );
 
   return (
     <PageContainer
       scrollable={false}
       pageTitle='Manage Coupons'
-      pageDescription='Manage discount coupons for bookings (CRUD) connected to the Laravel backend.'
+      pageDescription='Manage discount coupons for bookings'
       pageHeaderAction={pageHeaderAction}
     >
       {loading ? (

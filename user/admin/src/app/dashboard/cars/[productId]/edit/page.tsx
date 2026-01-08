@@ -1,6 +1,6 @@
 import FormCardSkeleton from '@/components/form-card-skeleton';
 import PageContainer from '@/components/layout/page-container';
-import { CarEditPage } from '@/features/products/components/car-edit-page';
+import { CarEditPage } from '@/features/cars/components/car-edit-page';
 import { Suspense } from 'react';
 
 export const metadata = {

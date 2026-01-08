@@ -11,6 +11,7 @@ import {
   ZoomControl,
 } from 'react-leaflet'
 import { motion as Motion } from 'motion/react'
+import { fetchProvincesRequest, fetchRegenciesByProvinceRequest } from '../lib/api/regions'
 
 const RecenterOnLocation = ({ center }) => {
   const map = useMap()
@@ -194,16 +195,9 @@ const Hero = () => {
         const controller = new AbortController()
         statesControllerRef.current = controller
 
-        const response = await fetch('http://localhost:8000/api/regions/provinces', {
-          method: 'GET',
-          signal: controller.signal,
-        })
-
-        if (!response.ok) {
-          return
-        }
-
-        const data = await response.json()
+        const response = await fetchProvincesRequest()
+        const raw = response.data
+        const data = Array.isArray(raw) ? raw : raw?.data || []
 
         if (!isMounted) {
           return
@@ -319,9 +313,9 @@ const Hero = () => {
     let isMounted = true
     ;(async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/regions/provinces/${id}/regencies`)
-        if (!res.ok) return
-        const data = await res.json()
+        const response = await fetchRegenciesByProvinceRequest(id)
+        const raw = response.data
+        const data = Array.isArray(raw) ? raw : raw?.data || []
         if (!isMounted) return
         const options = (Array.isArray(data) ? data : []).map((c) => {
           const name = String(c.name || '').toLowerCase().split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')

@@ -3,7 +3,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
-import CarListingPage from '@/features/products/components/car-listing';
+import CarListingPage from '@/features/cars/components/car-listing';
 import { searchParamsCache, serialize } from '@/lib/searchparams';
 import { cn } from '@/lib/utils';
 import { IconPlus } from '@tabler/icons-react';
@@ -51,4 +51,3 @@ export default async function Page(props: PageProps) {
     </PageContainer>
   );
 }
-

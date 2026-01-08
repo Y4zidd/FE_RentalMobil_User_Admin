@@ -50,19 +50,7 @@ const baseConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname)
   },
-  transpilePackages: ['geist'],
-  async rewrites() {
-    return [
-      {
-        source: '/dashboard/cars',
-        destination: '/dashboard/product'
-      },
-      {
-        source: '/dashboard/cars/:path*',
-        destination: '/dashboard/product/:path*'
-      }
-    ];
-  }
+  transpilePackages: ['geist']
 };
 
 let configWithPlugins = baseConfig;

@@ -10,12 +10,22 @@ class CouponController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $coupons = Coupon::orderBy('created_at', 'desc')->get();
         return response()->json($coupons);
     }
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $data = $request->validate([
             'code' => 'required|string|unique:coupons,code',
             'discount_type' => 'required|in:percent,fixed',
@@ -33,12 +43,22 @@ class CouponController extends Controller
 
     public function show($id)
     {
+        $user = request()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $coupon = Coupon::findOrFail($id);
         return response()->json($coupon);
     }
 
     public function update(Request $request, $id)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $coupon = Coupon::findOrFail($id);
 
         $data = $request->validate([
@@ -58,6 +78,11 @@ class CouponController extends Controller
 
     public function destroy($id)
     {
+        $user = request()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $coupon = Coupon::findOrFail($id);
         $coupon->delete();
         return response()->json(['message' => 'Deleted']);
@@ -65,6 +90,11 @@ class CouponController extends Controller
 
     public function cleanupStatus()
     {
+        $user = request()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $now = now();
         $affected = 0;
         $coupons = Coupon::all();

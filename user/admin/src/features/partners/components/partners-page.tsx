@@ -8,13 +8,14 @@ import { ColumnDef, Column } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
@@ -33,14 +34,32 @@ import { Input } from '@/components/ui/input';
 import { useDataTable } from '@/hooks/use-data-table';
 import { toast } from 'sonner';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import {
   AdminRentalPartner,
   createAdminRentalPartner,
   deleteAdminRentalPartner,
   fetchAdminRentalPartners,
   updateAdminRentalPartner
 } from '@/lib/api-admin-partners';
+import {
+  fetchAdminRegionsProvinces,
+  fetchAdminRegionsRegenciesByProvince
+} from '@/lib/api-admin-regions';
 import { parseAsInteger, useQueryState } from 'nuqs';
+import { useRouter } from 'next/navigation';
 import type { FormOption } from '@/types/base-form';
+import { IconBan, IconDotsVertical, IconEdit, IconEye, IconTrash } from '@tabler/icons-react';
+import { PartnerFormDialog } from './partner-form-dialog';
+import { PartnerDetailDialog } from './partner-detail-dialog';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -56,14 +75,41 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function PartnersPage() {
+  const router = useRouter();
   const [partners, setPartners] = useState<AdminRentalPartner[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editing, setEditing] = useState<AdminRentalPartner | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] =
+    useState<AdminRentalPartner | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailPartner, setDetailPartner] =
+    useState<AdminRentalPartner | null>(null);
   const [pageSize] = useQueryState('perPage', parseAsInteger.withDefault(10));
   const [provinceOptions, setProvinceOptions] = useState<FormOption[]>([]);
   const [regencyOptions, setRegencyOptions] = useState<FormOption[]>([]);
   const [provinceIdMap, setProvinceIdMap] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem('admin_user');
+    if (!stored) {
+      router.replace('/dashboard/overview');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as { role?: string };
+      if (!parsed.role || parsed.role.toLowerCase() !== 'admin') {
+        router.replace('/dashboard/overview');
+      }
+    } catch {
+      router.replace('/dashboard/overview');
+    }
+  }, [router]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -100,9 +146,7 @@ export default function PartnersPage() {
     let isMounted = true;
     const fetchProvinces = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/regions/provinces');
-        if (!res.ok) return;
-        const data: { id: number; name: string }[] = await res.json();
+        const data = await fetchAdminRegionsProvinces();
         if (!isMounted) return;
         const idMap: Record<string, number> = {};
         const options: FormOption[] = data.map((p) => {
@@ -132,11 +176,7 @@ export default function PartnersPage() {
       const id = provinceIdMap[selectedProvince || ''];
       if (!id) return;
       try {
-        const res = await fetch(
-          `http://localhost:8000/api/regions/provinces/${id}/regencies`
-        );
-        if (!res.ok) return;
-        const data: { id: number; name: string }[] = await res.json();
+        const data = await fetchAdminRegionsRegenciesByProvince(id);
         if (!isMounted) return;
         const options: FormOption[] = data.map((c) => {
           const proper = c.name
@@ -222,15 +262,14 @@ export default function PartnersPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Deactivate this partner?')) {
-      return;
-    }
+  const handleDeactivate = async () => {
+    if (!selectedPartner) return;
     try {
-      await deleteAdminRentalPartner(id);
+      setDeactivating(true);
+      await updateAdminRentalPartner(selectedPartner.id, { status: 'inactive' });
       setPartners((prev) =>
         prev.map((p) =>
-          p.id === id ? { ...p, status: 'inactive' } : p
+          p.id === selectedPartner.id ? { ...p, status: 'inactive' } : p
         )
       );
       toast.success('Partner deactivated');
@@ -238,6 +277,28 @@ export default function PartnersPage() {
       const message =
         err?.response?.data?.message || 'Failed to deactivate partner';
       toast.error(message);
+    } finally {
+      setDeactivating(false);
+      setConfirmOpen(false);
+      setSelectedPartner(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedPartner) return;
+    try {
+      setDeleting(true);
+      await deleteAdminRentalPartner(selectedPartner.id);
+      setPartners((prev) => prev.filter((p) => p.id !== selectedPartner.id));
+      toast.success('Partner deleted');
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || 'Failed to delete partner';
+      toast.error(message);
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setSelectedPartner(null);
     }
   };
 
@@ -307,28 +368,50 @@ export default function PartnersPage() {
         cell: ({ row }) => {
           const p = row.original;
           return (
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => openEdit(p)}
-              >
-                Edit
-              </Button>
-              <Button
-                variant='destructive'
-                size='sm'
-                onClick={() => handleDelete(p.id)}
-                disabled={p.status === 'inactive'}
-              >
-                Deactivate
-              </Button>
-            </div>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' className='h-8 w-8 p-0'>
+                  <span className='sr-only'>Open menu</span>
+                  <IconDotsVertical className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setDetailPartner(p);
+                    setDetailOpen(true);
+                  }}
+                >
+                  <IconEye className='mr-2 h-4 w-4' /> Detail
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openEdit(p)}>
+                  <IconEdit className='mr-2 h-4 w-4' /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedPartner(p);
+                    setConfirmOpen(true);
+                  }}
+                  disabled={p.status === 'inactive'}
+                >
+                  <IconBan className='mr-2 h-4 w-4' /> Deactivate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedPartner(p);
+                    setDeleteOpen(true);
+                  }}
+                >
+                  <IconTrash className='mr-2 h-4 w-4' /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         }
       }
     ],
-    [partners]
+    [partners, openEdit]
   );
 
   const pageCount = Math.max(1, Math.ceil(partners.length / pageSize));
@@ -341,128 +424,91 @@ export default function PartnersPage() {
   });
 
   const pageHeaderAction = (
-    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-      <DialogTrigger asChild>
-        <Button onClick={openCreate}>Add Partner</Button>
-      </DialogTrigger>
-      <DialogContent className='max-w-lg'>
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? 'Edit Partner' : 'Add Partner'}
-          </DialogTitle>
-        </DialogHeader>
-        <Form
-          form={form}
-          onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-4'
-        >
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <FormInput
-              control={form.control}
-              name='name'
-              label='Partner Name'
-              required
-            />
-            <FormSelect
-              control={form.control}
-              name='status'
-              label='Status'
-              options={[
-                { label: 'Active', value: 'active' },
-                { label: 'Inactive', value: 'inactive' }
-              ]}
-              required
-            />
-          </div>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <FormSelect
-              control={form.control}
-              name='province'
-              label='Province'
-              placeholder='Select province'
-              options={provinceOptions}
-            />
-            <FormSelect
-              control={form.control}
-              name='regency'
-              label='Regency (Kabupaten/Kota)'
-              placeholder='Select regency'
-              options={regencyOptions}
-            />
-          </div>
-          <FormTextarea
-            control={form.control}
-            name='address'
-            label='Address'
-            placeholder='Full address (optional)'
-            config={{
-              rows: 3
-            }}
-          />
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <FormInput
-              control={form.control}
-              name='contact_name'
-              label='Contact Name'
-            />
-            <FormInput
-              control={form.control}
-              name='contact_phone'
-              label='Contact Phone'
-            />
-            <FormField
-              control={form.control}
-              name='contact_email'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='email'
-                      placeholder='example@mail.com'
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className='flex gap-2 pt-2'>
-            <Button type='submit' className='flex-1'>
-              {editing ? 'Save Changes' : 'Save'}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              className='flex-1'
-              onClick={() => {
-                setOpenDialog(false);
-                resetForm();
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <PartnerFormDialog
+      open={openDialog}
+      onOpenChange={setOpenDialog}
+      onOpenCreate={openCreate}
+      form={form as any}
+      editing={editing}
+      provinceOptions={provinceOptions}
+      regencyOptions={regencyOptions}
+      onSubmit={onSubmit}
+      onCancel={() => {
+        setOpenDialog(false);
+        resetForm();
+      }}
+    />
   );
 
   return (
     <PageContainer
       scrollable={false}
       pageTitle='Manage Rental Partners'
-      pageDescription='Manage local rental partners (CRUD) connected to the Laravel backend.'
+      pageDescription='Manage local rental partners.'
       pageHeaderAction={pageHeaderAction}
     >
       {loading ? (
         <div>Loading rental partners...</div>
       ) : (
-        <DataTable table={table}>
-          <DataTableToolbar table={table} />
-        </DataTable>
+        <>
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Deactivate this partner?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  The partner will be marked as inactive and can no longer be used for new bookings.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deactivating}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeactivate}
+                  disabled={deactivating}
+                >
+                  Deactivate
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Delete this partner?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. The partner will be permanently removed from the system.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <PartnerDetailDialog
+            open={detailOpen}
+            onOpenChange={setDetailOpen}
+            partner={detailPartner}
+          />
+
+          <DataTable table={table}>
+            <DataTableToolbar table={table} />
+          </DataTable>
+        </>
       )}
     </PageContainer>
   );

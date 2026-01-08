@@ -109,7 +109,7 @@ export function RevenueLineGraph() {
           </ChartContainer>
         ) : (
           <div className="flex h-[250px] w-full items-center justify-center text-sm text-muted-foreground">
-            Belum ada data pendapatan harian.
+            No daily income data available yet.
           </div>
         )}
       </CardContent>

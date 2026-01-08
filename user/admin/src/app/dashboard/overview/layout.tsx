@@ -107,10 +107,25 @@ export default function OverViewLayout({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [carsResult, usersResult, overviewResult] = await Promise.allSettled([
+        let isAdmin = false;
+        if (typeof window !== 'undefined') {
+          const stored = window.localStorage.getItem('admin_user');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored) as { role?: string };
+              if (parsed.role && parsed.role.toLowerCase() === 'admin') {
+                isAdmin = true;
+              }
+            } catch {
+              isAdmin = false;
+            }
+          }
+        }
+
+        const [carsResult, overviewResult, usersResult] = await Promise.allSettled([
           fetchAdminCarsPreview(),
-          fetchAdminUsers({}),
-          fetchAdminOverview()
+          fetchAdminOverview(),
+          isAdmin ? fetchAdminUsers({}) : Promise.resolve([])
         ]);
 
         let carsCount = 0;
@@ -132,8 +147,8 @@ export default function OverViewLayout({
           console.error('Failed to fetch cars', carsResult.reason);
         }
 
-        if (usersResult.status === 'fulfilled') {
-          const usersData = usersResult.value;
+        if (usersResult.status === 'fulfilled' && isAdmin) {
+          const usersData = usersResult.value as any[];
           setPreviewUsers(
             usersData.slice(0, 5).map((u: any) => {
               return {
@@ -145,7 +160,7 @@ export default function OverViewLayout({
               };
             })
           );
-        } else {
+        } else if (usersResult.status === 'rejected' && isAdmin) {
           console.error('Failed to fetch users', usersResult.reason);
         }
 

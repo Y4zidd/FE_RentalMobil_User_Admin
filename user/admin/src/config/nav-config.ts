@@ -63,6 +63,7 @@ export const navItems: NavItem[] = [
     icon: 'teams',
     shortcut: ['p', 'r'],
     isActive: false,
+    access: { role: 'admin' },
     items: []
   },
   {
@@ -71,6 +72,7 @@ export const navItems: NavItem[] = [
     icon: 'users',
     shortcut: ['u', 'u'],
     isActive: false,
+    access: { role: 'admin' },
     items: []
   },
   {
@@ -79,6 +81,7 @@ export const navItems: NavItem[] = [
     icon: 'billing',
     shortcut: ['p', 'c'],
     isActive: false,
+    access: { role: 'admin' },
     items: []
   }
 ];

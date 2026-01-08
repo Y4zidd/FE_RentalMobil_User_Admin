@@ -22,7 +22,7 @@ import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 import type { User } from './users-table/columns';
 import { createAdminUser, updateAdminUser, uploadAdminUserAvatar } from '@/lib/api-admin-users';
 
-type Mode = 'create' | 'edit';
+type Mode = 'create' | 'edit' | 'view';
 
 interface UserFormDialogProps {
   mode: Mode;
@@ -39,6 +39,7 @@ type UserFormState = {
 };
 
 export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialogProps) {
+  const isView = mode === 'view';
   const [form, setForm] = useState<UserFormState>({
     name: user?.name ?? '',
     email: user?.email ?? '',
@@ -65,7 +66,8 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
     setAvatarPreview(null);
   }, [open, user]);
 
-  const title = mode === 'create' ? 'Add User' : 'Edit User';
+  const title =
+    mode === 'create' ? 'Add User' : mode === 'edit' ? 'Edit User' : 'User Details';
   const primaryLabel = mode === 'create' ? 'Create User' : 'Save Changes';
 
   const handleChange = (field: keyof UserFormState, value: string) => {
@@ -85,6 +87,9 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isView) {
+      return;
+    }
     setLoading(true);
     try {
       const target = event.target as any;
@@ -133,10 +138,13 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-2xl'>
         <DialogHeader>
-          <DialogTitle className='text-xl font-semibold'>{title}</DialogTitle>
+          <DialogTitle className='text-2xl font-semibold'>{title}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-6'>
+        <form
+          onSubmit={isView ? (event) => event.preventDefault() : handleSubmit}
+          className='space-y-6'
+        >
           {/* Avatar Section */}
           <div className='flex flex-col items-center gap-3 pb-4 border-b'>
             <Avatar className='h-24 w-24'>
@@ -148,114 +156,141 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
                 {avatarInitials || 'US'}
               </AvatarFallback>
             </Avatar>
-            <Input
-              ref={fileInputRef}
-              id='avatar'
-              type='file'
-              accept='image/*'
-              className='hidden'
-              onChange={handleAvatarChange}
-            />
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              className='text-xs'
-            >
-              Change Photo
-            </Button>
+            {!isView && (
+              <>
+                <Input
+                  ref={fileInputRef}
+                  id='avatar'
+                  type='file'
+                  accept='image/*'
+                  className='hidden'
+                  onChange={handleAvatarChange}
+                />
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                  className='text-xs'
+                >
+                  Change Photo
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Form Fields */}
-          <div className='space-y-4'>
-            {/* Name */}
-            <div className='space-y-2'>
-              <Label htmlFor='name'>Name</Label>
-              <Input
-                id='name'
-                value={form.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder='Full name'
-                required
-                disabled={loading}
-              />
-            </div>
-
-            {/* Role & Status */}
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label htmlFor='role'>Role</Label>
-                <Select
-                  value={form.role}
-                  onValueChange={(value) =>
-                    handleChange('role', value as UserFormState['role'])
-                  }
-                  disabled={loading}
-                >
-                  <SelectTrigger id='role'>
-                    <SelectValue placeholder='Select role' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='Admin'>Admin</SelectItem>
-                    <SelectItem value='Staff'>Staff</SelectItem>
-                    <SelectItem value='Customer'>Customer</SelectItem>
-                  </SelectContent>
-                </Select>
+          {/* Form Fields / Details */}
+          {isView ? (
+            <div className='space-y-6'>
+              <div className='space-y-1'>
+                <p className='text-sm text-muted-foreground'>Name</p>
+                <p className='text-base font-medium'>
+                  {user?.name ?? form.name}
+                </p>
               </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='status'>Status</Label>
-                <Select
-                  value={form.status}
-                  onValueChange={(value) =>
-                    handleChange('status', value as UserFormState['status'])
-                  }
-                  disabled={loading}
-                >
-                  <SelectTrigger id='status'>
-                    <SelectValue placeholder='Select status' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='Active'>Active</SelectItem>
-                    <SelectItem value='Inactive'>Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className='grid gap-6 sm:grid-cols-2'>
+                <div className='space-y-1'>
+                  <p className='text-sm text-muted-foreground'>Role</p>
+                  <p className='text-base font-medium'>
+                    {user?.role ?? form.role}
+                  </p>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm text-muted-foreground'>Status</p>
+                  <p className='text-base font-medium'>
+                    {user?.status ?? form.status}
+                  </p>
+                </div>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm text-muted-foreground'>Email</p>
+                <p className='text-base font-medium break-all'>
+                  {user?.email ?? form.email}
+                </p>
               </div>
             </div>
-
-            {/* Email */}
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                value={form.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                placeholder='user@example.com'
-                required
-                disabled={loading}
-              />
+          ) : (
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='name'>Name</Label>
+                <Input
+                  id='name'
+                  value={form.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  placeholder='Full name'
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label htmlFor='role'>Role</Label>
+                  <Select
+                    value={form.role}
+                    onValueChange={(value) =>
+                      handleChange('role', value as UserFormState['role'])
+                    }
+                    disabled={loading}
+                  >
+                    <SelectTrigger id='role'>
+                      <SelectValue placeholder='Select role' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='Admin'>Admin</SelectItem>
+                      <SelectItem value='Staff'>Staff</SelectItem>
+                      <SelectItem value='Customer'>Customer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='status'>Status</Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      handleChange('status', value as UserFormState['status'])
+                    }
+                    disabled={loading}
+                  >
+                    <SelectTrigger id='status'>
+                      <SelectValue placeholder='Select status' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='Active'>Active</SelectItem>
+                      <SelectItem value='Inactive'>Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='email'>Email</Label>
+                <Input
+                  id='email'
+                  type='email'
+                  value={form.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  placeholder='user@example.com'
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor={mode === 'create' ? 'password' : 'resetPassword'}>
+                  {mode === 'create' ? 'Password' : 'New Password'}
+                </Label>
+                <Input
+                  id={mode === 'create' ? 'password' : 'resetPassword'}
+                  type='password'
+                  placeholder={
+                    mode === 'create'
+                      ? 'Set password'
+                      : 'Leave blank to keep current'
+                  }
+                  disabled={loading}
+                />
+              </div>
             </div>
-
-            {/* Password */}
-            <div className='space-y-2'>
-              <Label htmlFor={mode === 'create' ? 'password' : 'resetPassword'}>
-                {mode === 'create' ? 'Password' : 'New Password'}
-              </Label>
-              <Input
-                id={mode === 'create' ? 'password' : 'resetPassword'}
-                type='password'
-                placeholder={
-                  mode === 'create'
-                    ? 'Set password'
-                    : 'Leave blank to keep current'
-                }
-                disabled={loading}
-              />
-            </div>
-          </div>
+          )}
 
           {/* Footer */}
           <DialogFooter className='gap-2 pt-4 border-t'>
@@ -265,11 +300,13 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancel
+              {isView ? 'Close' : 'Cancel'}
             </Button>
-            <Button type='submit' disabled={loading}>
-              {loading ? 'Saving...' : primaryLabel}
-            </Button>
+            {!isView && (
+              <Button type='submit' disabled={loading}>
+                {loading ? 'Saving...' : primaryLabel}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

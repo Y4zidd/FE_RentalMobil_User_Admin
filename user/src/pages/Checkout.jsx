@@ -306,10 +306,12 @@ const Checkout = () => {
                                         placeholder={t('checkout_email_placeholder')}
                                     />
                                 </div>
-                                <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-md text-sm flex gap-3 items-start">
-                                    <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>{t('checkout_license_info')}</p>
-                                </div>
+                                {!user?.license_number && (
+                                    <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-md text-sm flex gap-3 items-start">
+                                        <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
+                                        <p>{t('checkout_license_info')}</p>
+                                    </div>
+                                )}
                             </div>
                         </section>
 

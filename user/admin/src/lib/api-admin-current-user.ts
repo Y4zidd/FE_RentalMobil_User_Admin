@@ -5,6 +5,7 @@ export type CurrentUser = {
   email?: string | null
   phone?: string | null
   avatarUrl?: string | null
+  role?: string | null
 }
 
 export async function fetchCurrentAdminUser(): Promise<CurrentUser> {
@@ -16,5 +17,6 @@ export async function fetchCurrentAdminUser(): Promise<CurrentUser> {
     email: user.email ?? '',
     phone: user.phone ?? '',
     avatarUrl: user.avatar_url ?? '',
+    role: user.role ?? null,
   }
 }

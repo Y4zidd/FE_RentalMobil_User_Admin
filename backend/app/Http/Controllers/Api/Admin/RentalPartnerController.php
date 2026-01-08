@@ -10,6 +10,11 @@ class RentalPartnerController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $query = RentalPartner::query();
 
         if ($request->filled('status')) {
@@ -35,6 +40,11 @@ class RentalPartnerController extends Controller
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'country' => 'nullable|string|max:255',
@@ -63,6 +73,11 @@ class RentalPartnerController extends Controller
 
     public function show($id)
     {
+        $user = request()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $partner = RentalPartner::findOrFail($id);
 
         return response()->json($partner);
@@ -70,6 +85,11 @@ class RentalPartnerController extends Controller
 
     public function update(Request $request, $id)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $partner = RentalPartner::findOrFail($id);
 
         $data = $request->validate([
@@ -92,6 +112,11 @@ class RentalPartnerController extends Controller
 
     public function destroy($id)
     {
+        $user = request()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $partner = RentalPartner::findOrFail($id);
 
         $partner->status = 'inactive';

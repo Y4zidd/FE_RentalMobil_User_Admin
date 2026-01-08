@@ -1,7 +1,7 @@
 import FormCardSkeleton from '@/components/form-card-skeleton';
 import PageContainer from '@/components/layout/page-container';
 import { Suspense } from 'react';
-import CarViewPage from '@/features/products/components/car-view-page';
+import CarViewPage from '@/features/cars/components/car-view-page';
 
 export const metadata = {
   title: 'Dashboard : Car View'
@@ -22,4 +22,3 @@ export default async function Page(props: PageProps) {
     </PageContainer>
   );
 }
-

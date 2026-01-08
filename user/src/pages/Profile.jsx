@@ -22,6 +22,10 @@ import {
   updateRentalDetailsRequest,
   uploadAvatarRequest,
 } from "../lib/api/user"
+import {
+  fetchProvincesRequest,
+  fetchRegenciesByProvinceRequest,
+} from "../lib/api/regions"
 
 // Provinces will be fetched from backend API
 
@@ -103,9 +107,9 @@ const Profile = () => {
     let isMounted = true
     ;(async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/regions/provinces")
-        if (!res.ok) return
-        const data = await res.json()
+        const res = await fetchProvincesRequest()
+        const raw = res.data
+        const data = Array.isArray(raw) ? raw : raw?.data || []
         if (!isMounted) return
         const idMap = {}
         const options = (Array.isArray(data) ? data : []).map((p) => {
@@ -137,11 +141,9 @@ const Profile = () => {
     let isMounted = true
     ;(async () => {
       try {
-        const res = await fetch(
-          `http://localhost:8000/api/regions/provinces/${id}/regencies`
-        )
-        if (!res.ok) return
-        const data = await res.json()
+        const res = await fetchRegenciesByProvinceRequest(id)
+        const raw = res.data
+        const data = Array.isArray(raw) ? raw : raw?.data || []
         if (!isMounted) return
         const options = (Array.isArray(data) ? data : []).map((c) =>
           String(c.name || "")

@@ -11,6 +11,11 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $query = User::query();
 
         if ($request->filled('role')) {
@@ -39,6 +44,11 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         // Admin create user (staff/admin)
         $validated = $request->validate([
             'name' => 'required|string',
@@ -57,6 +67,11 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $user = User::findOrFail($id);
 
         $rules = [
@@ -84,6 +99,11 @@ class UserController extends Controller
 
     public function updateAvatar(Request $request, $id)
     {
+        $user = $request->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $user = User::findOrFail($id);
 
         $request->validate([
@@ -111,6 +131,11 @@ class UserController extends Controller
 
     public function destroy($id)
     {
+        $user = request()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
+        }
+
         $user = User::findOrFail($id);
         $user->delete();
         return response()->json(['message' => 'User deleted successfully']);

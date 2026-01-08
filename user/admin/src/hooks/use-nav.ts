@@ -23,10 +23,58 @@ import type { NavItem } from '@/types';
  * Hook to filter navigation items based on RBAC (fully client-side)
  *
  * @param items - Array of navigation items to filter
+ * @param currentRole - Optional current user role (e.g. "admin" | "staff")
  * @returns Filtered items
  */
-export function useFilteredNavItems(items: NavItem[]) {
-  // For template usage without auth/RBAC, simply return the items unchanged.
-  const filteredItems = useMemo(() => items, [items]);
+export function useFilteredNavItems(items: NavItem[], currentRole?: string | null) {
+  const filteredItems = useMemo(() => {
+    let role: string | null = currentRole ?? null;
+
+    if (!role && typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('admin_user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as { role?: string };
+          role = parsed.role ?? null;
+        } catch {
+          role = null;
+        }
+      }
+    }
+
+    const normalizedRole = role ? role.toLowerCase() : null;
+
+    const filterItems = (nodes: NavItem[]): NavItem[] => {
+      return nodes
+        .map((item) => {
+          const children = item.items ? filterItems(item.items) : [];
+          const access = item.access;
+
+          let allowed = true;
+
+          if (access?.role) {
+            const requiredRole = access.role.toLowerCase();
+            if (!normalizedRole) {
+              allowed = false;
+            } else {
+              allowed = normalizedRole === requiredRole;
+            }
+          }
+
+          if (!allowed && children.length === 0) {
+            return null;
+          }
+
+          return {
+            ...item,
+            items: children
+          };
+        })
+        .filter(Boolean) as NavItem[];
+    };
+
+    return filterItems(items);
+  }, [items]);
+
   return filteredItems;
 }

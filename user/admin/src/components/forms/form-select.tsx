@@ -25,6 +25,7 @@ interface FormSelectProps<
   options: FormOption[];
   placeholder?: string;
   searchable?: boolean;
+  onValueChange?: (value: string) => void;
 }
 
 function FormSelect<
@@ -39,7 +40,8 @@ function FormSelect<
   options,
   placeholder = 'Select an option',
   disabled,
-  className
+  className,
+  onValueChange
 }: FormSelectProps<TFieldValues, TName>) {
   return (
     <FormField
@@ -54,8 +56,13 @@ function FormSelect<
             </FormLabel>
           )}
           <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value}
+            onValueChange={(value) => {
+              field.onChange(value);
+              if (onValueChange) {
+                onValueChange(value);
+              }
+            }}
+            value={field.value || undefined}
             disabled={disabled}
           >
             <FormControl>

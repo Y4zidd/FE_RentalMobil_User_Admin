@@ -18,13 +18,13 @@ return new class extends Migration
             $table->string('model');
             $table->string('license_plate')->unique();
             $table->integer('year')->nullable();
-            $table->string('category'); // MPV, SUV, Sedan, etc.
+            $table->string('category');
             $table->enum('status', ['available', 'rented', 'maintenance'])->default('available');
             $table->enum('transmission', ['manual', 'automatic', 'semi_automatic', 'cvt', 'ivt']);
             $table->string('fuel_type');
             $table->integer('seating_capacity');
             $table->decimal('price_per_day', 12, 2);
-            $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
+            $table->foreignId('location_id');
             $table->text('description')->nullable();
             $table->string('photo_url');
             $table->timestamps();

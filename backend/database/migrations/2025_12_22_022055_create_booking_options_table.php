@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('booking_options', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
-            $table->string('option_code'); // theft_protection, collision_damage, etc.
+            $table->foreignId('booking_id');
+            $table->string('option_code');
             $table->string('label');
             $table->decimal('price_per_day', 12, 2);
             $table->integer('days');

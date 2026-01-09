@@ -12,3 +12,5 @@ export const markBookingPaidRequest = (bookingId) =>
 export const fetchUserBookingsRequest = () =>
   apiClient.get('/api/bookings/user')
 
+export const downloadReceiptRequest = (bookingId) =>
+  apiClient.get(`/api/bookings/${bookingId}/receipt`, { responseType: 'blob' })

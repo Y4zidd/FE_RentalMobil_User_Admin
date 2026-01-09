@@ -11,6 +11,16 @@ import {
   markBookingPaidRequest,
 } from "../lib/api/booking"
 import { validateCouponRequest } from "../lib/api/user"
+import { MapContainer, TileLayer, CircleMarker, useMapEvents } from "react-leaflet"
+
+const DropPointClickHandler = ({ onSelect }) => {
+  useMapEvents({
+    click(e) {
+      onSelect(e.latlng)
+    },
+  })
+  return null
+}
 
 const Checkout = () => {
     const navigate = useNavigate()
@@ -18,6 +28,14 @@ const Checkout = () => {
     const { cars, token, formatCurrency, user, setShowLogin, t, language } = useAppContext()
     const { carId, pickupDate, returnDate, pickupTime, returnTime, preselectedOptions } = location.state || {}
     const [car, setCar] = useState(null)
+    const [dropPoint, setDropPoint] = useState({
+        address: '',
+        lat: null,
+        lng: null,
+    })
+    const [dropPointCenter, setDropPointCenter] = useState(null)
+    const [isDropPointMapOpen, setIsDropPointMapOpen] = useState(false)
+    const [isGeocodingDropPoint, setIsGeocodingDropPoint] = useState(false)
 
     // State for form, initialized with preselectedOptions if available
     const [bookingOptions] = useState(preselectedOptions || {
@@ -71,6 +89,30 @@ const Checkout = () => {
             navigate("/cars")
         }
     }, [carId, pickupDate, returnDate, cars, navigate])
+
+    useEffect(() => {
+        const fetchCenter = async () => {
+            if (!car || !car.location) return
+            try {
+                const query = `${car.location}, Indonesia`
+                const res = await fetch(
+                    'https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q=' +
+                    encodeURIComponent(query)
+                )
+                if (!res.ok) return
+                const data = await res.json()
+                if (!Array.isArray(data) || data.length === 0) return
+                const first = data[0]
+                const lat = parseFloat(first.lat)
+                const lng = parseFloat(first.lon)
+                if (Number.isNaN(lat) || Number.isNaN(lng)) return
+                setDropPointCenter({ lat, lng })
+            } catch (error) {
+                console.error(error)
+            }
+        }
+        fetchCenter()
+    }, [car])
 
 
     const optionConfig = [
@@ -163,6 +205,64 @@ const Checkout = () => {
         }
     }
 
+    const handleRemoveCoupon = () => {
+        setCouponCode("")
+        setCouponDiscount(0)
+        setCouponApplied(false)
+        toast.success(t('checkout_toast_coupon_removed'))
+    }
+
+    const handleDropPointSelect = async (latlng) => {
+        if (!car || !car.location) return
+        setIsGeocodingDropPoint(true)
+        try {
+            const res = await fetch(
+                'https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat=' +
+                encodeURIComponent(latlng.lat) +
+                '&lon=' +
+                encodeURIComponent(latlng.lng)
+            )
+            if (!res.ok) {
+                toast.error(t('checkout_drop_point_geocode_error'))
+                return
+            }
+            const data = await res.json()
+            const address = data.address || {}
+            const displayName = data.display_name || ''
+            const normalize = (value) =>
+                String(value || '')
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ')
+                    .trim()
+            const expected = normalize(car.location)
+            const regencyRaw =
+                address.county ||
+                address.state_district ||
+                address.region ||
+                address.state ||
+                ''
+            const regencyCandidate = normalize(regencyRaw)
+            if (
+                expected &&
+                regencyCandidate &&
+                !regencyCandidate.includes(expected) &&
+                !expected.includes(regencyCandidate)
+            ) {
+                toast.error(t('checkout_drop_point_out_of_regency'))
+                return
+            }
+            setDropPoint({
+                address: displayName || car.location,
+                lat: latlng.lat,
+                lng: latlng.lng,
+            })
+        } catch {
+            toast.error(t('checkout_drop_point_geocode_error'))
+        } finally {
+            setIsGeocodingDropPoint(false)
+        }
+    }
+
     const handleBooking = async () => {
         if (!token) {
             toast.error(t('checkout_toast_login_required'))
@@ -191,8 +291,17 @@ const Checkout = () => {
                 payment_method: paymentMethodBackend,
                 pickup_location_id: car.locationId || 1,
                 dropoff_location_id: car.locationId || 1,
+                dropoff_full_address: dropPoint.address || null,
+                dropoff_latitude: dropPoint.lat ?? null,
+                dropoff_longitude: dropPoint.lng ?? null,
                 options: selectedOptions,
                 coupon_code: couponApplied ? couponCode.trim() : undefined,
+                notes: dropPoint.address
+                    ? `${t('checkout_drop_point_label')}: ${dropPoint.address}` +
+                    (dropPoint.lat && dropPoint.lng
+                        ? ` (lat: ${dropPoint.lat}, lng: ${dropPoint.lng})`
+                        : '')
+                    : undefined,
             }
 
             const { data: booking } = await createBookingRequest(payload)
@@ -310,6 +419,76 @@ const Checkout = () => {
                                     <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-md text-sm flex gap-3 items-start">
                                         <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
                                         <p>{t('checkout_license_info')}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">{t('checkout_drop_point_heading')}</h2>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                        {t('checkout_drop_point_label')}
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={dropPoint.address}
+                                            readOnly
+                                            className="w-full px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                            placeholder={t('checkout_drop_point_placeholder')}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsDropPointMapOpen((prev) => !prev)}
+                                            className="px-3 py-2 rounded-md border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50"
+                                        >
+                                            {isDropPointMapOpen
+                                                ? t('checkout_drop_point_hide_map_button')
+                                                : t('checkout_drop_point_map_button')}
+                                        </button>
+                                    </div>
+                                    {dropPoint.address && (
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            {t('checkout_drop_point_selected_prefix')} {dropPoint.address}
+                                        </p>
+                                    )}
+                                </div>
+                                {isDropPointMapOpen && (
+                                    <div className="mt-2 h-64 rounded-xl border border-gray-200 overflow-hidden bg-slate-50">
+                                        <MapContainer
+                                            center={
+                                                dropPointCenter
+                                                    ? [dropPointCenter.lat, dropPointCenter.lng]
+                                                    : [-2, 115]
+                                            }
+                                            zoom={dropPointCenter ? 11 : 5}
+                                            scrollWheelZoom
+                                            className="h-full w-full"
+                                        >
+                                            <TileLayer
+                                                attribution="&copy; OpenStreetMap contributors"
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            />
+                                            {dropPoint.lat && dropPoint.lng && (
+                                                <CircleMarker
+                                                    center={[dropPoint.lat, dropPoint.lng]}
+                                                    radius={10}
+                                                    pathOptions={{
+                                                        color: "#ef4444",
+                                                        fillColor: "#ef4444",
+                                                        fillOpacity: 0.9,
+                                                    }}
+                                                />
+                                            )}
+                                            <DropPointClickHandler onSelect={handleDropPointSelect} />
+                                        </MapContainer>
+                                        {isGeocodingDropPoint && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-xs text-gray-600">
+                                                {t('checkout_drop_point_geocoding')}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -467,9 +646,18 @@ const Checkout = () => {
                                     </div>
                                 )}
                                 {couponApplied && couponDiscount > 0 && (
-                                    <div className="flex justify-between text-sm text-gray-600">
+                                    <div className="flex justify-between items-center text-sm text-gray-600">
                                         <span>{t('checkout_price_coupon_discount')}</span>
-                                        <span>-{formatCurrency(couponDiscount)}</span>
+                                        <span className="flex items-center gap-2">
+                                            <span>-{formatCurrency(couponDiscount)}</span>
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveCoupon}
+                                                className="text-xs text-red-500 underline underline-offset-2"
+                                            >
+                                                {t('checkout_promo_button_remove')}
+                                            </button>
+                                        </span>
                                     </div>
                                 )}
                                 <div className="pt-3 border-t border-gray-100 flex justify-between items-center">

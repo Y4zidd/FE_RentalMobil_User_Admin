@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->prefix('bookings')->group(function () {
     Route::get('user', [BookingController::class, 'index']);
     Route::post('/', [BookingController::class, 'store']);
     Route::post('{booking}/mark-paid', [BookingController::class, 'markPaid']);
+    Route::get('{booking}/receipt', [BookingController::class, 'receipt']);
 });
 
 Route::middleware('auth:sanctum')->post('payments/checkout', [PaymentController::class, 'checkout']);

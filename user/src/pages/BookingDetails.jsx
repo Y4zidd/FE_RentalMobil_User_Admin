@@ -10,6 +10,7 @@ import {
   checkoutPaymentRequest,
   fetchUserBookingsRequest,
   markBookingPaidRequest,
+  downloadReceiptRequest,
 } from "../lib/api/booking"
 
 const BookingDetails = () => {
@@ -35,6 +36,9 @@ const BookingDetails = () => {
       price: b.total_price,
       createdAt: b.created_at,
       paymentMethod: b.payment_method,
+      dropoffAddress: b.dropoff_full_address || '',
+      dropoffLat: b.dropoff_latitude ?? null,
+      dropoffLng: b.dropoff_longitude ?? null,
       operatorId: "Rent-A-Car",
       extras: options.map((opt) => opt.label),
       car: {
@@ -100,6 +104,28 @@ const BookingDetails = () => {
 
   const canRetryPayment =
     booking.paymentMethod === "online_full" && booking.status === "pending"
+
+  const handleDownloadReceipt = async () => {
+    if (!token) {
+      toast.error(t('booking_details_toast_login_required'))
+      return
+    }
+    try {
+      const response = await downloadReceiptRequest(booking.bookingId)
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `booking-${String(booking.id || booking.bookingId)}-receipt.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error(error)
+      toast.error(t('booking_details_toast_receipt_failed'))
+    }
+  }
 
   const handleRetryPayment = async () => {
     if (!token) {
@@ -267,6 +293,13 @@ const BookingDetails = () => {
               <p className="text-base font-medium text-gray-900">{booking.car.location}</p>
             </div>
 
+            {booking.dropoffAddress && (
+              <div className="pt-6 pb-6 border-b border-gray-100">
+                <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_drop_point_label')}</p>
+                <p className="text-base font-medium text-gray-900 leading-relaxed">{booking.dropoffAddress}</p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 mb-6 pb-6 border-b border-gray-100">
               <div>
                 <p className="text-xs text-gray-500 font-medium mb-1">{t('booking_details_payment_method_label')}</p>
@@ -322,6 +355,7 @@ const BookingDetails = () => {
           <div className="flex flex-col md:flex-row gap-4 justify-end">
             <button
               type="button"
+              onClick={handleDownloadReceipt}
               className="px-6 py-3 rounded-lg bg-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-300 transition-colors"
             >
               {t('booking_details_download_receipt')}

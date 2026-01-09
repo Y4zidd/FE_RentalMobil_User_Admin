@@ -31,6 +31,14 @@ const Cars = () => {
     maxPrice: '',
   })
 
+  const formatRupiah = (value) => {
+    const numeric = String(value || '')
+      .replace(/[^0-9]/g, '')
+      .replace(/^0+/, '')
+    if (!numeric) return ''
+    return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  }
+
   const hasSearchParams = Boolean(pickupLocation || pickupDate || returnDate)
 
   const searchCarAvailablity = useCallback(async () => {
@@ -137,13 +145,15 @@ const Cars = () => {
 
     if (filters.province) {
       const provinceLower = filters.province.toLowerCase()
-      filtered = filtered.filter(
-        (car) => (car.location || '').toLowerCase() === provinceLower
-      )
+      filtered = filtered.filter((car) => {
+        const carLocation = (car.location || '').toLowerCase()
+        return carLocation === provinceLower
+      })
     }
 
     if (filters.maxPrice) {
-      const max = Number(filters.maxPrice)
+      const normalized = String(filters.maxPrice).replace(/[^0-9]/g, '')
+      const max = Number(normalized)
       if (!Number.isNaN(max) && max > 0) {
         filtered = filtered.filter((car) => car.pricePerDay <= max)
       }
@@ -334,17 +344,18 @@ const Cars = () => {
                 <div>
                   <p className='text-xs font-medium text-gray-500 mb-1.5'>{t('cars_filter_max_price')}</p>
                   <input
-                    type='number'
+                    type='text'
                     min='0'
-                    value={filters.maxPrice}
-                    onChange={(e) =>
+                    value={filters.maxPrice ? `Rp ${formatRupiah(filters.maxPrice)}` : ''}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, '')
                       setFilters((prev) => ({
                         ...prev,
-                        maxPrice: e.target.value,
+                        maxPrice: raw,
                       }))
-                    }
+                    }}
                     className='w-full h-10 rounded-lg border border-borderColor px-3 text-gray-700 outline-none'
-                    placeholder='e.g. 500000'
+                    placeholder='Rp 500.000'
                   />
                 </div>
               </div>
@@ -388,17 +399,26 @@ const Cars = () => {
         className='px-6 md:px-16 lg:px-24 xl:px-32 mt-10'>
         <p className='text-gray-500 xl:px-20 max-w-7xl mx-auto'>{t('cars_showing_cars_label')} {filteredCars.length} {t('cars_showing_cars_suffix')}</p>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-8 mt-4 xl:px-20 max-w-7xl mx-auto'>
-          {filteredCars.map((car, index) => (
-            <Motion.div key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index, duration: 0.4 }}
-            >
-              <CarCard car={car} />
-            </Motion.div>
-          ))}
-        </div>
+        {filteredCars.length === 0 ? (
+          <div className='mt-6 xl:px-20 max-w-7xl mx-auto'>
+            <p className='text-center text-gray-500 text-sm'>
+              {t('cars_empty_state_message') || 'Tidak ada mobil yang tersedia untuk filter ini.'}
+            </p>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-8 mt-4 xl:px-20 max-w-7xl mx-auto'>
+            {filteredCars.map((car, index) => (
+              <Motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index, duration: 0.4 }}
+              >
+                <CarCard car={car} />
+              </Motion.div>
+            ))}
+          </div>
+        )}
       </Motion.div>
 
     </div>

@@ -1,41 +1,27 @@
-import { type ClassValue, clsx } from 'clsx';
+import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatBytes(
-  bytes: number,
-  opts: {
-    decimals?: number;
-    sizeType?: 'accurate' | 'normal';
-  } = {}
-) {
-  const { decimals = 0, sizeType = 'normal' } = opts;
-
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const accurateSizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
-  if (bytes === 0) return '0 Byte';
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(decimals)} ${
-    sizeType === 'accurate'
-      ? (accurateSizes[i] ?? 'Bytest')
-      : (sizes[i] ?? 'Bytes')
-  }`;
-}
-
 export function getInitials(
-  value?: string | null,
-  fallback: string = 'US'
+  nameOrEmail?: string | null,
+  defaultInitials = 'U'
 ): string {
-  if (!value) return fallback;
-  const initials = value
-    .split(' ')
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-  return initials || fallback;
+  if (!nameOrEmail) return defaultInitials;
+
+  const value = nameOrEmail.includes('@')
+    ? nameOrEmail.split('@')[0]
+    : nameOrEmail;
+
+  const parts = value.trim().split(/\s+/);
+
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
+  return (
+    (parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '')
+  ).toUpperCase();
 }

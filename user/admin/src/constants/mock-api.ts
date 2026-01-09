@@ -59,6 +59,11 @@ export type Product = {
   seating_capacity: number; // Renamed from capacity to match User FE/Docs
   license_plate: string;
   updated_at: string;
+  partner_id?: number | string | null;
+  province?: string | null;
+  regency?: string | null;
+  location_latitude?: number | null;
+  location_longitude?: number | null;
 };
 
 // Mock product data store replaced with Real API
@@ -96,21 +101,89 @@ export const fakeProducts = {
           allProducts = response.data.data; // Handle pagination if present
       }
       
-      allProducts = allProducts.map((p: any) => ({
-        ...p,
-        photo_url: normalizeImageUrl(p.photo_url),
-        location: p.location?.name || 'Unknown',
-        price_per_day: Number(p.price_per_day),
-        seating_capacity: Number(p.seating_capacity),
-        year: Number(p.year),
-        images: p.images
-          ? p.images.map((img: any) => ({
-              ...img,
-              image_url: normalizeImageUrl(img.image_url)
-            }))
-          : [],
-        features: Array.isArray(p.features) ? p.features : []
-      }));
+      allProducts = allProducts.map((p: any) => {
+        const rawLocation: string =
+          typeof p.location === 'string'
+            ? p.location
+            : p.location?.name || p.location_name || '';
+
+        const locationWithoutIndonesia = rawLocation.replace(
+          /,\s*Indonesia\s*$/i,
+          '',
+        );
+
+        const locationParts = locationWithoutIndonesia
+          .split(',')
+          .map((part: string) => part.trim())
+          .filter((part: string) => part.length > 0);
+
+        const cityFromPayload =
+          p.location_city ||
+          p.city ||
+          (p.location && typeof p.location === 'object'
+            ? p.location.city
+            : null);
+
+        let province: string | null =
+          p.province != null ? String(p.province) : null;
+        let regency: string | null =
+          p.regency != null ? String(p.regency) : null;
+
+        if (!province && locationParts.length >= 1) {
+          province = locationParts[locationParts.length - 1];
+        }
+
+        if (!regency && locationParts.length >= 2) {
+          regency = locationParts.slice(0, locationParts.length - 1).join(', ');
+        }
+
+        if (!regency && cityFromPayload) {
+          regency = String(cityFromPayload);
+        }
+
+        const partnerPayload =
+          p.partner ||
+          p.rental_partner ||
+          p.rentalPartner ||
+          p.rental_partner_data;
+
+        let partnerId: number | string | null = null;
+
+        if (p.partner_id != null) {
+          partnerId = p.partner_id;
+        } else if (p.rental_partner_id != null) {
+          partnerId = p.rental_partner_id;
+        } else if (partnerPayload && typeof partnerPayload === 'object') {
+          partnerId = partnerPayload.id ?? null;
+        }
+
+        return {
+          ...p,
+          photo_url: normalizeImageUrl(p.photo_url),
+          location: rawLocation,
+          price_per_day: Number(p.price_per_day),
+          seating_capacity: Number(p.seating_capacity),
+          year: Number(p.year),
+          province,
+          regency,
+          location_latitude:
+            p.location_latitude != null
+              ? Number(p.location_latitude)
+              : null,
+          location_longitude:
+            p.location_longitude != null
+              ? Number(p.location_longitude)
+              : null,
+          images: p.images
+            ? p.images.map((img: any) => ({
+                ...img,
+                image_url: normalizeImageUrl(img.image_url),
+              }))
+            : [],
+          features: Array.isArray(p.features) ? p.features : [],
+          partner_id: partnerId,
+        };
+      });
 
       if (categories) {
         const categoriesArray = categories
@@ -164,19 +237,87 @@ export const fakeProducts = {
         const response = await apiClient.get(`/api/admin/cars/${id}`);
         let product = response.data;
 
+        const rawLocation: string =
+          typeof product.location === 'string'
+            ? product.location
+            : product.location?.name || product.location_name || '';
+
+        const locationWithoutIndonesia = rawLocation.replace(
+          /,\s*Indonesia\s*$/i,
+          '',
+        );
+
+        const locationParts = locationWithoutIndonesia
+          .split(',')
+          .map((part: string) => part.trim())
+          .filter((part: string) => part.length > 0);
+
+        const cityFromPayload =
+          product.location_city ||
+          product.city ||
+          (product.location && typeof product.location === 'object'
+            ? product.location.city
+            : null);
+
+        let province: string | null =
+          product.province != null ? String(product.province) : null;
+        let regency: string | null =
+          product.regency != null ? String(product.regency) : null;
+
+        if (!province && locationParts.length >= 1) {
+          province = locationParts[locationParts.length - 1];
+        }
+
+        if (!regency && locationParts.length >= 2) {
+          regency = locationParts
+            .slice(0, locationParts.length - 1)
+            .join(', ');
+        }
+
+        if (!regency && cityFromPayload) {
+          regency = String(cityFromPayload);
+        }
+
+        const partnerPayload =
+          product.partner ||
+          product.rental_partner ||
+          product.rentalPartner ||
+          product.rental_partner_data;
+
+        let partnerId: number | string | null = null;
+
+        if (product.partner_id != null) {
+          partnerId = product.partner_id;
+        } else if (product.rental_partner_id != null) {
+          partnerId = product.rental_partner_id;
+        } else if (partnerPayload && typeof partnerPayload === 'object') {
+          partnerId = partnerPayload.id ?? null;
+        }
+
         product = {
           ...product,
-          location: product.location?.name || 'Unknown',
+          location: rawLocation,
           price_per_day: Number(product.price_per_day),
           seating_capacity: Number(product.seating_capacity),
           year: Number(product.year),
+          province,
+          regency,
+          location_latitude:
+            product.location_latitude != null
+              ? Number(product.location_latitude)
+              : null,
+          location_longitude:
+            product.location_longitude != null
+              ? Number(product.location_longitude)
+              : null,
           images: product.images
             ? product.images.map((img: any) => ({
                 ...img,
-                image_url: normalizeImageUrl(img.image_url)
+                image_url: normalizeImageUrl(img.image_url),
               }))
             : [],
-          features: Array.isArray(product.features) ? product.features : []
+          features: Array.isArray(product.features) ? product.features : [],
+          partner_id: partnerId,
         };
 
         const currentTime = new Date().toISOString();

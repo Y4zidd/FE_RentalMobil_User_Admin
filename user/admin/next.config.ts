@@ -47,9 +47,9 @@ const baseConfig: NextConfig = {
   experimental: {
     externalDir: true
   },
-  turbopack: {
-    root: path.resolve(__dirname)
-  },
+  // turbopack: {
+  //   root: path.resolve(__dirname)
+  // },
   transpilePackages: ['geist']
 };
 

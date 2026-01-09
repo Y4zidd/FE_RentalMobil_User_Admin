@@ -239,7 +239,7 @@ export default function OverViewLayout({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {previewCars.map((car) => {
+                  {previewCars.map((car, index) => {
                     const statusLower = car.status.toLowerCase();
 
                     let badgeColor = '';
@@ -263,7 +263,7 @@ export default function OverViewLayout({
                     }
 
                     return (
-                      <TableRow key={car.id}>
+                      <TableRow key={`${car.id}-${index}`}>
                         <TableCell>
                           <div className='relative h-10 w-16 overflow-hidden rounded-md bg-muted'>
                             <Image
@@ -330,7 +330,7 @@ export default function OverViewLayout({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewUsers.map((user) => {
+                    {previewUsers.map((user, index) => {
                       let roleColor = '';
 
                       switch (user.role) {
@@ -352,7 +352,7 @@ export default function OverViewLayout({
                       }
 
                       return (
-                        <TableRow key={user.id}>
+                        <TableRow key={`${user.id}-${index}`}>
                           <TableCell>
                             <Avatar className='h-9 w-9 rounded-full border'>
                               <AvatarImage src={user.avatar} alt={user.name} />

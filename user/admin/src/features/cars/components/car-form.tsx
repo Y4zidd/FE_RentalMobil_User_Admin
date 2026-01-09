@@ -1,6 +1,7 @@
 'use client';
 
-import { FormFileUpload } from '@/components/forms/form-file-upload';
+import GalleryUpload from '@/components/gallery-upload';
+import { FileMetadata } from '@/hooks/use-file-upload';
 import { FormInput } from '@/components/forms/form-input';
 import { FormSelect } from '@/components/forms/form-select';
 import { FormCheckboxGroup } from '@/components/forms/form-checkbox-group';
@@ -126,29 +127,61 @@ export default function CarForm({
   pageTitle: string;
 }) {
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
+    null
+  );
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
   const geocodeControllerRef = useRef<AbortController | null>(null);
   const pendingRegencyNameRef = useRef<string | null>(null);
-  const [existingImages, setExistingImages] = useState(initialData?.images ?? []);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
 
   const parsedLocation = (() => {
-    const location = initialData?.location || '';
-    if (!location.includes(',')) {
+    const rawLocation = initialData?.location || '';
+    if (!rawLocation) {
       return {
-        province: location,
+        province: '',
         regency: ''
       };
     }
-    const parts = location.split(',').map((part) => part.trim());
-    const province = parts[0] || '';
-    const regency = parts.length > 1 ? parts[1] : '';
+
+    const withoutIndonesia = rawLocation.replace(/,\s*Indonesia\s*$/i, '');
+    const parts = withoutIndonesia
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+
+    if (parts.length === 0) {
+      return {
+        province: '',
+        regency: ''
+      };
+    }
+
+    if (parts.length === 1) {
+      return {
+        province: parts[0],
+        regency: ''
+      };
+    }
+
+    const province = parts[parts.length - 1];
+    const regency = parts.slice(0, parts.length - 1).join(', ');
+
     return {
       province,
       regency
     };
   })();
+
+  const prevProvinceRef = useRef(parsedLocation.province);
+  const initialPartnerIdRef = useRef(
+    initialData?.partner_id ? String(initialData.partner_id) : ''
+  );
+  const hasHandledInitialPartnerEffectRef = useRef(false);
+  const shouldSkipFirstGeocodeRef = useRef(
+    initialData?.location_latitude != null &&
+      initialData?.location_longitude != null
+  );
 
   const defaultValues = {
     name: initialData?.name || '',
@@ -159,9 +192,9 @@ export default function CarForm({
     seatingCapacity: initialData?.seating_capacity || 1,
     transmission: initialData?.transmission || '',
     fuelType: initialData?.fuel_type || '',
-    province: parsedLocation.province,
-    regency: parsedLocation.regency,
-    partnerId: '',
+    province: initialData?.province || parsedLocation.province,
+    regency: initialData?.regency || parsedLocation.regency,
+    partnerId: initialData?.partner_id ? String(initialData.partner_id) : '',
     year: initialData?.year || new Date().getFullYear(),
     category: initialData?.category || '',
     status: initialData?.status || 'available',
@@ -177,11 +210,30 @@ export default function CarForm({
   const selectedProvince = form.watch('province');
   const selectedRegency = form.watch('regency');
   const selectedPartnerId = form.watch('partnerId');
+  const initialGalleryFiles: FileMetadata[] = (initialData?.images ?? []).map(
+    (img) => ({
+      id: String(img.id),
+      name: `Image ${img.id}`,
+      size: 0,
+      type: 'image/jpeg',
+      url: img.image_url
+    })
+  );
 
-  const handleRemoveExistingImage = (id: number) => {
-    setExistingImages((prev) => prev.filter((image) => image.id !== id));
-    setDeletedImageIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-  };
+  useEffect(() => {
+    if (
+      initialData?.location_latitude != null &&
+      initialData?.location_longitude != null
+    ) {
+      const lat = Number(initialData.location_latitude);
+      const lng = Number(initialData.location_longitude);
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+        const center: [number, number] = [lat, lng];
+        setMapCenter(center);
+        setMarkerPosition(center);
+      }
+    }
+  }, [initialData]);
 
   useEffect(() => {
     const query = selectedRegency
@@ -247,6 +299,11 @@ export default function CarForm({
       }
     };
 
+    if (shouldSkipFirstGeocodeRef.current) {
+      shouldSkipFirstGeocodeRef.current = false;
+      return;
+    }
+
     geocode();
 
     return () => {
@@ -297,8 +354,11 @@ export default function CarForm({
   useEffect(() => {
     let isMounted = true;
     const loadRegencies = async () => {
+      if (selectedProvince !== prevProvinceRef.current) {
+        form.setValue('regency', '');
+        prevProvinceRef.current = selectedProvince;
+      }
       setRegencyOptions([]);
-      form.setValue('regency', '');
       const id = provinceIdMap[selectedProvince || ''];
       if (!id) return;
       try {
@@ -319,7 +379,7 @@ export default function CarForm({
     return () => {
       isMounted = false;
     };
-  }, [selectedProvince]);
+  }, [selectedProvince, provinceIdMap]);
 
   useEffect(() => {
     if (!pendingRegencyNameRef.current || regencyOptions.length === 0) {
@@ -393,6 +453,12 @@ export default function CarForm({
       return;
     }
 
+    const initialPartnerId = initialPartnerIdRef.current;
+    const currentRegency = form.getValues('regency');
+    const isInitialPartner =
+      initialPartnerId &&
+      String(selectedPartnerId) === String(initialPartnerId);
+
     const normalize = (value: string) =>
       value
         .toLowerCase()
@@ -403,57 +469,90 @@ export default function CarForm({
     const region = partnerRegionMap[String(selectedPartnerId)];
 
     let provinceName = '';
+    let regencyName = '';
 
-    if (region && region.province) {
-      provinceName = String(region.province);
-    } else {
-      const selectedPartnerOption = partnerOptions.find(
-        (option) => option.value === String(selectedPartnerId)
-      );
-
-      if (!selectedPartnerOption) {
-        return;
+    if (region) {
+      if (region.province) {
+        provinceName = String(region.province);
       }
+      if (region.regency) {
+        regencyName = String(region.regency);
+      }
+    }
 
+    const selectedPartnerOption = partnerOptions.find(
+      (option) => option.value === String(selectedPartnerId)
+    );
+
+    if (!provinceName && selectedPartnerOption) {
       const labelParts = selectedPartnerOption.label.split('—');
       const regionText = labelParts[1]?.trim() || '';
-      if (!regionText) {
-        return;
+      if (regionText) {
+        const regionPieces = regionText.split(',').map((p) => p.trim());
+        if (!provinceName) {
+          provinceName = regionPieces[regionPieces.length - 1] || '';
+        }
+        if (!regencyName && regionPieces.length > 1) {
+          regencyName = regionPieces.slice(0, regionPieces.length - 1).join(', ');
+        }
       }
-
-      const regionPieces = regionText.split(',').map((p) => p.trim());
-      provinceName = regionPieces[regionPieces.length - 1] || '';
     }
 
-    if (!provinceName) {
+    if (!provinceName && !regencyName) {
       return;
     }
 
-    const normalizedProvince = normalize(provinceName);
+    const normalizedProvince = provinceName ? normalize(provinceName) : '';
 
-    const provinceOption =
-      provinceOptions.find((option) => option.value === normalizedProvince) ||
-      provinceOptions.find(
-        (option) => normalize(option.value) === normalizedProvince
-      ) ||
-      provinceOptions.find(
-        (option) => normalize(option.label) === normalizedProvince
-      ) ||
-      provinceOptions.find((option) =>
-        option.label.toLowerCase().includes(provinceName.toLowerCase())
-      );
+    let provinceOption = null as FormOption | null;
 
-    if (!provinceOption) {
+    if (normalizedProvince) {
+      provinceOption =
+        provinceOptions.find((option) => option.value === normalizedProvince) ||
+        provinceOptions.find(
+          (option) => normalize(option.value) === normalizedProvince
+        ) ||
+        provinceOptions.find(
+          (option) => normalize(option.label) === normalizedProvince
+        ) ||
+        provinceOptions.find((option) =>
+          option.label.toLowerCase().includes(provinceName.toLowerCase())
+        ) ||
+        null;
+    }
+
+    if (provinceOption) {
+      form.setValue('province', provinceOption.value, {
+        shouldValidate: true
+      });
+    }
+
+    // Kasus 1: Edit dengan partner awal dan regency sudah ada -> jangan ubah apa-apa
+    if (isInitialPartner && currentRegency) {
+      hasHandledInitialPartnerEffectRef.current = true;
       return;
     }
 
-    form.setValue('province', provinceOption.value, {
-      shouldValidate: true
-    });
+    // Kasus 2: Edit dengan partner awal tapi regency kosong -> isi otomatis dari partner
+    if (isInitialPartner && !currentRegency) {
+      if (regencyName) {
+        pendingRegencyNameRef.current = String(regencyName);
+      }
+      hasHandledInitialPartnerEffectRef.current = true;
+      return;
+    }
 
+    // Kasus 3: User mengganti partner -> kosongkan regency supaya dipilih ulang
+    hasHandledInitialPartnerEffectRef.current = true;
     form.setValue('regency', '');
     pendingRegencyNameRef.current = null;
-  }, [selectedPartnerId, partnerRegionMap, partnerOptions, provinceOptions, form]);
+  }, [
+    selectedPartnerId,
+    partnerRegionMap,
+    partnerOptions,
+    provinceOptions,
+    form
+  ]);
 
   const handleMapClick = async (position: [number, number]) => {
     const [lat, lng] = position;
@@ -541,10 +640,15 @@ export default function CarForm({
     try {
       const formData = new FormData();
 
-      const hasExistingImages = existingImages.length > 0;
       const hasNewImages = Array.isArray(values.image) && values.image.length > 0;
+      // For validation, we need at least one image (either new or existing)
+      // We can check if initialGalleryFiles - deletedImages + newImages > 0
+      // But calculating that here is tricky since we only have deletedImageIds.
+      
+      const remainingExistingCount = (initialData?.images?.length ?? 0) - deletedImageIds.length;
+      const totalImages = remainingExistingCount + (values.image?.length ?? 0);
 
-      if (!hasExistingImages && !hasNewImages) {
+      if (totalImages === 0) {
         toast.error('Upload at least one car image');
         setLoading(false);
         return;
@@ -654,45 +758,38 @@ export default function CarForm({
           onSubmit={form.handleSubmit(onSubmit)}
           className='space-y-8'
         >
-          <FormFileUpload<CarFormValues>
+          <FormField
             control={form.control}
             name='image'
-            label='Car Image'
-            description='Upload at least one car image'
-            config={{
-              maxSize: 5 * 1024 * 1024,
-              maxFiles: 8
-            }}
-          />
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Car Images</FormLabel>
+                <FormControl>
+                  <GalleryUpload
+                    initialFiles={initialGalleryFiles}
+                    onFilesChange={(files) => {
+                      const newFiles = files
+                        .map((f) => f.file)
+                        .filter((f): f is File => f instanceof File);
+                      field.onChange(newFiles);
 
-          {initialData && existingImages.length > 0 && (
-            <div className='space-y-2'>
-              <p className='text-sm font-medium'>Existing Images</p>
-              <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-                {existingImages.map((image) => (
-                  <div
-                    key={image.id}
-                    className='relative overflow-hidden rounded-xl bg-muted'
-                  >
-                    <img
-                      src={image.image_url}
-                      alt={initialData.name}
-                      className='h-40 w-full object-cover'
-                    />
-                    <Button
-                      type='button'
-                      size='icon'
-                      variant='destructive'
-                      className='absolute right-3 top-3 h-8 w-8 rounded-full bg-red-500/90 text-white shadow-md'
-                      onClick={() => handleRemoveExistingImage(image.id)}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                      const currentIds = files.map((f) => f.id);
+                      const originalIds = (initialData?.images ?? []).map((i) =>
+                        String(i.id)
+                      );
+                      const deleted = originalIds
+                        .filter((id) => !currentIds.includes(id))
+                        .map(Number);
+                      setDeletedImageIds(deleted);
+                    }}
+                    maxFiles={8}
+                    maxSize={5 * 1024 * 1024}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <Separator />
 
@@ -923,4 +1020,3 @@ export default function CarForm({
     </Card>
   );
 }
-

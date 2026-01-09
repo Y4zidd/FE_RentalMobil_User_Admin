@@ -68,6 +68,7 @@ export default function OverViewLayout({
 }) {
   const [previewCars, setPreviewCars] = useState<any[]>([]);
   const [previewUsers, setPreviewUsers] = useState<any[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState(statisticsCardData);
 
   const applyOverviewMetricsToStats = (metrics: any, carsCount: number) => {
@@ -107,25 +108,27 @@ export default function OverViewLayout({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let isAdmin = false;
+        let isAdminFlag = false;
         if (typeof window !== 'undefined') {
           const stored = window.localStorage.getItem('admin_user');
           if (stored) {
             try {
               const parsed = JSON.parse(stored) as { role?: string };
               if (parsed.role && parsed.role.toLowerCase() === 'admin') {
-                isAdmin = true;
+                isAdminFlag = true;
               }
             } catch {
-              isAdmin = false;
+              isAdminFlag = false;
             }
           }
         }
 
+        setIsAdmin(isAdminFlag);
+
         const [carsResult, overviewResult, usersResult] = await Promise.allSettled([
           fetchAdminCarsPreview(),
           fetchAdminOverview(),
-          isAdmin ? fetchAdminUsers({}) : Promise.resolve([])
+          isAdminFlag ? fetchAdminUsers({}) : Promise.resolve([])
         ]);
 
         let carsCount = 0;
@@ -147,7 +150,7 @@ export default function OverViewLayout({
           console.error('Failed to fetch cars', carsResult.reason);
         }
 
-        if (usersResult.status === 'fulfilled' && isAdmin) {
+        if (usersResult.status === 'fulfilled' && isAdminFlag) {
           const usersData = usersResult.value as any[];
           setPreviewUsers(
             usersData.slice(0, 5).map((u: any) => {
@@ -160,7 +163,7 @@ export default function OverViewLayout({
               };
             })
           );
-        } else if (usersResult.status === 'rejected' && isAdmin) {
+        } else if (usersResult.status === 'rejected' && isAdminFlag) {
           console.error('Failed to fetch users', usersResult.reason);
         }
 
@@ -297,94 +300,96 @@ export default function OverViewLayout({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <div>
-                <CardTitle className='text-base'>Users Preview</CardTitle>
-                <p className='text-xs text-muted-foreground'>
-                  Preview of users with access to this dashboard.
-                </p>
-              </div>
-              <Link
-                href='/dashboard/users'
-                className={cn(
-                  buttonVariants({ variant: 'outline', size: 'sm' }),
-                  'text-xs'
-                )}
-              >
-                View all
-              </Link>
-            </CardHeader>
-            <CardContent className='pt-0'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className='w-[72px]'>Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead className='hidden sm:table-cell'>Email</TableHead>
-                    <TableHead className='text-right'>Role</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {previewUsers.map((user) => {
-                    let roleColor = '';
+          {isAdmin && (
+            <Card>
+              <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                <div>
+                  <CardTitle className='text-base'>Users Preview</CardTitle>
+                  <p className='text-xs text-muted-foreground'>
+                    Preview of users with access to this dashboard.
+                  </p>
+                </div>
+                <Link
+                  href='/dashboard/users'
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'sm' }),
+                    'text-xs'
+                  )}
+                >
+                  View all
+                </Link>
+              </CardHeader>
+              <CardContent className='pt-0'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='w-[72px]'>Image</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead className='hidden sm:table-cell'>Email</TableHead>
+                      <TableHead className='text-right'>Role</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {previewUsers.map((user) => {
+                      let roleColor = '';
 
-                    switch (user.role) {
-                      case 'Admin':
-                        roleColor =
-                          'bg-blue-500 hover:bg-blue-600 text-white border-transparent';
-                        break;
-                      case 'Staff':
-                        roleColor =
-                          'bg-amber-500 hover:bg-amber-600 text-white border-transparent';
-                        break;
-                      case 'Customer':
-                        roleColor =
-                          'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent';
-                        break;
-                      default:
-                        roleColor =
-                          'bg-gray-500 hover:bg-gray-600 text-white border-transparent';
-                    }
+                      switch (user.role) {
+                        case 'Admin':
+                          roleColor =
+                            'bg-blue-500 hover:bg-blue-600 text-white border-transparent';
+                          break;
+                        case 'Staff':
+                          roleColor =
+                            'bg-amber-500 hover:bg-amber-600 text-white border-transparent';
+                          break;
+                        case 'Customer':
+                          roleColor =
+                            'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent';
+                          break;
+                        default:
+                          roleColor =
+                            'bg-gray-500 hover:bg-gray-600 text-white border-transparent';
+                      }
 
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <Avatar className='h-9 w-9 rounded-full border'>
-                            <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback>
-                              {user.name
-                                .split(' ')
-                                .map((n: string) => n[0])
-                                .join('')
-                                .slice(0, 2)
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        </TableCell>
-                        <TableCell className='font-medium'>
-                          {user.name}
-                        </TableCell>
-                        <TableCell className='hidden sm:table-cell'>
-                          {user.email}
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <Badge
-                            className={cn(
-                              'rounded-full px-3 text-xs',
-                              roleColor
-                            )}
-                          >
-                            {user.role}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                      return (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <Avatar className='h-9 w-9 rounded-full border'>
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback>
+                                {user.name
+                                  .split(' ')
+                                  .map((n: string) => n[0])
+                                  .join('')
+                                  .slice(0, 2)
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
+                          <TableCell className='font-medium'>
+                            {user.name}
+                          </TableCell>
+                          <TableCell className='hidden sm:table-cell'>
+                            {user.email}
+                          </TableCell>
+                          <TableCell className='text-right'>
+                            <Badge
+                              className={cn(
+                                'rounded-full px-3 text-xs',
+                                roleColor
+                              )}
+                            >
+                              {user.role}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </PageContainer>

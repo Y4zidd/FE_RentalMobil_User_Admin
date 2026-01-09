@@ -13,6 +13,23 @@ import {
 import { validateCouponRequest } from "../lib/api/user"
 import { MapContainer, TileLayer, CircleMarker, useMapEvents } from "react-leaflet"
 
+const toRad = (value) => (value * Math.PI) / 180
+
+const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2)
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
 const DropPointClickHandler = ({ onSelect }) => {
   useMapEvents({
     click(e) {
@@ -234,22 +251,72 @@ const Checkout = () => {
                     .toLowerCase()
                     .replace(/\s+/g, ' ')
                     .trim()
-            const expected = normalize(car.location)
+            const normalizeRegionCore = (value) => {
+                const base = normalize(value)
+                if (!base) return ''
+                const cleaned = base.replace(/\bkota administrasi\b/g, ' ')
+                const stopWords = ['kota', 'kabupaten', 'kab', 'administrasi', 'city', 'regency']
+                const tokens = cleaned
+                    .split(' ')
+                    .filter((token) => token && !stopWords.includes(token))
+                return tokens.join(' ')
+            }
             const regencyRaw =
                 address.county ||
                 address.state_district ||
                 address.region ||
                 address.state ||
                 ''
-            const regencyCandidate = normalize(regencyRaw)
-            if (
-                expected &&
-                regencyCandidate &&
-                !regencyCandidate.includes(expected) &&
-                !expected.includes(regencyCandidate)
-            ) {
-                toast.error(t('checkout_drop_point_out_of_regency'))
-                return
+            const expectedCore = normalizeRegionCore(car.location)
+            const regencyCore = normalizeRegionCore(regencyRaw)
+
+            let sameRegion = false
+
+            if (expectedCore && regencyCore) {
+                if (expectedCore === regencyCore) {
+                    sameRegion = true
+                } else {
+                    const longer = expectedCore.length >= regencyCore.length ? expectedCore : regencyCore
+                    const shorter = longer === expectedCore ? regencyCore : expectedCore
+
+                    if (shorter.length >= 3 && longer.includes(shorter)) {
+                        sameRegion = true
+                    } else {
+                        const expectedTokens = expectedCore.split(' ').filter(Boolean)
+                        const regencyTokens = regencyCore.split(' ').filter(Boolean)
+                        const expectedLast = expectedTokens[expectedTokens.length - 1]
+                        const regencyLast = regencyTokens[regencyTokens.length - 1]
+
+                        if (
+                            (regencyLast && expectedTokens.includes(regencyLast)) ||
+                            (expectedLast && regencyTokens.includes(expectedLast))
+                        ) {
+                            sameRegion = true
+                        }
+                    }
+                }
+            }
+
+            let withinRadius = false
+
+            if (dropPointCenter && dropPointCenter.lat && dropPointCenter.lng) {
+                const distanceKm = getDistanceKm(
+                    dropPointCenter.lat,
+                    dropPointCenter.lng,
+                    latlng.lat,
+                    latlng.lng
+                )
+                const MAX_DISTANCE_KM = 50
+                if (!Number.isNaN(distanceKm) && distanceKm <= MAX_DISTANCE_KM) {
+                    withinRadius = true
+                }
+            }
+
+            if (expectedCore || regencyCore || dropPointCenter) {
+                if (!sameRegion && !withinRadius) {
+                    toast.error(t('checkout_drop_point_out_of_regency'))
+                    return
+                }
             }
             setDropPoint({
                 address: displayName || car.location,
@@ -450,7 +517,7 @@ const Checkout = () => {
                                         </button>
                                     </div>
                                     {dropPoint.address && (
-                                        <p className="mt-1 text-xs text-gray-500">
+                                        <p className="mt-1 text-xs text-gray-500 lowercase">
                                             {t('checkout_drop_point_selected_prefix')} {dropPoint.address}
                                         </p>
                                     )}
@@ -629,7 +696,14 @@ const Checkout = () => {
                                 </div>
                                 <div className="flex gap-3 items-center pt-2 border-t border-gray-50">
                                     <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                                    <p className="text-sm text-gray-600 truncate">{car.location}</p>
+                                    <div className="flex flex-col">
+                                        <p className="text-sm text-gray-600 truncate">{car.location}</p>
+                                        {dropPoint.address && (
+                                            <p className="text-xs text-gray-500 lowercase leading-snug break-words">
+                                                {dropPoint.address}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

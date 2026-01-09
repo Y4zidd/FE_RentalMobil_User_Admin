@@ -1,188 +1,111 @@
-<p align="center">
-<h1 align="center">Admin Dashboard Starter Template with Next.js &amp; Shadcn UI</h1>
+# Admin Dashboard – Rental Car
 
-<div align="center">Built with the Next.js 16 App Router, Tailwind CSS &amp; Shadcn UI components</div>
+The admin dashboard for this Rental Car project is built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**, and **Shadcn UI**.  
+It serves as a management panel that connects to the Laravel backend.
 
-<br />
+## 1. Main Features
 
-<div align="center">
-  <a href="https://dub.sh/shadcn-dashboard"><strong>View Demo</strong></a>
-</div>
-<br />
-<div align="center">
-  <img src="/public/shadcn-dashboard.png" alt="Shadcn Dashboard Cover" style="max-width: 100%; border-radius: 8px;" />
-</div>
+- Admin authentication (login) and protected admin routes.
+- **Overview / Dashboard** page with statistics and charts.
+- **Cars** management (create, edit, view, list).
+- **Bookings** management.
+- **Users** management.
+- **Rental Partners** management.
+- **Coupons / Discounts** management.
+- **Admin Profile** page (update profile data).
 
-## Overview
+These features are implemented using the `src/app` and `src/features` structure, split by domain (cars, bookings, users, partners, coupons, overview, profile, etc.).
 
-This is an **admin dashboard starter template** built with **Next.js 16, Shadcn UI, and Tailwind CSS**.
+## 2. Tech Stack
 
-It gives you a production-ready **dashboard UI** with authentication, charts, tables, forms, and a feature-based folder structure, perfect for **SaaS apps, internal tools, and admin panels**.
+- Framework: **Next.js 16 (App Router)**  
+- Language: **TypeScript**  
+- UI: **Shadcn UI** + **Tailwind CSS v4**  
+- HTTP client: **axios**  
+- Charts: **Recharts**  
+- Forms: **React Hook Form** + **Zod**  
+- Toast/notifications: **sonner**
 
-### Tech Stack
+The admin dashboard talks to the Laravel backend via REST API. The backend base URL is configured through environment variables.
 
-This template uses the following stack:
+## 3. Folder Structure (Short Overview)
 
-- Framework - [Next.js 16](https://nextjs.org/16)
-- Language - [TypeScript](https://www.typescriptlang.org)
-- Auth - [Clerk](https://go.clerk.com/ILdYhn7)
-- Error tracking - [Sentry](https://sentry.io/for/nextjs/?utm_source=github&utm_medium=paid-community&utm_campaign=general-fy26q2-nextjs&utm_content=github-banner-project-tryfree)
-- Styling - [Tailwind CSS v4](https://tailwindcss.com)
-- Components - [Shadcn-ui](https://ui.shadcn.com)
-- Schema Validations - [Zod](https://zod.dev)
-- State Management - [Zustand](https://zustand-demo.pmnd.rs)
-- Search params state manager - [Nuqs](https://nuqs.47ng.com/)
-- Tables - [Tanstack Data Tables](https://ui.shadcn.com/docs/components/data-table) • [Dice table](https://www.diceui.com/docs/components/data-table)
-- Forms - [React Hook Form](https://ui.shadcn.com/docs/components/form)
-- Command+k interface - [kbar](https://kbar.vercel.app/)
-- Linting - [ESLint](https://eslint.org)
-- Pre-commit Hooks - [Husky](https://typicode.github.io/husky/)
-- Formatting - [Prettier](https://prettier.io)
-
-_If you are looking for a Tanstack start dashboard template, here is the [repo](https://git.new/tanstack-start-dashboard)._
-
-## Features
-
-- 🧱 Pre-built **admin dashboard layout** (sidebar, header, content area)
-
-- 📊 **Analytics overview** page with cards and charts
-
-- 📋 **Data tables** with server-side search, filter & pagination
-
-- 🔐 **Authentication** & user management via Clerk
-
-- 🏢 **Multi-tenant workspaces** with Clerk Organizations (create, switch, manage teams)
-
-- 💳 **Billing & subscriptions** with Clerk Billing for B2B (plan management, feature gating)
-
-- 🔒 **RBAC navigation system** - Fully client-side navigation filtering based on organization, permissions, and roles
-
-- 🧩 **Shadcn UI components** with Tailwind CSS styling
-
-- 🧠 Feature-based folder structure for scalable projects
-
-- ⚙️ Ready for **SaaS dashboards**, internal tools, and client admin panels
-
-## Use Cases
-
-You can use this Next.js + Shadcn UI dashboard starter to build:
-
-- SaaS admin dashboards
-
-- Internal tools & operations panels
-
-- Analytics dashboards
-
-- Client project admin panels
-
-- Boilerplate for new Next.js admin UI projects
-
-## Pages
-
-| Pages                                                                                                                                                                  | Specifications                                                                                                                                                                                                                                                          |
-| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Signup / Signin](https://go.clerk.com/ILdYhn7)                                                                                                                        | Authentication with **Clerk** provides secure authentication and user management with multiple sign-in options including passwordless authentication, social logins, and enterprise SSO - all designed to enhance security while delivering a seamless user experience. |
-| [Dashboard Overview](https://shadcn-dashboard.kiranism.dev/dashboard)                                                                                                  | Cards with Recharts graphs for analytics. Parallel routes in the overview sections feature independent loading, error handling, and isolated component rendering.                                                                                                       |
-| [Product List (Table)](https://shadcn-dashboard.kiranism.dev/dashboard/product)                                                                                        | Tanstack tables with server side searching, filter, pagination by Nuqs which is a Type-safe search params state manager in nextjs                                                                                                                                       |
-| [Create Product Form](https://shadcn-dashboard.kiranism.dev/dashboard/product/new)                                                                                     | A Product Form with shadcn form (react-hook-form + zod).                                                                                                                                                                                                                |
-| [Profile](https://shadcn-dashboard.kiranism.dev/dashboard/profile)                                                                                                     | Clerk's full-featured account management UI that allows users to manage their profile and security settings                                                                                                                                                             |
-| [Kanban Board](https://shadcn-dashboard.kiranism.dev/dashboard/kanban)                                                                                                 | A Drag n Drop task management board with dnd-kit and zustand to persist state locally.                                                                                                                                                                                  |
-| [Workspaces](https://shadcn-dashboard.kiranism.dev/dashboard/workspaces)                                                                                               | Organization management page using Clerk's `<OrganizationList />` component. Users can view, create, and switch between organizations/workspaces.                                                                                                                       |
-| [Team Management](https://shadcn-dashboard.kiranism.dev/dashboard/workspaces/team)                                                                                     | Full-featured team management interface using Clerk's `<OrganizationProfile />` component. Manage members, roles, permissions, security settings, and organization details. Requires an active organization.                                                            |
-| [Billing & Plans](https://shadcn-dashboard.kiranism.dev/dashboard/billing)                                                                                             | Billing management page using Clerk's `<PricingTable />` component. Organizations can view available plans, subscribe, and manage subscriptions. Requires an active organization.                                                                                       |
-| [Exclusive Page](https://shadcn-dashboard.kiranism.dev/dashboard/exclusive)                                                                                            | Example of plan-based access control using Clerk's `<Protect>` component. This page is only accessible to organizations on the Pro plan, demonstrating feature gating with fallback UI.                                                                                 |
-| [Not Found](https://shadcn-dashboard.kiranism.dev/dashboard/notfound)                                                                                                  | Not Found Page Added in the root level                                                                                                                                                                                                                                  |
-| [Global Error](https://sentry.io/for/nextjs/?utm_source=github&utm_medium=paid-community&utm_campaign=general-fy26q2-nextjs&utm_content=github-banner-project-tryfree) | A centralized error page that captures and displays errors across the application. Integrated with **Sentry** to log errors, provide detailed reports, and enable replay functionality for better debugging.                                                            |
-
-## Feature based organization
+Important structure inside the [admin folder](file:///c:/Users/Yazid/Documents/TubesPBW2/user/admin):
 
 ```plaintext
 src/
-├── app/ # Next.js App Router directory
-│ ├── (auth)/ # Auth route group
-│ │ ├── (signin)/
-│ ├── (dashboard)/ # Dashboard route group
-│ │ ├── layout.tsx
-│ │ ├── loading.tsx
-│ │ └── page.tsx
-│ └── api/ # API routes
-│
-├── components/ # Shared components
-│ ├── ui/ # UI components (buttons, inputs, etc.)
-│ └── layout/ # Layout components (header, sidebar, etc.)
-│
-├── features/ # Feature-based modules
-│ ├── feature/
-│ │ ├── components/ # Feature-specific components
-│ │ ├── actions/ # Server actions
-│ │ ├── schemas/ # Form validation schemas
-│ │ └── utils/ # Feature-specific utilities
-│ │
-├── lib/ # Core utilities and configurations
-│ ├── auth/ # Auth configuration
-│ ├── db/ # Database utilities
-│ └── utils/ # Shared utilities
-│
-├── hooks/ # Custom hooks
-│ └── use-debounce.ts
-│
-├── stores/ # Zustand stores
-│ └── dashboard-store.ts
-│
-└── types/ # TypeScript types
-└── index.ts
+├─ app/
+│  ├─ auth/          # Halaman login/register admin
+│  ├─ dashboard/     # Seluruh halaman dashboard
+│  │  ├─ overview/   # Statistik & grafik
+│  │  ├─ cars/       # CRUD mobil
+│  │  ├─ bookings/   # Manajemen booking
+│  │  ├─ users/      # Manajemen user
+│  │  ├─ partners/   # Rental partners
+│  │  ├─ coupons/    # Kupon
+│  │  └─ profile/    # Profil admin
+│  └─ layout.tsx     # Layout utama dashboard
+├─ features/         # Logika per fitur (UI + hooks + helper)
+├─ components/       # Komponen UI reusable
+├─ lib/              # Helper umum (api-client, utils, format, dll)
+└─ hooks/            # Custom hooks
 ```
 
-## Getting Started
+## 4. Environment Configuration
 
-> [!NOTE]  
-> This admin dashboard starter uses **Next.js 16 (App Router)** with **React 19** and **Shadcn UI**. Follow these steps to run it locally:
+Example environment file:
 
-Clone the repo:
+- [env.example copy.txt](file:///c:/Users/Yazid/Documents/TubesPBW2/user/admin/env.example%20copy.txt)
 
+Minimal environment required to connect to the Laravel backend:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
-git clone https://github.com/Kiranism/next-shadcn-dashboard-starter.git
+
+This value points to the Laravel backend URL when running `php artisan serve`.
+
+## 5. Running the Admin Dashboard (Development)
+
+You can run these commands from the project root (via scripts) or directly inside the admin folder.
+
+1. Go to the admin folder:
+
+```bash
+cd user/admin
 ```
 
-- `bun install`
-- Create a `.env.local` file by copying the example environment file:
-  `cp env.example.txt .env.local`
-- Add the required environment variables to the `.env.local` file.
-- `bun run dev`
+2. Install dependencies:
 
-##### Environment Configuration Setup
+```bash
+npm install
+```
 
-To configure the environment for this project, refer to the `env.example.txt` file. This file contains the necessary environment variables required for authentication and error tracking.
+3. Make sure the Laravel backend is running (see root/backend README).
 
-##### Clerk Setup
+4. Set environment (create `.env.local` or `.env`):
 
-For detailed instructions on configuring Clerk authentication (including organizations/workspaces/teams), please refer to [clerk_setup.md](./docs/clerk_setup.md).
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-You should now be able to access the application at http://localhost:3000.
+5. Run the development server:
 
-> [!WARNING]
-> After cloning or forking the repository, be cautious when pulling or syncing with the latest changes, as this may result in breaking conflicts.
+```bash
+npm run dev
+```
 
-Cheers! 🥂
+By default, the admin app is available at:
 
-<!--
+- http://localhost:3000
 
-SEO keywords:
+## 6. Backend Integration Notes
 
-nextjs admin dashboard, nextjs dashboard template, shadcn ui dashboard,
+- All requests to the backend use the axios instance in [api-client.ts](file:///c:/Users/Yazid/Documents/TubesPBW2/user/admin/src/lib/api-client.ts).
+- The admin token is stored in `localStorage` with the key `admin_token` and sent as a header:
 
-admin dashboard starter, dashboard ui template, nextjs shadcn admin panel,
+```http
+Authorization: Bearer <token>
+```
 
-react admin dashboard, tailwind css admin dashboard
-
--->
-
-## Star History
-
-<a href="https://www.star-history.com/#Kiranism/next-shadcn-dashboard-starter&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Kiranism/next-shadcn-dashboard-starter&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Kiranism/next-shadcn-dashboard-starter&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Kiranism/next-shadcn-dashboard-starter&type=date&legend=top-left" />
- </picture>
-</a>
+When the token is invalid (HTTP 401), it is cleared and the user can be redirected back to the login page.

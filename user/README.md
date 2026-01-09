@@ -1,264 +1,100 @@
-# Rent-A-Car Booking System (MERN Stack)
+# User Frontend – Rental Car
 
-A fully functional, production‑ready **Rent-A-Car Booking Website** built using the **MERN Stack (MongoDB, Express.js, React.js, Node.js)** with **ImageKit** integration for media storage.
+This is the **user-facing frontend** for the Rental Car system.  
+It is built with **React + Vite + Tailwind CSS**, and connects to the **Laravel** backend through a REST API.
 
----
+## 1. Main Features
 
-## 🚀 Features
+- Landing / home page with hero, banner, and car list.
+- Car list with basic information (price, type, fuel, etc).
+- Car detail page.
+- Booking / checkout form.
+- "My Bookings" page.
+- Basic user profile page.
+- Reusable components such as loading, navbar, footer, testimonial, newsletter, etc.
 
-### 👤 **User Features**
+Authentication and booking features communicate with the backend in the [`backend`](file:///c:/Users/Yazid/Documents/TubesPBW2/backend) folder via `/api` endpoints.
 
-* User Registration & Login (JWT‑based authentication)
-* Browse cars with filters
-* Select pickup location & date
-* View car details
-* Make a booking
-* View "My Bookings" page
+## 2. Tech Stack
 
-### 🛠️ **Admin Features**
+- **React 19** (SPA)
+- **Vite** as bundler
+- **React Router DOM** for routing
+- **Axios** for HTTP requests
+- **Tailwind CSS** for styling
+- Simple global state using React Context/hooks
 
-* Secure Admin Login
-* Add new cars
-* Manage all bookings
-* Manage car inventory including images
+## 3. Folder Structure (Short Overview)
 
-### 🖼️ **Image Handling**
+Inside the [user folder](file:///c:/Users/Yazid/Documents/TubesPBW2/user):
 
-* Image upload handled via **ImageKit**
-* Auto optimization, fast delivery
-
-### 🌐 **Fully Deployed Application**
-
-* Frontend deployed (e.g., on Vercel or Netlify)
-* Backend deployed (e.g., on Render or Railway)
-* Connected to MongoDB Atlas
-
----
-
-## 🏗️ Tech Stack
-
-### **Frontend**
-
-* React.js
-* React Router
-* Axios
-* Context API
-* CSS / Tailwind (optional)
-
-### **Backend**
-
-* Node.js
-* Express.js
-* MongoDB & Mongoose
-* JWT Authentication
-* ImageKit SDK
-
-### **Deployment**
-
-* Frontend → Vercel / Netlify
-* Backend → Render / Railway / VPS
-* Database → MongoDB Atlas
-* Media → ImageKit
-
----
-
-## 📁 Folder Structure
-
-```
-car-rental-app/
-│
-├── client/             # React Frontend
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── context/
-│   │   ├── assets/
-│   │   ├── App.js
-│   │   ├── index.js
-│   └── package.json
-│
-├── server/             # Node Backend
-│   ├── controllers/
-│   ├── routes/
-│   ├── models/
-│   ├── middleware/
-│   ├── .env
-│   ├── index.js
-│   └── package.json
-│
-└── README.md
+```plaintext
+user/
+├─ src/
+│  ├─ pages/        # Halaman (Home, Cars, CarDetails, Checkout, MyBookings, Profile, dll)
+│  ├─ components/   # Komponen UI (Navbar, Banner, CarCard, Footer, Login, dll)
+│  ├─ lib/
+│  │  └─ api/       # File helper untuk call API (auth, cars, booking, regions, user)
+│  ├─ context/      # AppContext (state global sederhana)
+│  ├─ assets/       # Gambar dan ikon
+│  ├─ App.jsx       # Root komponen
+│  └─ main.jsx      # Entry point Vite
+└─ package.json
 ```
 
----
+## 4. Environment Configuration
 
-## ⚙️ Installation & Setup
-
-### 🔧 Prerequisites
-
-Make sure you have:
-
-* Node.js installed
-* MongoDB Atlas account
-* ImageKit account
-
----
-
-## 🖥️ Local Setup
-
-### **1. Clone the Repository**
+The backend base URL is configured via Vite env:
 
 ```bash
-https://github.com/pratikdevelops/car-rental-mern.git
-cd car-rental-mern
+VITE_BASE_URL=http://localhost:8000/api
 ```
 
-### **2. Install Frontend Dependencies**
+This environment variable is used in [client.js](file:///c:/Users/Yazid/Documents/TubesPBW2/user/src/lib/api/client.js) and shared across all API helpers.
+
+Store this variable in:
+
+- `.env` (or `.env.local`) inside the `user` folder.
+
+## 5. Running the User Frontend (Development)
+
+1. Go to the `user` folder:
 
 ```bash
-cd client
+cd user
+```
+
+2. Install dependencies:
+
+```bash
 npm install
 ```
 
-### **3. Install Backend Dependencies**
+3. Make sure the Laravel backend is running at `http://localhost:8000` with the API prefix `http://localhost:8000/api`.
+
+4. Set the environment:
 
 ```bash
-cd ../server
-npm install
+VITE_BASE_URL=http://localhost:8000/api
 ```
 
----
-
-## 🔑 Environment Variables
-
-Create a `.env` file in the **server** folder and add:
-
-```
-MONGO_URI=your_mongo_atlas_url
-JWT_SECRET=your_jwt_secret
-IMAGEKIT_PUBLIC_KEY=
-IMAGEKIT_PRIVATE_KEY=
-IMAGEKIT_URL_ENDPOINT=
-```
-
----
-
-## ▶️ Run the App
-
-### **Start Backend**
+5. Run the development server:
 
 ```bash
-cd server
-npm start
-```
-
-### **Start Frontend**
-
-```bash
-cd client
 npm run dev
 ```
 
-Your project will be live at:
+By default, the user app is available at:
 
-* Frontend: [http://localhost:5173](http://localhost:5173)
-* Backend: [http://localhost:4000](http://localhost:4000)
+- http://localhost:5173
 
----
+## 6. Build for Production
 
-## 📦 Build for Production
-
-### Frontend Build
+To build the production bundle:
 
 ```bash
-cd client
+cd user
 npm run build
 ```
 
-This generates a production-ready build inside `/dist`.
-
----
-
-## ☁️ Deployment Steps
-
-### **Frontend (Vercel / Netlify)**
-
-1. Connect GitHub repo
-2. Select the `client` folder
-3. Build Command → `npm run build`
-4. Output Directory → `dist`
-
-### **Backend (Render / Railway)**
-
-1. Create new web service
-2. Use `server` folder
-3. Add environment variables
-4. Deploy
-
-### **ImageKit Setup**
-
-* Create a new ImageKit project
-* Copy API Keys to `.env`
-* Use `.upload()` method to upload car images
-
----
-
-## 🔗 API Endpoints
-
-### **Auth Routes**
-
-| Method | Endpoint           | Description   |
-| ------ | ------------------ | ------------- |
-| POST   | /api/auth/register | Register user |
-| POST   | /api/auth/login    | Login user    |
-
-### **Car Routes**
-
-| Method | Endpoint      | Description     |
-| ------ | ------------- | --------------- |
-| GET    | /api/cars     | List all cars   |
-| GET    | /api/cars/:id | Get car details |
-| POST   | /api/cars     | Add car (Admin) |
-
-### **Booking Routes**
-
-| Method | Endpoint         | Description       |
-| ------ | ---------------- | ----------------- |
-| POST   | /api/bookings    | Create booking    |
-| GET    | /api/bookings/me | Get user bookings |
-
----
-
-
-
----
-
-## 🛡️ Authentication Flow
-
-* User logs in → Backend generates JWT
-* Frontend stores token in localStorage
-* Token added in every protected request header
-* Admin routes are protected using middleware
-
----
-
-## ✨ Bonus Features You Can Add
-
-* Payment gateway (Razorpay / Stripe)
-* Advanced car filters (price, brand, fuel type)
-* Reviews & ratings
-* Coupon/discount system
-* Admin analytics dashboard
-* OTP login
-
----
-
-
-## 📄 License
-
-This project is open source and free to use.
-
----
-
-## 💬 Feedback & Support
-
-Feel free to fork the project, raise issues, or suggest improvements!
+The output will be generated in the `dist/` folder.

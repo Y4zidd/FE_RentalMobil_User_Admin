@@ -93,7 +93,7 @@ export default function GalleryUpload({
             </p>
           </div>
 
-          <Button onClick={openFileDialog}>
+          <Button type="button" onClick={openFileDialog}>
             <Upload className="h-4 w-4" />
             Select images
           </Button>
@@ -111,7 +111,7 @@ export default function GalleryUpload({
               Total: {formatBytes(files.reduce((acc, file) => acc + file.file.size, 0))}
             </div>
           </div>
-          <Button onClick={clearFiles} variant="outline" size="sm">
+          <Button type="button" onClick={clearFiles} variant="outline" size="sm">
             Clear all
           </Button>
         </div>
@@ -139,6 +139,7 @@ export default function GalleryUpload({
                 {/* View Button */}
                 {fileItem.preview && (
                   <Button
+                    type="button"
                     onClick={() => setSelectedImage(fileItem.preview!)}
                     variant="secondary"
                     size="icon"
@@ -149,7 +150,7 @@ export default function GalleryUpload({
                 )}
 
                 {/* Remove Button */}
-                <Button onClick={() => removeFile(fileItem.id)} variant="secondary" size="icon" className="size-7">
+                <Button type="button" onClick={() => removeFile(fileItem.id)} variant="secondary" size="icon" className="size-7">
                   <XIcon className="opacity-100/80" />
                 </Button>
               </div>
@@ -195,6 +196,7 @@ export default function GalleryUpload({
               onClick={(e) => e.stopPropagation()}
             />
             <Button
+              type="button"
               onClick={() => setSelectedImage(null)}
               variant="secondary"
               size="icon"

@@ -25,27 +25,35 @@ export type OverviewResponse = {
 }
 
 export async function fetchAdminOverview(): Promise<OverviewResponse> {
-  const res = await apiClient.get('/api/admin/overview')
-  const data = res.data || {}
-  const metrics = data.metrics || {}
-  const revenueItems = Array.isArray(data.revenue_by_month) ? data.revenue_by_month : []
-  const revenueDayItems = Array.isArray(data.revenue_by_day) ? data.revenue_by_day : []
+  try {
+    const res = await apiClient.get('/api/admin/overview')
+    const data = res.data || {}
+    const metrics = data.metrics || {}
+    const revenueItems = Array.isArray(data.revenue_by_month) ? data.revenue_by_month : []
+    const revenueDayItems = Array.isArray(data.revenue_by_day) ? data.revenue_by_day : []
 
-  const revenue_by_month: RevenueByMonthItem[] = revenueItems.map((item: any) => ({
-    month: String(item.month),
-    online: Number(item.online ?? 0),
-    pay_at_location: Number(item.pay_at_location ?? 0),
-  }))
+    const revenue_by_month: RevenueByMonthItem[] = revenueItems.map((item: any) => ({
+      month: String(item.month),
+      online: Number(item.online ?? 0),
+      pay_at_location: Number(item.pay_at_location ?? 0),
+    }))
 
-  const revenue_by_day: RevenueByDayItem[] = revenueDayItems.map((item: any) => ({
-    date: String(item.date),
-    revenue: Number(item.revenue ?? 0),
-  }))
+    const revenue_by_day: RevenueByDayItem[] = revenueDayItems.map((item: any) => ({
+      date: String(item.date),
+      revenue: Number(item.revenue ?? 0),
+    }))
 
-  return {
-    metrics,
-    revenue_by_month,
-    revenue_by_day,
+    return {
+      metrics,
+      revenue_by_month,
+      revenue_by_day,
+    }
+  } catch (error) {
+    console.error('Failed to fetch admin overview', error)
+    return {
+      metrics: {},
+      revenue_by_month: [],
+      revenue_by_day: [],
+    }
   }
 }
-

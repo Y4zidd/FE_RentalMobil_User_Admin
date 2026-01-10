@@ -137,7 +137,7 @@ export default function OverViewLayout({
           const carsData = carsResult.value;
           carsCount = carsData.length;
           setPreviewCars(
-            carsData.map((c) => ({
+            carsData.slice(0, 5).map((c) => ({
               id: c.id,
               photo: c.photoUrl || 'https://via.placeholder.com/150',
               name: c.name,

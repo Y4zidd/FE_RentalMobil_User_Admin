@@ -10,7 +10,7 @@ export type AdminCarPreview = {
 }
 
 export async function fetchAdminCarsPreview(
-  limit = 5
+  limit?: number
 ): Promise<AdminCarPreview[]> {
   const res = await apiClient.get('/api/admin/cars')
   const raw = Array.isArray(res.data) ? res.data : res.data.data || []
@@ -24,7 +24,11 @@ export async function fetchAdminCarsPreview(
     status: c.status || '',
   }))
 
-  return cars.slice(0, limit)
+  if (typeof limit === 'number') {
+    return cars.slice(0, limit)
+  }
+
+  return cars
 }
 
 export async function createAdminCar(formData: FormData) {

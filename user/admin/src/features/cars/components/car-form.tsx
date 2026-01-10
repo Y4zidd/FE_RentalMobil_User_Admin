@@ -4,9 +4,10 @@ import GalleryUpload from '@/components/gallery-upload';
 import { FileMetadata } from '@/hooks/use-file-upload';
 import { FormInput } from '@/components/forms/form-input';
 import { FormSelect } from '@/components/forms/form-select';
-import { FormCheckboxGroup } from '@/components/forms/form-checkbox-group';
 import { FormTextarea } from '@/components/forms/form-textarea';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Icons } from '@/components/icons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
@@ -18,8 +19,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
-  CATEGORY_OPTIONS,
-  FEATURES_OPTIONS,
   FUEL_TYPE_OPTIONS,
   STATUS_OPTIONS,
   TRANSMISSION_OPTIONS
@@ -134,6 +133,7 @@ export default function CarForm({
   const geocodeControllerRef = useRef<AbortController | null>(null);
   const pendingRegencyNameRef = useRef<string | null>(null);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
+  const [featureInput, setFeatureInput] = useState('');
 
   const parsedLocation = (() => {
     const rawLocation = initialData?.location || '';
@@ -833,13 +833,12 @@ export default function CarForm({
                 type='number'
                 min={1900}
               />
-              <FormSelect<CarFormValues>
+              <FormInput<CarFormValues>
                 control={form.control}
                 name='category'
                 label='Category'
-                placeholder='Select category'
+                placeholder='e.g. SUV, MPV, Sport'
                 required
-                options={CATEGORY_OPTIONS}
               />
             </div>
           </div>
@@ -1004,13 +1003,80 @@ export default function CarForm({
 
           <div className='space-y-4'>
             <h3 className='text-lg font-medium'>Features</h3>
-            <FormCheckboxGroup<CarFormValues>
+            <FormField
               control={form.control}
               name='features'
-              label='Car Features'
-              description='Select the available features for this car'
-              options={FEATURES_OPTIONS}
-              columns={2}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Car Features</FormLabel>
+                  <FormControl>
+                    <div className='space-y-3'>
+                      <div className='flex gap-2'>
+                        <Input
+                          placeholder='Add a feature (e.g. Sunroof, Bluetooth, GPS)'
+                          value={featureInput}
+                          onChange={(e) => setFeatureInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (featureInput.trim()) {
+                                const current = field.value || [];
+                                if (!current.includes(featureInput.trim())) {
+                                  field.onChange([...current, featureInput.trim()]);
+                                }
+                                setFeatureInput('');
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='icon'
+                          onClick={() => {
+                            if (featureInput.trim()) {
+                              const current = field.value || [];
+                              if (!current.includes(featureInput.trim())) {
+                                field.onChange([...current, featureInput.trim()]);
+                              }
+                              setFeatureInput('');
+                            }
+                          }}
+                        >
+                          <Icons.add className='h-4 w-4' />
+                        </Button>
+                      </div>
+                      <div className='flex flex-wrap gap-2 rounded-md border border-dashed p-3 min-h-[3rem]'>
+                        {field.value?.map((feature: string) => (
+                          <Badge key={feature} variant='secondary' className='px-3 py-1 text-sm'>
+                            {feature}
+                            <button
+                              type='button'
+                              className='ml-2 text-muted-foreground hover:text-destructive'
+                              onClick={() => {
+                                field.onChange(
+                                  field.value?.filter((f) => f !== feature)
+                                );
+                              }}
+                            >
+                              <Icons.close className='h-3 w-3' />
+                            </button>
+                          </Badge>
+                        ))}
+                        {(!field.value || field.value.length === 0) && (
+                          <p className='text-sm text-muted-foreground self-center italic'>
+                            No features added yet.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </FormControl>
+                  <div className='text-[0.8rem] text-muted-foreground'>
+                    Type a feature name and press Enter or click the plus button to add it.
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
 

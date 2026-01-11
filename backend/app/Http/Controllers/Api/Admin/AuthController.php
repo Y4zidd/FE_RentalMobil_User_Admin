@@ -25,7 +25,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if (! in_array($user->role, ['admin', 'staff'])) {
+        if (! in_array($user->role, ['admin', 'staff', 'partner'])) {
             return response()->json(['message' => 'Unauthorized. Admin access only.'], 403);
         }
 

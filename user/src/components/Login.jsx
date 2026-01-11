@@ -24,7 +24,7 @@ const Login = () => {
     const [resetPasswordConfirm, setResetPasswordConfirm] = React.useState("");
 
     const handleAfterAuthSuccess = (user, token) => {
-        if (user?.role === 'admin' || user?.role === 'staff') {
+        if (user?.role === 'admin' || user?.role === 'staff' || user?.role === 'partner') {
             if (!ADMIN_BASE_URL) {
                 toast.error(t('login_admin_url_not_configured'))
                 return

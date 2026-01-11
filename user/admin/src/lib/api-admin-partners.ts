@@ -20,6 +20,13 @@ export async function fetchAdminRentalPartners(): Promise<AdminRentalPartner[]> 
   return raw as AdminRentalPartner[];
 }
 
+export async function fetchAvailablePartners(includeId?: number | string): Promise<{ id: number; name: string }[]> {
+  const res = await apiClient.get('/api/admin/rental-partners/available', {
+    params: { include_id: includeId }
+  });
+  return res.data;
+}
+
 export async function createAdminRentalPartner(
   payload: Partial<AdminRentalPartner>
 ): Promise<AdminRentalPartner> {

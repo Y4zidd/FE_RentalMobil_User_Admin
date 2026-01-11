@@ -79,6 +79,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('cars', AdminCarController::class);
 
         // Rental Partners
+        Route::get('rental-partners/available', [AdminRentalPartnerController::class, 'getAvailablePartners']);
         Route::apiResource('rental-partners', AdminRentalPartnerController::class)->only([
             'index',
             'store',

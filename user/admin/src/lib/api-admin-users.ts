@@ -1,6 +1,6 @@
 import apiClient from './api-client'
 
-type AdminUserRole = 'Admin' | 'Staff' | 'Customer'
+type AdminUserRole = 'Admin' | 'Staff' | 'Customer' | 'Partner'
 type AdminUserStatus = 'Active' | 'Inactive'
 
 export type AdminUser = {
@@ -10,6 +10,10 @@ export type AdminUser = {
   role: AdminUserRole
   status: AdminUserStatus
   avatarUrl?: string
+  rental_partner?: {
+    id: number
+    name: string
+  }
 }
 
 type UsersQuery = {
@@ -35,6 +39,8 @@ export async function fetchAdminUsers(params: UsersQuery): Promise<AdminUser[]> 
       role = 'Admin'
     } else if (u.role === 'staff') {
       role = 'Staff'
+    } else if (u.role === 'partner') {
+      role = 'Partner'
     } else {
       role = 'Customer'
     }
@@ -46,6 +52,9 @@ export async function fetchAdminUsers(params: UsersQuery): Promise<AdminUser[]> 
       role,
       status: u.status === 'active' ? 'Active' : 'Inactive',
       avatarUrl: u.avatar_url || '',
+      rental_partner: u.rental_partner
+        ? { id: u.rental_partner.id, name: u.rental_partner.name }
+        : undefined,
     }
   })
 
@@ -61,6 +70,8 @@ export async function fetchAdminUserById(id: string | number): Promise<AdminUser
     role = 'Admin'
   } else if (u.role === 'customer') {
     role = 'Customer'
+  } else if (u.role === 'partner') {
+    role = 'Partner'
   } else {
     role = 'Staff'
   }
@@ -72,6 +83,9 @@ export async function fetchAdminUserById(id: string | number): Promise<AdminUser
     role,
     status: u.status === 'active' ? 'Active' : 'Inactive',
     avatarUrl: u.avatar_url || '',
+    rental_partner: u.rental_partner
+      ? { id: u.rental_partner.id, name: u.rental_partner.name }
+      : undefined,
   }
 }
 
@@ -79,17 +93,10 @@ type SaveAdminUserPayload = {
   name: string
   email: string
   role: AdminUserRole
-  status: AdminUserStatus
-  password?: string
+  partner_id?: number
 }
 
-export async function createAdminUser(payload: {
-  name: string
-  email: string
-  role: string
-  status: string
-  password: string
-}) {
+export async function createAdminUser(payload: any) {
   const response = await apiClient.post('/api/admin/users', payload)
   return response.data
 }

@@ -10,6 +10,7 @@ class RentalPartner extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'country',
         'province',
@@ -25,6 +26,11 @@ class RentalPartner extends Model
     public function cars()
     {
         return $this->hasMany(Car::class, 'partner_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }
 

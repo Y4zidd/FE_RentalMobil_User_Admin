@@ -10,20 +10,47 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function overview()
+    public function overview(Request $request)
     {
         $this->cleanupOverdueBookings();
         $this->cleanupCoupons();
-        $totalBookings = Booking::count();
-        $pendingBookings = Booking::where('status', 'pending')->count();
-        $confirmedBookings = Booking::where('status', 'confirmed')->count();
-        $cancelledBookings = Booking::where('status', 'cancelled')->count();
-        $completedBookings = Booking::where('status', 'completed')->count();
 
-        $totalRevenue = Payment::where('transaction_status', 'settlement')->sum('gross_amount');
+        $user = $request->user();
+        $isPartner = $user->role === 'partner';
+        $partnerId = $isPartner && $user->rentalPartner ? $user->rentalPartner->id : null;
+
+        $bookingsQuery = Booking::query();
+
+        if ($isPartner) {
+            $bookingsQuery->whereHas('car', function ($q) use ($partnerId) {
+                $q->where('partner_id', $partnerId);
+            });
+        }
+
+        $totalBookings = (clone $bookingsQuery)->count();
+        $pendingBookings = (clone $bookingsQuery)->where('status', 'pending')->count();
+        $confirmedBookings = (clone $bookingsQuery)->where('status', 'confirmed')->count();
+        $cancelledBookings = (clone $bookingsQuery)->where('status', 'cancelled')->count();
+        $completedBookings = (clone $bookingsQuery)->where('status', 'completed')->count();
+
+        $paymentQuery = Payment::where('transaction_status', 'settlement');
+
+        if ($isPartner) {
+            $paymentQuery->whereHas('booking.car', function ($q) use ($partnerId) {
+                $q->where('partner_id', $partnerId);
+            });
+        }
+
+        $totalRevenue = (clone $paymentQuery)->sum('gross_amount');
 
         $basePaymentsQuery = Payment::where('provider', 'midtrans')
             ->where('transaction_status', 'settlement');
+
+        if ($isPartner) {
+            $basePaymentsQuery->whereHas('booking.car', function ($q) use ($partnerId) {
+                $q->where('partner_id', $partnerId);
+            });
+        }
 
         $paymentsForDay = (clone $basePaymentsQuery)
             ->where('created_at', '>=', now()->subDays(30))

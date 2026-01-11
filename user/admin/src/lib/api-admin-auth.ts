@@ -14,3 +14,8 @@ export async function adminLogout() {
   await apiClient.post('/api/admin/logout')
 }
 
+export async function fetchUserProfile() {
+  const response = await apiClient.get('/api/user/data')
+  return response.data
+}
+

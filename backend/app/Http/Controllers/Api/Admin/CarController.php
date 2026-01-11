@@ -10,9 +10,21 @@ use Illuminate\Support\Facades\Storage;
 
 class CarController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $cars = Car::with(['location', 'images', 'partner'])->get();
+        $query = Car::with(['location', 'images', 'partner']);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if ($user->rentalPartner) {
+                $query->where('partner_id', $user->rentalPartner->id);
+            } else {
+                // If partner role but no partner profile, show empty or handle error
+                return response()->json([]);
+            }
+        }
+
+        $cars = $query->get();
         return response()->json($cars);
     }
 
@@ -43,6 +55,14 @@ class CarController extends Controller
             'images' => 'required|array',
             'images.*' => 'image|max:5120',
         ]);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if (!$user->rentalPartner) {
+                return response()->json(['message' => 'Partner profile missing.'], 403);
+            }
+            $validated['partner_id'] = $user->rentalPartner->id;
+        }
 
         $locationId = $validated['location_id'] ?? null;
 
@@ -115,15 +135,30 @@ class CarController extends Controller
         return response()->json($car->load(['location', 'images', 'partner']), 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $car = Car::with(['location', 'images'])->findOrFail($id);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if (!$user->rentalPartner || $car->partner_id !== $user->rentalPartner->id) {
+                return response()->json(['message' => 'Unauthorized access to car.'], 403);
+            }
+        }
+
         return response()->json($car);
     }
 
     public function update(Request $request, $id)
     {
         $car = Car::findOrFail($id);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if (!$user->rentalPartner || $car->partner_id !== $user->rentalPartner->id) {
+                return response()->json(['message' => 'Unauthorized processing of car.'], 403);
+            }
+        }
 
         $request->validate([
             'license_plate' => 'sometimes|string|unique:cars,license_plate,' . $car->id,
@@ -237,9 +272,17 @@ class CarController extends Controller
         return response()->json($car->load(['location', 'images', 'partner']));
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $car = Car::findOrFail($id);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if (!$user->rentalPartner || $car->partner_id !== $user->rentalPartner->id) {
+                return response()->json(['message' => 'Unauthorized deletion of car.'], 403);
+            }
+        }
+
         $car->delete();
         return response()->json(['message' => 'Car deleted successfully']);
     }

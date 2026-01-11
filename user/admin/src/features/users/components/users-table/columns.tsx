@@ -15,14 +15,19 @@ export type User = {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Staff' | 'Customer';
+  role: 'Admin' | 'Staff' | 'Customer' | 'Partner';
   status: 'Active' | 'Inactive';
   avatarUrl?: string;
+  rental_partner?: {
+    id: number;
+    name: string;
+  };
 };
 
 export const ROLE_OPTIONS = [
   { label: 'Admin', value: 'Admin' },
   { label: 'Staff', value: 'Staff' },
+  { label: 'Partner', value: 'Partner' },
   { label: 'Customer', value: 'Customer' }
 ];
 

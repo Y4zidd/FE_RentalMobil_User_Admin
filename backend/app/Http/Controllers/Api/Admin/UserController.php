@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\RentalPartner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -16,7 +18,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
         }
 
-        $query = User::query();
+        $query = User::with('rentalPartner'); // Load rental partner info
 
         if ($request->filled('role')) {
             $roles = explode(',', $request->role);
@@ -49,20 +51,40 @@ class UserController extends Controller
             return response()->json(['message' => 'Forbidden. Admin access only.'], 403);
         }
 
-        // Admin create user (staff/admin)
+        // Admin create user (staff/admin/partner)
         $validated = $request->validate([
             'name' => 'required|string',
+            'role' => 'required|in:admin,staff,customer,partner',
+            'status' => 'required|in:active,inactive',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,staff,customer',
-            'status' => 'required|in:active,inactive',
+            'partner_id' => [
+                'nullable',
+                'required_if:role,partner',
+                'exists:rental_partners,id',
+                function ($attribute, $value, $fail) {
+                    if ($value && RentalPartner::where('id', $value)->whereNotNull('user_id')->exists()) {
+                        $fail('The selected partner is already defined for another user.');
+                    }
+                },
+            ],
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
         $validated['email_verified_at'] = now();
 
-        $user = User::create($validated);
-        return response()->json($user, 201);
+        return DB::transaction(function () use ($validated, $request) {
+            $userData = collect($validated)->except(['partner_id'])->toArray();
+            $user = User::create($userData);
+
+            if ($request->role === 'partner' && $request->filled('partner_id')) {
+                $partner = RentalPartner::find($request->partner_id);
+                $partner->user_id = $user->id;
+                $partner->save();
+            }
+
+            return response()->json($user, 201);
+        });
     }
 
     public function update(Request $request, $id)
@@ -76,7 +98,7 @@ class UserController extends Controller
 
         $rules = [
             'name' => 'string',
-            'role' => 'in:admin,staff,customer',
+            'role' => 'in:admin,staff,customer,partner',
             'status' => 'in:active,inactive',
             'phone' => 'nullable|string',
             'password' => 'nullable|string|min:8',
@@ -87,14 +109,48 @@ class UserController extends Controller
             $rules['email'] = 'email|unique:users,email,' . $id;
         }
 
+        if ($request->role === 'partner') {
+            $rules['partner_id'] = [
+                'nullable',
+                'exists:rental_partners,id',
+                function ($attribute, $value, $fail) use ($user) {
+                    if ($value) {
+                         // Check if this partner is already owned by SOMEONE ELSE
+                         $existingOwner = RentalPartner::where('id', $value)->whereNotNull('user_id')->where('user_id', '!=', $user->id)->first();
+                         if ($existingOwner) {
+                             $fail('The selected partner is already defined for another user.');
+                         }
+                    }
+                },
+            ];
+        }
+
         $validated = $request->validate($rules);
 
         if (isset($validated['password'])) {
             $validated['password'] = bcrypt($validated['password']);
         }
 
-        $user->update($validated);
-        return response()->json($user);
+        return DB::transaction(function () use ($user, $validated, $request) {
+             $userData = collect($validated)->except(['partner_id'])->toArray();
+             $user->update($userData);
+
+             // If linked to partner
+             if ($request->role === 'partner' && $request->filled('partner_id')) {
+                 // 1. Unlink any previous partner this user might have had
+                 RentalPartner::where('user_id', $user->id)->update(['user_id' => null]);
+
+                 // 2. Link new partner
+                 $partner = RentalPartner::find($request->partner_id);
+                 $partner->user_id = $user->id;
+                 $partner->save();
+             } elseif ($request->role !== 'partner') {
+                 // If role changed FROM partner TO something else, unlink partner
+                 RentalPartner::where('user_id', $user->id)->update(['user_id' => null]);
+             }
+
+             return response()->json($user);
+        });
     }
 
     public function updateAvatar(Request $request, $id)
@@ -137,6 +193,14 @@ class UserController extends Controller
         }
 
         $user = User::findOrFail($id);
+
+        // Unlink partner before deleting to prevent cascade delete (if configured incorrectly in DB)
+        // or just ensure data integrity.
+        if ($user->rentalPartner) {
+            $user->rentalPartner->user_id = null;
+            $user->rentalPartner->save();
+        }
+
         $user->delete();
         return response()->json(['message' => 'User deleted successfully']);
     }

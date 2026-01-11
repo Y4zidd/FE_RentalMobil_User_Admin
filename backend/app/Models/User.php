@@ -58,6 +58,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function rentalPartner()
+    {
+        return $this->hasOne(RentalPartner::class);
+    }
+
     public function bookings()
     {
         return $this->hasMany(Booking::class);

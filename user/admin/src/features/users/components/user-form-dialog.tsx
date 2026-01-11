@@ -21,6 +21,8 @@ import { DEFAULT_USER_AVATAR } from '@/lib/default-avatar';
 
 import type { User } from './users-table/columns';
 import { createAdminUser, updateAdminUser, uploadAdminUserAvatar } from '@/lib/api-admin-users';
+import { fetchAvailablePartners } from '@/lib/api-admin-partners';
+
 
 type Mode = 'create' | 'edit' | 'view';
 
@@ -46,6 +48,9 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
     role: user?.role ?? 'Staff',
     status: user?.status ?? 'Active'
   });
+  
+  const [availablePartners, setAvailablePartners] = useState<{ id: number; name: string }[]>([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
 
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -64,6 +69,28 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
     });
     setAvatarFile(null);
     setAvatarPreview(null);
+    
+    // Set initial partner if exists
+    if (user?.role === 'Partner' && user?.rental_partner) {
+      setSelectedPartnerId(user.rental_partner.id.toString());
+    } else {
+      setSelectedPartnerId('');
+    }
+
+    const loadPartners = async () => {
+      try {
+        // Pass the current partner ID to include it in the list (so it shows up in edit mode)
+        const includeId = (user?.role === 'Partner' && user?.rental_partner) 
+          ? user.rental_partner.id 
+          : undefined;
+          
+        const partners = await fetchAvailablePartners(includeId);
+        setAvailablePartners(partners);
+      } catch (err) {
+        console.error('Failed to load partners', err);
+      }
+    };
+    loadPartners();
   }, [open, user]);
 
   const title =
@@ -96,12 +123,17 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
       let currentUserId = user?.id;
 
       if (mode === 'create') {
-        const createdUser = await createAdminUser({
-          ...form,
+        const payload: any = {
+           ...form,
           password: target.password?.value || 'password123',
           role: form.role.toLowerCase(),
           status: form.status.toLowerCase()
-        });
+        };
+        if (form.role === 'Partner' && selectedPartnerId) {
+           payload.partner_id = parseInt(selectedPartnerId);
+        }
+
+        const createdUser = await createAdminUser(payload);
         currentUserId = createdUser?.id ?? currentUserId;
         toast.success('User created successfully');
       } else {
@@ -110,6 +142,9 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
           role: form.role.toLowerCase(),
           status: form.status.toLowerCase()
         };
+        if (form.role === 'Partner' && selectedPartnerId) {
+            payload.partner_id = parseInt(selectedPartnerId);
+        }
         const newPassword = target.resetPassword?.value;
         await updateAdminUser(user?.id, payload, newPassword);
         toast.success('User updated successfully');
@@ -239,6 +274,7 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
                     <SelectContent>
                       <SelectItem value='Admin'>Admin</SelectItem>
                       <SelectItem value='Staff'>Staff</SelectItem>
+                      <SelectItem value='Partner'>Partner</SelectItem>
                       <SelectItem value='Customer'>Customer</SelectItem>
                     </SelectContent>
                   </Select>
@@ -262,6 +298,34 @@ export function UserFormDialog({ mode, open, onOpenChange, user }: UserFormDialo
                   </Select>
                 </div>
               </div>
+
+              {form.role === 'Partner' && !isView && (
+                <div className='space-y-2'>
+                  <Label htmlFor='partner'>Select Rental Partner Business</Label>
+                  <Select
+                    disabled={loading || availablePartners.length === 0}
+                    value={selectedPartnerId}
+                    onValueChange={setSelectedPartnerId}
+                  >
+                    <SelectTrigger id='partner'>
+                      <SelectValue placeholder={availablePartners.length === 0 ? 'No available partners' : 'Select a partner'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePartners.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {availablePartners.length === 0 && (
+                    <p className="text-[0.8rem] text-muted-foreground text-red-500">
+                      No partners available without an account. Please create a partner first.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className='space-y-2'>
                 <Label htmlFor='email'>Email</Label>
                 <Input

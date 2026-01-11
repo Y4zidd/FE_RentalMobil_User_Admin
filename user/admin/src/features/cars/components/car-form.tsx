@@ -34,6 +34,7 @@ import {
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { createAdminCar, updateAdminCar } from '@/lib/api-admin-cars';
+import { fetchUserProfile } from '@/lib/api-admin-auth';
 import {
   fetchAdminRegionsProvinces,
   fetchAdminRegionsRegenciesByProvince
@@ -134,6 +135,11 @@ export default function CarForm({
   const pendingRegencyNameRef = useRef<string | null>(null);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [featureInput, setFeatureInput] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetchUserProfile().then(setCurrentUser).catch(() => {});
+  }, []);
 
   const parsedLocation = (() => {
     const rawLocation = initialData?.location || '';
@@ -929,6 +935,7 @@ export default function CarForm({
                   form.setValue('regency', value, { shouldValidate: true })
                 }
               />
+              {currentUser?.role !== 'partner' && (
               <FormSelect<CarFormValues>
                 control={form.control}
                 name='partnerId'
@@ -936,6 +943,7 @@ export default function CarForm({
                 placeholder='Select rental partner'
                 options={partnerOptions}
               />
+              )}
             </div>
             <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
               <FormSelect<CarFormValues>

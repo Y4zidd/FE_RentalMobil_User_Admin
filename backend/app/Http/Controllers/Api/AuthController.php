@@ -171,7 +171,11 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            $user->load('rentalPartner');
+        }
+        return response()->json($user);
     }
 
     public function updateAccount(Request $request)

@@ -12,7 +12,7 @@ class AdminMiddleware
     {
         $user = $request->user();
 
-        if ($user && in_array($user->role, ['admin', 'staff'])) {
+        if ($user && in_array($user->role, ['admin', 'staff', 'partner'])) {
             return $next($request);
         }
 

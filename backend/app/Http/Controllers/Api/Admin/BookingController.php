@@ -12,6 +12,17 @@ class BookingController extends Controller
     {
         $query = Booking::with(['user', 'car', 'options']);
 
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if ($user->rentalPartner) {
+                $query->whereHas('car', function($q) use ($user) {
+                    $q->where('partner_id', $user->rentalPartner->id);
+                });
+            } else {
+                return response()->json([]);
+            }
+        }
+
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
@@ -20,15 +31,30 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $booking = Booking::with(['user', 'car', 'options', 'payments'])->findOrFail($id);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if (!$user->rentalPartner || $booking->car->partner_id !== $user->rentalPartner->id) {
+                return response()->json(['message' => 'Unauthorized access to booking.'], 403);
+            }
+        }
+
         return response()->json($booking);
     }
 
     public function update(Request $request, $id)
     {
         $booking = Booking::with('car')->findOrFail($id);
+
+        $user = $request->user();
+        if ($user->role === 'partner') {
+            if (!$user->rentalPartner || $booking->car->partner_id !== $user->rentalPartner->id) {
+                return response()->json(['message' => 'Unauthorized access to booking.'], 403);
+            }
+        }
 
         $request->validate([
             'status' => 'required|in:pending,confirmed,cancelled,completed',
